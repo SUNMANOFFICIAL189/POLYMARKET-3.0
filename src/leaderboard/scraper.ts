@@ -118,8 +118,12 @@ export class LeaderboardScraper {
   // ─── Strategy 1: Data API ──────────────────────────────────────
 
   private async fetchFromDataAPI(): Promise<RawLeaderboardEntry[]> {
-    // Polymarket Data API — /activity is confirmed public, used by wallet monitor
+    // Polymarket Data API — try all known leaderboard/user ranking endpoints
     const endpoints = [
+      // Users sorted by total PnL
+      `${DATA_API_BASE}/users?limit=100&sortBy=allPnl&sortDirection=desc`,
+      `${DATA_API_BASE}/users?limit=100&sortBy=profit&sortDirection=desc`,
+      // Activity-based leaderboard
       `${DATA_API_BASE}/activity?window=all&sortBy=profitAndLoss&limit=100`,
       `${DATA_API_BASE}/activity?window=all&limit=100`,
       `${DATA_API_BASE}/leaderboard?window=all&limit=100`,
@@ -227,29 +231,48 @@ export class LeaderboardScraper {
       if (!this.puppeteerBrowser || !this.puppeteerBrowser.connected) {
         this.puppeteerBrowser = await puppeteer.default.launch({
           headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled'],
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-web-security',
+          ],
         });
       }
 
       const page = await this.puppeteerBrowser.newPage();
       page.on('console', () => {});
 
-      const capturedEntries: RawLeaderboardEntry[] = [];
-      const seenUrls: string[] = [];
+      // Set realistic user-agent so Cloudflare/bot-protection doesn't block us
+      await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
 
-      // Use page.on('response') — more reliable than CDP Network.getResponseBody
+      const capturedEntries: RawLeaderboardEntry[] = [];
+      const seenUrls: string[] = [];        // all non-asset URLs for diagnostics
+      const jsonUrls: string[] = [];        // subset that returned JSON
+
+      // Intercept ALL responses — log all non-asset URLs so we can discover the real endpoint
       page.on('response', async (response: any) => {
         const url: string = response.url();
         const ct: string = response.headers()['content-type'] || '';
+
+        // Skip static assets (fonts, images, css, compiled js bundles)
+        const skip = /\.(png|svg|ico|woff2?|ttf|eot|css)($|\?)/.test(url)
+          || url.includes('/_next/static/')
+          || url.includes('/fonts/')
+          || url.includes('google') && url.includes('font');
+        if (!skip) {
+          seenUrls.push(url.replace(/\?.*$/, '').slice(-100));
+        }
+
         if (!ct.includes('json')) return;
 
-        seenUrls.push(url.split('?')[0].slice(-80));
+        jsonUrls.push(url.replace(/\?.*$/, '').slice(-100));
 
         try {
           const data = await response.json();
           const entries = this.extractEntries(data);
           if (entries.length > 0) {
-            logger.info(`LeaderboardScraper: Captured ${entries.length} entries from ${url.split('?')[0].slice(-80)}`);
+            logger.info(`LeaderboardScraper: Captured ${entries.length} entries from ${url.replace(/\?.*$/, '').slice(-80)}`);
             capturedEntries.push(...entries);
           }
         } catch {}
@@ -258,14 +281,21 @@ export class LeaderboardScraper {
       try {
         await page.goto(LEADERBOARD_URL, { waitUntil: 'networkidle2', timeout: 30_000 });
         // Extra wait for lazy-loaded leaderboard data
-        await new Promise(resolve => setTimeout(resolve, 3_000));
+        await new Promise(resolve => setTimeout(resolve, 5_000));
       } catch (err) {
         logger.warn(`LeaderboardScraper: Puppeteer goto error: ${err}`);
       }
 
-      // Log all JSON URLs we saw (helps diagnose the right endpoint)
-      if (seenUrls.length > 0) {
-        logger.info(`LeaderboardScraper: JSON URLs seen: ${[...new Set(seenUrls)].join(' | ')}`);
+      // Always log what we saw so we can find the right endpoint
+      logger.info(`LeaderboardScraper: Puppeteer saw ${seenUrls.length} URLs, ${jsonUrls.length} JSON`);
+      if (jsonUrls.length > 0) {
+        logger.info(`LeaderboardScraper: JSON URLs: ${[...new Set(jsonUrls)].join(' | ')}`);
+      } else if (seenUrls.length > 0) {
+        // Log all non-asset URLs to help find the API — cap at 20 to avoid log flood
+        const unique = [...new Set(seenUrls)].slice(0, 20);
+        logger.info(`LeaderboardScraper: All URLs seen: ${unique.join(' | ')}`);
+      } else {
+        logger.warn('LeaderboardScraper: Puppeteer saw ZERO URLs — page may be blocked or failing to load');
       }
 
       if (capturedEntries.length === 0) {
@@ -393,7 +423,8 @@ export class LeaderboardScraper {
       .filter(item => item && typeof item === 'object')
       .map(item => {
         const addr = item.address || item.wallet || item.user || item.proxy_wallet_address ||
-          item.proxyWalletAddress || item.pseudonym_wallet || item.walletAddress;
+          item.proxyWalletAddress || item.pseudonym_wallet || item.walletAddress ||
+          item.proxyAddress || item.userAddress || item.account;
         if (!addr || typeof addr !== 'string') return null;
         // Must look like an Ethereum address
         if (!addr.match(/^0x[a-fA-F0-9]{40}$/i)) return null;
@@ -401,11 +432,11 @@ export class LeaderboardScraper {
         return {
           address: addr.toLowerCase(),
           name: item.name || item.pseudonym || item.username || item.displayName || item.display_name,
-          profit: Number(item.profit || item.pnl || item.profitAndLoss || item.total_profit || item.allPnl || 0),
-          winRate: Number(item.winRate || item.win_rate || item.pct_positive || item.positiveRate || 0),
-          numTrades: Number(item.numTrades || item.num_trades || item.tradeCount || item.trade_count || 0),
-          volume: Number(item.volume || item.total_volume || 0),
-          lastTrade: item.lastTrade || item.last_trade || item.lastActive || item.last_active,
+          profit: Number(item.profit || item.pnl || item.profitAndLoss || item.total_profit || item.allPnl || item.totalPnl || 0),
+          winRate: Number(item.winRate || item.win_rate || item.pct_positive || item.positiveRate || item.pctPositive || 0),
+          numTrades: Number(item.numTrades || item.num_trades || item.tradeCount || item.trade_count || item.tradesCount || 0),
+          volume: Number(item.volume || item.total_volume || item.totalVolume || 0),
+          lastTrade: item.lastTrade || item.last_trade || item.lastActive || item.last_active || item.lastTradeDate,
         } as RawLeaderboardEntry;
       })
       .filter((e): e is RawLeaderboardEntry => e !== null);

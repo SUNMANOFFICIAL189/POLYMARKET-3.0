@@ -57,6 +57,7 @@ export class GlintScraper extends EventEmitter {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private livenessTimer: ReturnType<typeof setInterval> | null = null;
   private pageRefreshFailures = 0;
+  private connectedAt = 0; // timestamp of last successful connect (for stable-connection check)
   private signalCount = 0;
   private whaleCount = 0;
   private lastFrameTime = 0;
@@ -174,7 +175,7 @@ export class GlintScraper extends EventEmitter {
     await this.saveCookies();
     this.connected = true;
     this.lastFrameTime = Date.now();
-    this.pageRefreshFailures = 0;
+    this.connectedAt = Date.now(); // record stable-connection start (don't reset failures here)
     logger.info('GlintScraper: Connected and monitoring feed + whale_trades rooms');
     this.emit('connected', {});
   }
@@ -229,11 +230,19 @@ export class GlintScraper extends EventEmitter {
     if (this.reconnecting) { logger.debug(`GlintScraper: Ignoring scheduleReconnect(${reason}) — reconnect already in progress`); return; }
     if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
 
+    // Only reset failure counter if the last connection was stable for >60s.
+    // If Glint keeps dropping quickly (<60s), backoff accumulates and slows the loop.
+    const connectionAge = this.connectedAt > 0 ? Date.now() - this.connectedAt : 0;
+    if (connectionAge > 60_000) {
+      this.pageRefreshFailures = 0;
+      logger.debug(`GlintScraper: Connection was stable ${(connectionAge / 1000).toFixed(0)}s — reset failure count`);
+    }
+
     const delay = Math.min(
       this.RECONNECT_DELAY_MS * Math.pow(1.5, Math.min(this.pageRefreshFailures, 5)),
       this.MAX_RECONNECT_DELAY_MS
     );
-    logger.info(`GlintScraper: Scheduling reconnect in ${(delay / 1000).toFixed(0)}s (reason: ${reason})`);
+    logger.info(`GlintScraper: Scheduling reconnect in ${(delay / 1000).toFixed(0)}s (reason: ${reason}, failures: ${this.pageRefreshFailures})`);
 
     this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = null;
