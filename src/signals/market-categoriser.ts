@@ -25,6 +25,10 @@ const KEYWORDS: Record<Exclude<MarketCategory, 'other'>, string[]> = {
     'lakers', 'celtics', 'warriors', 'bulls', 'heat', 'nets', 'knicks',
     'yankees', 'dodgers', 'cubs', 'red sox', 'ncaa', 'march madness',
     'murray state', 'wyoming', 'kentucky', 'duke',
+    // Tennis: ATP/WTA tournament cities & keywords
+    'zadar', 'murcia', 'santiago', 'acapulco', 'doha', 'miami open',
+    'indian wells', 'roland garros', 'us open tennis', 'atp', 'wta',
+    'challenger', 'grandslam', 'grand slam',
     'fc ', 'afc ', 'nfc ', ' fc', ' sc', 'rcd ',
     'goals scored', 'exact score', 'spread:', 'over/under',
     'win the', 'beat the', 'defeat', 'qualify', 'relegated',
