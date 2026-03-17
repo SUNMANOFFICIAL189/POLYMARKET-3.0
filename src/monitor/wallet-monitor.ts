@@ -222,7 +222,7 @@ export class WalletMonitor extends EventEmitter {
   private emitLeaderTrade(t: DataAPITrade, leaderWallet: string, rank: number): void {
     const leaderTrade: LeaderTrade = {
       leaderWallet,
-      marketId: t.market || t.condition_id || '',
+      marketId: t.market || t.condition_id || t.slug || '',
       marketQuestion: t.title || t.slug || t.market || '',
       tokenId: t.asset_id || '',
       outcome: t.outcome || 'Yes',
