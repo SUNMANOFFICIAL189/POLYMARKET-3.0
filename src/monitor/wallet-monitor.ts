@@ -1,61 +1,122 @@
 import { EventEmitter } from 'events';
 import { logger } from '../utils/logger.js';
-import type { Leader, LeaderTrade, DataAPITrade, DataAPIPosition } from '../types/index.js';
+import type { Leader, LeaderTrade, DataAPITrade, DataAPIPosition, WatcherConfig } from '../types/index.js';
 
 /**
- * WalletMonitor — polls the Polymarket Data API for the current leader's trades.
+ * WalletMonitor — polls the Polymarket Data API for up to 5 traders simultaneously.
  *
  * Detection method:
- *   - Poll /trades?user={address}&limit=50 every POLL_INTERVAL_MS
- *   - Diff against previous snapshot by trade ID
- *   - Emit 'new-trade' for each new position opened
+ *   - Poll /trades?user={address}&limit=50 every POLL_INTERVAL_MS for each watcher
+ *   - Diff against per-wallet snapshot by trade ID
+ *   - Emit 'new-trade' with rank tag for each new trade detected
  *
- * Fallback cross-reference:
- *   - If Glint captures a whale trade from the leader, the runner can call
- *     checkWhaleMatch() for instant detection
+ * Rank semantics:
+ *   - rank=1: primary leader (unconditional copy path)
+ *   - rank=2-5: watchers (corroboration gate applied by ConfirmationLayer)
  */
 
 const DATA_API_BASE = 'https://data-api.polymarket.com';
 
 export class WalletMonitor extends EventEmitter {
-  private currentLeader: Leader | null = null;
+  // address → rank (1=leader, 2-5=watchers)
+  private watchers: Map<string, number> = new Map();
+  // per-wallet seen trade key sets
+  private seenTradeIds: Map<string, Set<string>> = new Map();
+  // per-wallet open positions
+  private walletPositions: Map<string, Map<string, DataAPIPosition>> = new Map();
+  // addresses currently running initSnapshot (poll skips them)
+  private snapshotActive: Set<string> = new Set();
+
+  private currentLeader: Leader | null = null; // kept for getCurrentLeader() compat
   private pollIntervalMs: number;
   private intervalId: ReturnType<typeof setInterval> | null = null;
-  private seenTradeIds = new Set<string>();
-  private currentPositions: Map<string, DataAPIPosition> = new Map();
-  private snapshotInProgress = false; // pause polling while seeding baseline
   private pollCount = 0;
   private lastPollTime = 0;
 
   constructor(opts: { pollIntervalMs?: number } = {}) {
     super();
-    this.pollIntervalMs = opts.pollIntervalMs ?? 30_000; // 30 seconds
+    this.pollIntervalMs = opts.pollIntervalMs ?? 30_000;
   }
 
+  /**
+   * Replace the watcher list. New addresses are seeded immediately; removed addresses
+   * have their state cleaned up. Existing addresses just get their rank updated.
+   */
+  setWatchers(list: WatcherConfig[]): void {
+    const newAddressSet = new Set(list.map(w => w.walletAddress));
+
+    // Remove wallets no longer in the list
+    for (const addr of this.watchers.keys()) {
+      if (!newAddressSet.has(addr)) {
+        this.watchers.delete(addr);
+        this.seenTradeIds.delete(addr);
+        this.walletPositions.delete(addr);
+        this.snapshotActive.delete(addr);
+        logger.debug(`WalletMonitor: Removed watcher ${addr.slice(0, 10)}...`);
+      }
+    }
+
+    // Add new / update rank for existing
+    for (const w of list) {
+      const isNew = !this.watchers.has(w.walletAddress);
+      this.watchers.set(w.walletAddress, w.rank);
+
+      if (isNew) {
+        this.seenTradeIds.set(w.walletAddress, new Set());
+        this.walletPositions.set(w.walletAddress, new Map());
+
+        // Seed if monitor is already running
+        if (this.intervalId !== null) {
+          this.snapshotActive.add(w.walletAddress);
+          this.initSnapshot(w.walletAddress).finally(() => {
+            this.snapshotActive.delete(w.walletAddress);
+          });
+        }
+      }
+    }
+
+    // Track rank-1 as currentLeader for backwards compatibility
+    const rank1 = list.find(w => w.rank === 1);
+    if (rank1 && rank1.walletAddress !== this.currentLeader?.walletAddress) {
+      this.currentLeader = { walletAddress: rank1.walletAddress } as Leader;
+    }
+
+    const summary = list.map(w => `${w.walletAddress.slice(0, 8)}(r${w.rank})`).join(', ');
+    logger.info(`WalletMonitor: Watching ${list.length} trader(s): ${summary}`);
+  }
+
+  /**
+   * Backwards-compatibility wrapper — sets a single rank-1 watcher.
+   * Used by legacy code paths; runner will call setWatchers() with full top-5 list.
+   */
   setLeader(leader: Leader): void {
     if (this.currentLeader?.walletAddress === leader.walletAddress) return;
 
     const prev = this.currentLeader?.walletAddress;
     this.currentLeader = leader;
 
-    // Clear seen trades and re-seed baseline for the new leader.
-    // snapshotInProgress pauses poll() until seeding completes so we don't
-    // emit historical trades as "new".
-    this.seenTradeIds.clear();
-    this.currentPositions.clear();
-
     logger.info(`WalletMonitor: Switched to leader ${leader.walletAddress.slice(0, 10)}...${prev ? ` (was: ${prev.slice(0, 10)}...)` : ''}`);
-
-    // Fire-and-forget snapshot — poll() will skip until this resolves
-    this.snapshotInProgress = true;
-    this.initSnapshot().finally(() => { this.snapshotInProgress = false; });
+    this.setWatchers([{ walletAddress: leader.walletAddress, rank: 1 }]);
   }
 
   start(): void {
     if (this.intervalId) return;
     logger.info(`WalletMonitor starting — poll every ${this.pollIntervalMs / 1000}s`);
-    // Initial snapshot (don't emit trades — just seed seenTradeIds)
-    this.initSnapshot().then(() => {
+
+    // Seed all current watchers before starting the interval
+    const addrs = Array.from(this.watchers.keys());
+    if (addrs.length === 0) {
+      // No watchers yet — start interval immediately; setWatchers will seed on arrival
+      this.intervalId = setInterval(() => this.poll(), this.pollIntervalMs);
+      return;
+    }
+
+    for (const addr of addrs) this.snapshotActive.add(addr);
+    const seeds = addrs.map(addr =>
+      this.initSnapshot(addr).finally(() => this.snapshotActive.delete(addr))
+    );
+
+    Promise.all(seeds).then(() => {
       this.intervalId = setInterval(() => this.poll(), this.pollIntervalMs);
     });
   }
@@ -66,81 +127,87 @@ export class WalletMonitor extends EventEmitter {
   }
 
   /**
-   * Seed the seen-trades set without emitting. Called once on start and on leader switch.
+   * Seed seen-trades and positions for one address without emitting trades.
    */
-  private async initSnapshot(): Promise<void> {
-    if (!this.currentLeader) return;
+  private async initSnapshot(address: string): Promise<void> {
     try {
-      const trades = await this.fetchTrades(this.currentLeader.walletAddress, 50);
-      for (const t of trades) this.seenTradeIds.add(this.tradeKey(t));
-      logger.info(`WalletMonitor: Seeded ${this.seenTradeIds.size} existing trades for ${this.currentLeader.walletAddress.slice(0, 10)}...`);
+      const trades = await this.fetchTrades(address, 50);
+      const seenSet = this.seenTradeIds.get(address) ?? new Set<string>();
+      for (const t of trades) seenSet.add(this.tradeKey(t));
+      this.seenTradeIds.set(address, seenSet);
+      logger.info(`WalletMonitor: Seeded ${seenSet.size} existing trades for ${address.slice(0, 10)}...`);
 
-      const positions = await this.fetchPositions(this.currentLeader.walletAddress);
-      for (const p of positions) this.currentPositions.set(p.condition_id || p.asset, p);
-      logger.info(`WalletMonitor: Seeded ${this.currentPositions.size} existing positions`);
+      const positions = await this.fetchPositions(address);
+      const posMap = new Map<string, DataAPIPosition>();
+      for (const p of positions) posMap.set(p.condition_id || p.asset, p);
+      this.walletPositions.set(address, posMap);
+      logger.info(`WalletMonitor: Seeded ${posMap.size} existing positions for ${address.slice(0, 10)}...`);
     } catch (err) {
-      logger.warn(`WalletMonitor: Init snapshot failed: ${err}`);
+      logger.warn(`WalletMonitor: Init snapshot failed for ${address.slice(0, 10)}...: ${err}`);
     }
   }
 
   private async poll(): Promise<void> {
-    if (!this.currentLeader) return;
-    if (this.snapshotInProgress) { logger.debug('WalletMonitor: Snapshot in progress — skipping poll'); return; }
-
+    if (this.watchers.size === 0) return;
     this.pollCount++;
-    const addr = this.currentLeader.walletAddress;
+    this.lastPollTime = Date.now();
 
+    // Poll each watcher sequentially to avoid API flooding
+    for (const [addr, rank] of this.watchers) {
+      if (this.snapshotActive.has(addr)) {
+        logger.debug(`WalletMonitor: Snapshot in progress for ${addr.slice(0, 10)}... — skipping`);
+        continue;
+      }
+      await this.pollWallet(addr, rank);
+    }
+  }
+
+  private async pollWallet(addr: string, rank: number): Promise<void> {
     try {
-      // Check for new trades
       const trades = await this.fetchTrades(addr, 50);
+      const seenSet = this.seenTradeIds.get(addr) ?? new Set<string>();
       const newTrades: DataAPITrade[] = [];
 
       for (const t of trades) {
         const key = this.tradeKey(t);
-        if (!this.seenTradeIds.has(key)) {
-          this.seenTradeIds.add(key);
+        if (!seenSet.has(key)) {
+          seenSet.add(key);
           newTrades.push(t);
         }
       }
+      this.seenTradeIds.set(addr, seenSet);
 
       if (newTrades.length > 0) {
-        logger.info(`WalletMonitor: ${newTrades.length} new trade(s) detected for ${addr.slice(0, 10)}...`);
+        logger.info(`WalletMonitor: ${newTrades.length} new trade(s) from rank-${rank} ${addr.slice(0, 10)}...`);
         for (const t of newTrades) {
-          this.emitLeaderTrade(t, addr);
+          this.emitLeaderTrade(t, addr, rank);
         }
       }
 
-      // Check for closed positions (leader sold something we copied)
+      // Check for closed positions
       const positions = await this.fetchPositions(addr);
-      const positionMap = new Map(positions.map(p => [p.condition_id || p.asset, p]));
+      const posMap = new Map(positions.map(p => [p.condition_id || p.asset, p]));
+      const oldPosMap = this.walletPositions.get(addr) ?? new Map();
 
-      for (const [key, oldPos] of this.currentPositions) {
-        if (!positionMap.has(key) && oldPos.quantity_owned > 0) {
-          // Position closed or sold
-          logger.info(`WalletMonitor: Leader closed position on ${oldPos.title?.slice(0, 50) || key}`);
+      for (const [key, oldPos] of oldPosMap) {
+        if (!posMap.has(key) && oldPos.quantity_owned > 0) {
+          logger.info(`WalletMonitor: Rank-${rank} ${addr.slice(0, 10)}... closed position on ${oldPos.title?.slice(0, 50) || key}`);
           this.emit('leader-closed', {
             marketId: key,
             marketQuestion: oldPos.title || '',
             leaderWallet: addr,
+            rank,
           });
         }
       }
 
-      this.currentPositions = positionMap;
-      this.lastPollTime = Date.now();
-
+      this.walletPositions.set(addr, posMap);
     } catch (err) {
-      logger.warn(`WalletMonitor: Poll failed: ${err}`);
+      logger.warn(`WalletMonitor: Poll failed for ${addr.slice(0, 10)}...: ${err}`);
     }
   }
 
-  private emitLeaderTrade(t: DataAPITrade, leaderWallet: string): void {
-    // Only emit BUY trades (new positions). Sells are handled via position close detection.
-    const side = (t.side || t.type || '').toLowerCase();
-    if (side !== 'buy' && !side.includes('yes') && !side.includes('no')) {
-      // Try to infer from outcome
-    }
-
+  private emitLeaderTrade(t: DataAPITrade, leaderWallet: string, rank: number): void {
     const leaderTrade: LeaderTrade = {
       leaderWallet,
       marketId: t.market || t.condition_id || '',
@@ -149,13 +216,14 @@ export class WalletMonitor extends EventEmitter {
       outcome: t.outcome || 'Yes',
       side: this.normalizeSide(t.side || t.type || 'buy'),
       entryPrice: Number(t.price || 0),
-      size: Number(t.size || 0) * Number(t.price || 1), // Convert shares → USDC
+      size: Number(t.size || 0) * Number(t.price || 1),
       timestamp: this.toISOTimestamp(t.timestamp || t.created_at),
       tradeId: t.id || t.taker_order_id,
+      rank,
     };
 
     logger.debug(`WalletMonitor: trade ts raw=${t.timestamp} created_at=${t.created_at} → ${leaderTrade.timestamp}`);
-    logger.info(`WalletMonitor: New leader trade → ${leaderTrade.side.toUpperCase()} ${leaderTrade.outcome} on "${leaderTrade.marketQuestion.slice(0, 50)}" @ $${leaderTrade.entryPrice.toFixed(3)}`);
+    logger.info(`WalletMonitor: Rank-${rank} trade → ${leaderTrade.side.toUpperCase()} ${leaderTrade.outcome} on "${leaderTrade.marketQuestion.slice(0, 50)}" @ $${leaderTrade.entryPrice.toFixed(3)}`);
     this.emit('new-trade', leaderTrade);
   }
 
@@ -167,11 +235,9 @@ export class WalletMonitor extends EventEmitter {
   private toISOTimestamp(raw: number | string | undefined): string {
     if (!raw) return new Date().toISOString();
     if (typeof raw === 'string') {
-      // Already an ISO string or parseable date string
       const d = new Date(raw);
       return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
     }
-    // Numeric: <1e12 → Unix seconds, >=1e12 → Unix milliseconds
     const ms = raw < 1e12 ? raw * 1000 : raw;
     return new Date(ms).toISOString();
   }
@@ -214,13 +280,19 @@ export class WalletMonitor extends EventEmitter {
 
   getCurrentLeader(): Leader | null { return this.currentLeader; }
 
+  getWatchers(): Map<string, number> { return new Map(this.watchers); }
+
   getStats() {
     return {
       pollCount: this.pollCount,
       lastPollTime: this.lastPollTime,
-      seenTradeCount: this.seenTradeIds.size,
-      openPositionCount: this.currentPositions.size,
-      currentLeader: this.currentLeader?.walletAddress,
+      watcherCount: this.watchers.size,
+      watchers: Array.from(this.watchers.entries()).map(([addr, rank]) => ({
+        address: addr.slice(0, 10),
+        rank,
+        seenTrades: this.seenTradeIds.get(addr)?.size ?? 0,
+        openPositions: this.walletPositions.get(addr)?.size ?? 0,
+      })),
     };
   }
 }

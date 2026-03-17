@@ -69,7 +69,8 @@ export class Runner {
       onRotation: async (event) => {
         logger.info(`LEADER ROTATION: ${event.previousLeader?.walletAddress?.slice(0, 10) ?? 'none'} → ${event.newLeader.walletAddress.slice(0, 10)} (${event.reason})`);
         this.currentLeader = event.newLeader;
-        this.walletMonitor.setLeader(event.newLeader);
+        // setWatchers is now called in onLeaderboardUpdate — no need to call setLeader here.
+        // Keep rotation event for logging and Supabase history only.
 
         if (cfg.supabase.url) {
           await db.setCurrentLeader(event.newLeader.walletAddress);
@@ -176,22 +177,25 @@ export class Runner {
       });
 
       this.glintScraper.on('whale', (event) => {
-        // Check if this whale is our current leader — instant copy signal
-        if (this.currentLeader) {
-          const match = this.glintAdapter.checkForLeaderWhale(event, [this.currentLeader.walletAddress]);
+        // Check if this whale is any tracked watcher (rank 1-5)
+        const watcherMap = this.walletMonitor.getWatchers();
+        const watcherAddresses = Array.from(watcherMap.keys());
+        if (watcherAddresses.length > 0) {
+          const match = this.glintAdapter.checkForLeaderWhale(event, watcherAddresses);
           if (match) {
-            logger.info(`INSTANT LEADER WHALE DETECTED via Glint: ${match.marketQuestion.slice(0, 50)}`);
-            // Convert whale event to LeaderTrade and process
+            const rank = watcherMap.get(match.walletAddress) ?? 1;
+            logger.info(`INSTANT RANK-${rank} WHALE DETECTED via Glint: ${match.marketQuestion.slice(0, 50)}`);
             const leaderTrade: LeaderTrade = {
-              leaderWallet: this.currentLeader.walletAddress,
+              leaderWallet: match.walletAddress,
               marketId: match.marketSlug,
               marketQuestion: match.marketQuestion,
               tokenId: '',
               outcome: match.side === 'buy' ? 'Yes' : 'No',
               side: match.side,
-              entryPrice: 0.5, // Unknown price from whale data
+              entryPrice: 0.5,
               size: match.size,
               timestamp: new Date(match.timestamp).toISOString(),
+              rank,
             };
             this.handleLeaderTrade(leaderTrade);
           }
@@ -232,7 +236,16 @@ export class Runner {
       this.currentLeader = newLeader;
     }
 
-    logger.info(`Leaderboard update: ${scored.length} traders scored. Current leader: ${this.currentLeader?.walletAddress?.slice(0, 10) ?? 'none'} (score: ${this.currentLeader?.compositeScore?.toFixed(1) ?? '-'})`);
+    // Update the watcher pool: top 5 traders (rank 1 = leader, 2-5 = watchers)
+    const top5 = this.selector.getTopN(5);
+    if (top5.length > 0) {
+      this.walletMonitor.setWatchers(
+        top5.map((leader, i) => ({ walletAddress: leader.walletAddress, rank: i + 1 }))
+      );
+    }
+
+    const watcherSummary = top5.map((l, i) => `${l.walletAddress.slice(0, 8)}(r${i + 1})`).join(', ');
+    logger.info(`Leaderboard update: ${scored.length} traders scored. Watching top ${top5.length}: ${watcherSummary}`);
   }
 
   private async handleLeaderTrade(trade: LeaderTrade): Promise<void> {

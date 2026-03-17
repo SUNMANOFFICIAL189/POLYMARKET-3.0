@@ -21,6 +21,14 @@ export interface ExecutionResult {
   reason?: string;
 }
 
+const RANK_MULTIPLIERS: Record<number, number> = {
+  1: 1.00,
+  2: 0.60,
+  3: 0.50,
+  4: 0.40,
+  5: 0.30,
+};
+
 export class CopyExecutor {
   private paperEngine: PaperTradingEngine;
   private riskManager: RiskManager;
@@ -28,6 +36,8 @@ export class CopyExecutor {
   private ourPortfolio: number;
   private riskLevel: RiskLevel;
   private openCopyTrades: Map<string, CopyTrade> = new Map(); // marketId → CopyTrade
+  // marketId → rank of the watcher who opened the position (for collision detection)
+  private watcherPositions: Map<string, number> = new Map();
   private executedCount = 0;
   private blockedCount = 0;
 
@@ -85,14 +95,29 @@ export class CopyExecutor {
       return { success: false, copyTrade, reason: confirmationReason };
     }
 
-    // Already have a position in this market
+    // Rank-1 collision: if a watcher opened this market, close it and re-enter at full rank-1 size
+    const isRank1 = !leaderTrade.rank || leaderTrade.rank === 1;
+    if (isRank1 && this.watcherPositions.has(leaderTrade.marketId)) {
+      const watcherRank = this.watcherPositions.get(leaderTrade.marketId)!;
+      logger.info(`CopyExecutor: Rank-1 collision — closing rank-${watcherRank} watcher position for ${leaderTrade.marketId.slice(0, 12)}, re-entering at rank-1 size`);
+      await this.closePosition(leaderTrade.marketId, leaderTrade.entryPrice, 'rank1_override');
+      this.watcherPositions.delete(leaderTrade.marketId);
+    }
+
+    // Already have a position in this market (from rank-1 trade or unresolved state)
     if (this.hasOpenPositionForMarket(leaderTrade.marketId)) {
       this.blockedCount++;
       return { success: false, reason: `Already have open position in market ${leaderTrade.marketId.slice(0, 12)}` };
     }
 
-    // Calculate proportional size
-    const ourSize = this.calculateSize(leaderTrade.size, leaderPortfolioSize);
+    // Calculate proportional size, then apply rank multiplier for rank 2-5
+    let ourSize = this.calculateSize(leaderTrade.size, leaderPortfolioSize);
+    const rank = leaderTrade.rank ?? 1;
+    const multiplier = RANK_MULTIPLIERS[rank] ?? RANK_MULTIPLIERS[5];
+    if (rank > 1) {
+      ourSize = Math.round(ourSize * multiplier * 100) / 100;
+      logger.info(`CopyExecutor: Rank-scaled: rank=${rank} multiplier=${multiplier} → $${ourSize.toFixed(2)}`);
+    }
 
     if (ourSize < 1) {
       this.blockedCount++;
@@ -155,9 +180,13 @@ export class CopyExecutor {
       riskLevel: this.riskLevel,
       entryTime: new Date().toISOString(),
       createdAt: new Date().toISOString(),
+      watcherRank: leaderTrade.rank,
     };
 
     this.openCopyTrades.set(leaderTrade.marketId, copyTrade);
+    if (leaderTrade.rank && leaderTrade.rank > 1) {
+      this.watcherPositions.set(leaderTrade.marketId, leaderTrade.rank);
+    }
     this.executedCount++;
 
     return { success: true, copyTrade };
@@ -225,6 +254,7 @@ export class CopyExecutor {
           copyTrade.exitTime = typeof closed.exitTime === 'string' ? closed.exitTime : closed.exitTime?.toISOString();
           this.openCopyTrades.delete(marketId);
         }
+        this.watcherPositions.delete(marketId);
         return true;
       }
     } else {
@@ -234,6 +264,7 @@ export class CopyExecutor {
           await cliWrapper.smartOrder(copyTrade.tokenId, 'sell', copyTrade.ourSize);
           copyTrade.status = 'closed';
           this.openCopyTrades.delete(marketId);
+          this.watcherPositions.delete(marketId);
           return true;
         } catch (err) {
           logger.error(`CopyExecutor: Live close failed for market ${marketId}: ${err}`);

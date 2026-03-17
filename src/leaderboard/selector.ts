@@ -23,6 +23,7 @@ export class LeaderSelector {
   private hysteresisMinDurationMs: number;
   private rotationHistory: RotationEvent[] = [];
   private onRotation: ((event: RotationEvent) => void) | null = null;
+  private lastScoredLeaders: Leader[] = [];
 
   constructor(opts: {
     hysteresisMarginPct?: number;
@@ -39,6 +40,7 @@ export class LeaderSelector {
    * Returns the current leader (may be same or new).
    */
   update(rankedLeaders: Leader[]): Leader | null {
+    this.lastScoredLeaders = rankedLeaders;
     if (rankedLeaders.length === 0) {
       logger.warn('LeaderSelector: Empty leaderboard — keeping current leader');
       return this.currentLeader;
@@ -134,6 +136,14 @@ export class LeaderSelector {
   }
 
   getCurrentLeader(): Leader | null { return this.currentLeader; }
+
+  /**
+   * Return the top N ranked traders from the most recent leaderboard snapshot.
+   * Already sorted by compositeScore descending (order from scorer.scoreAndRank).
+   */
+  getTopN(n: number): Leader[] {
+    return this.lastScoredLeaders.slice(0, n);
+  }
 
   getRotationHistory(): RotationEvent[] { return [...this.rotationHistory]; }
 

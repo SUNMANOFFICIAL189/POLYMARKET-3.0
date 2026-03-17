@@ -234,6 +234,11 @@ export interface Leader {
   updatedAt?: string;
 }
 
+export interface WatcherConfig {
+  walletAddress: string;
+  rank: number; // 1 = primary leader, 2-5 = watchers
+}
+
 export interface LeaderTrade {
   leaderWallet: string;
   marketId: string;
@@ -245,6 +250,7 @@ export interface LeaderTrade {
   size: number;
   timestamp: string;
   tradeId?: string;
+  rank?: number; // 1 = leader, 2-5 = watcher
 }
 
 export type CopyTradeStatus = 'pending' | 'open' | 'closed' | 'stopped' | 'vetoed';
@@ -270,6 +276,7 @@ export interface CopyTrade {
   entryTime: string;
   exitTime?: string;
   createdAt?: string;
+  watcherRank?: number; // rank of trader who triggered this copy (1-5)
 }
 
 // ─── Raw Data API Types ────────────────────────────────────────
