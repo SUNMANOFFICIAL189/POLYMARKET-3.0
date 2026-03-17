@@ -25,7 +25,8 @@ export interface ConfirmationResult {
   latencyMs: number;
 }
 
-const MAX_TRADE_AGE_MS = 5 * 60 * 1000; // Skip trades older than 5 minutes
+const MAX_TRADE_AGE_MS = 5 * 60 * 1000;         // Skip rank-1 trades older than 5 minutes
+const WATCHER_MAX_TRADE_AGE_MS = 15 * 60 * 1000; // Rank 2-5: corroboration gate is the filter, 15min ok
 const VETO_CONFIDENCE_THRESHOLD = 0.70;  // AI must be this confident to veto (rank 1)
 const WATCHER_AI_MIN_CONFIDENCE = 0.75;  // AI confidence needed to count as corroboration (rank 2-5)
 const WATCHER_ORDERBOOK_THRESHOLD = 0.55; // bid pressure ratio needed to count as corroboration
@@ -53,12 +54,15 @@ export class ConfirmationLayer {
   async confirm(trade: LeaderTrade): Promise<ConfirmationResult> {
     const start = Date.now();
 
-    // Skip stale trades
+    // Skip stale trades — use a longer window for rank 2-5 watchers since the
+    // corroboration gate is the quality filter; stale age matters less for them.
+    const isWatcher = trade.rank !== undefined && trade.rank >= 2;
+    const maxAge = isWatcher ? WATCHER_MAX_TRADE_AGE_MS : MAX_TRADE_AGE_MS;
     const tradeAge = Date.now() - new Date(trade.timestamp).getTime();
-    if (tradeAge > MAX_TRADE_AGE_MS) {
+    if (tradeAge > maxAge) {
       const result: ConfirmationResult = {
         decision: 'skipped',
-        reason: `Trade too old (${(tradeAge / 60000).toFixed(1)}min > ${MAX_TRADE_AGE_MS / 60000}min max)`,
+        reason: `Trade too old (${(tradeAge / 60000).toFixed(1)}min > ${maxAge / 60000}min max)`,
         confidence: 1.0,
         hasOpposingSignals: false,
         hasSupportingSignals: false,

@@ -104,6 +104,13 @@ export class CopyExecutor {
       this.watcherPositions.delete(leaderTrade.marketId);
     }
 
+    // Reject trades with no market identifier — can't track or close them reliably
+    if (!leaderTrade.marketId) {
+      this.blockedCount++;
+      logger.warn(`CopyExecutor: Trade has empty marketId — skipping (market="${leaderTrade.marketQuestion.slice(0, 40)}")`);
+      return { success: false, reason: 'Trade missing marketId — cannot open position' };
+    }
+
     // Already have a position in this market (from rank-1 trade or unresolved state)
     if (this.hasOpenPositionForMarket(leaderTrade.marketId)) {
       this.blockedCount++;
