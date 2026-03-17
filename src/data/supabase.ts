@@ -25,7 +25,7 @@ export function getClient(): SupabaseClient {
 
 export async function upsertLeader(leader: Leader): Promise<void> {
   const { error } = await getClient().from('leaders').upsert({
-    wallet_address: leader.walletAddress,
+    wallet_address: leader.walletAddress.toLowerCase(),
     display_name: leader.displayName,
     composite_score: leader.compositeScore,
     win_rate_30d: leader.winRate30d,
@@ -50,10 +50,10 @@ export async function setCurrentLeader(walletAddress: string): Promise<void> {
   // Clear all current leaders first
   await getClient().from('leaders').update({ is_current_leader: false }).neq('wallet_address', '');
 
-  // Set new current leader
+  // Set new current leader (normalise to lowercase to match upsert key)
   const { error } = await getClient().from('leaders')
     .update({ is_current_leader: true })
-    .eq('wallet_address', walletAddress);
+    .eq('wallet_address', walletAddress.toLowerCase());
   if (error) logger.error(`setCurrentLeader failed: ${error.message}`);
 }
 
