@@ -38,6 +38,11 @@ const RANK1_RESERVED_SLOTS = 2;
 const MAX_WATCHER_PRICE = 0.92;
 const MIN_WATCHER_PRICE = 0.08;
 
+// Edge floor: prices within 6% of 0.5 (0.44–0.56) represent genuine uncertainty —
+// no measurable directional edge. Top performers enter at ≥6% deviation from consensus
+// (PANews 112K wallet study; min edge = 6-11% from midpoint).
+const EDGE_FLOOR_DISTANCE = 0.06;
+
 export class CopyExecutor {
   private paperEngine: PaperTradingEngine;
   private riskManager: RiskManager;
@@ -123,7 +128,14 @@ export class CopyExecutor {
         return { success: false, reason: `Near-certainty price $${price.toFixed(3)} — no alpha to copy` };
       }
 
-      // Filter 2: reserve slots for rank-1 leader
+      // Filter 2: edge floor — dead zone within 6% of 0.5 has no measurable directional edge
+      if (Math.abs(price - 0.5) < EDGE_FLOOR_DISTANCE) {
+        this.blockedCount++;
+        logger.info(`CopyExecutor: Watcher trade skipped — dead zone price $${price.toFixed(3)} (within ${EDGE_FLOOR_DISTANCE} of 0.5, no measurable edge)`);
+        return { success: false, reason: `Dead zone price $${price.toFixed(3)} — within ${EDGE_FLOOR_DISTANCE * 100}% of 0.5, no measurable edge` };
+      }
+
+      // Filter 3: reserve slots for rank-1 leader
       // watcherPositions tracks open positions opened by rank 2-5 trades
       const watcherLimit = Math.max(1, 5 - RANK1_RESERVED_SLOTS); // 5 = paper maxOpenPositions
       if (this.watcherPositions.size >= watcherLimit) {

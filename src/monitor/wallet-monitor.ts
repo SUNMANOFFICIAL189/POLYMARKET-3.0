@@ -1,5 +1,7 @@
 import { EventEmitter } from 'events';
 import { logger } from '../utils/logger.js';
+import { categoriseMarket, detectSpecialistCategory } from '../signals/market-categoriser.js';
+import type { MarketCategory } from '../signals/market-categoriser.js';
 import type { Leader, LeaderTrade, DataAPITrade, DataAPIPosition, WatcherConfig } from '../types/index.js';
 
 /**
@@ -24,6 +26,8 @@ export class WalletMonitor extends EventEmitter {
   private seenTradeIds: Map<string, Set<string>> = new Map();
   // per-wallet open positions
   private walletPositions: Map<string, Map<string, DataAPIPosition>> = new Map();
+  // per-wallet category history (last 30 trades) for specialist detection
+  private walletCategories: Map<string, MarketCategory[]> = new Map();
   // addresses currently running initSnapshot (poll skips them)
   private snapshotActive: Set<string> = new Set();
 
@@ -63,6 +67,7 @@ export class WalletMonitor extends EventEmitter {
         this.watchers.delete(addr);
         this.seenTradeIds.delete(addr);
         this.walletPositions.delete(addr);
+        this.walletCategories.delete(addr);
         this.snapshotActive.delete(addr);
         logger.debug(`WalletMonitor: Removed watcher ${addr.slice(0, 10)}...`);
       }
@@ -76,6 +81,7 @@ export class WalletMonitor extends EventEmitter {
       if (isNew) {
         this.seenTradeIds.set(w.walletAddress, new Set());
         this.walletPositions.set(w.walletAddress, new Map());
+        this.walletCategories.set(w.walletAddress, []);
 
         // Seed if monitor is already running
         if (this.intervalId !== null) {
@@ -145,9 +151,17 @@ export class WalletMonitor extends EventEmitter {
     try {
       const trades = await this.fetchTrades(address, 50);
       const seenSet = this.seenTradeIds.get(address) ?? new Set<string>();
-      for (const t of trades) seenSet.add(this.tradeKey(t));
+      const categories = this.walletCategories.get(address) ?? [];
+      for (const t of trades) {
+        seenSet.add(this.tradeKey(t));
+        const cat = categoriseMarket(t.title || t.slug || t.market || '');
+        categories.push(cat);
+      }
+      if (categories.length > 30) categories.splice(0, categories.length - 30);
       this.seenTradeIds.set(address, seenSet);
-      logger.info(`WalletMonitor: Seeded ${seenSet.size} existing trades for ${address.slice(0, 10)}...`);
+      this.walletCategories.set(address, categories);
+      const specialist = detectSpecialistCategory(categories);
+      logger.info(`WalletMonitor: Seeded ${seenSet.size} existing trades for ${address.slice(0, 10)}... specialist=${specialist ?? 'none'}`);
 
       const positions = await this.fetchPositions(address);
       const posMap = new Map<string, DataAPIPosition>();
@@ -191,9 +205,14 @@ export class WalletMonitor extends EventEmitter {
 
       if (newTrades.length > 0) {
         logger.info(`WalletMonitor: ${newTrades.length} new trade(s) from rank-${rank} ${addr.slice(0, 10)}...`);
+        const categories = this.walletCategories.get(addr) ?? [];
         for (const t of newTrades) {
-          this.emitLeaderTrade(t, addr, rank);
+          const cat = categoriseMarket(t.title || t.slug || t.market || '');
+          categories.push(cat);
+          if (categories.length > 30) categories.splice(0, categories.length - 30);
+          this.emitLeaderTrade(t, addr, rank, detectSpecialistCategory(categories));
         }
+        this.walletCategories.set(addr, categories);
       }
 
       // Check for closed positions
@@ -219,7 +238,7 @@ export class WalletMonitor extends EventEmitter {
     }
   }
 
-  private emitLeaderTrade(t: DataAPITrade, leaderWallet: string, rank: number): void {
+  private emitLeaderTrade(t: DataAPITrade, leaderWallet: string, rank: number, specialistCategory?: MarketCategory | null): void {
     const leaderTrade: LeaderTrade = {
       leaderWallet,
       marketId: t.market || t.condition_id || t.slug || '',
@@ -232,6 +251,7 @@ export class WalletMonitor extends EventEmitter {
       timestamp: this.toISOTimestamp(t.timestamp || t.created_at),
       tradeId: t.id || t.taker_order_id,
       rank,
+      specialistCategory,
     };
 
     logger.debug(`WalletMonitor: trade ts raw=${t.timestamp} created_at=${t.created_at} → ${leaderTrade.timestamp}`);

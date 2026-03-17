@@ -1,6 +1,7 @@
 import { logger } from '../utils/logger.js';
 import { AIClassifier } from '../signals/ai-classifier.js';
 import { OrderbookChecker } from '../signals/orderbook-checker.js';
+import { categoriseMarket } from '../signals/market-categoriser.js';
 import type { GlintAdapter } from '../signals/glint-adapter.js';
 import type { LeaderTrade, ConfirmationDecision } from '../types/index.js';
 
@@ -28,7 +29,8 @@ export interface ConfirmationResult {
 const MAX_TRADE_AGE_MS = 5 * 60 * 1000;         // Skip rank-1 trades older than 5 minutes
 const WATCHER_MAX_TRADE_AGE_MS = 15 * 60 * 1000; // Rank 2-5: corroboration gate is the filter, 15min ok
 const VETO_CONFIDENCE_THRESHOLD = 0.70;  // AI must be this confident to veto (rank 1)
-const WATCHER_AI_MIN_CONFIDENCE = 0.75;  // AI confidence needed to count as corroboration (rank 2-5)
+const WATCHER_AI_MIN_CONFIDENCE = 0.75;       // AI confidence needed to count as corroboration (rank 2-5)
+const WATCHER_OUT_OF_SPECIALTY_CONFIDENCE = 0.85; // Higher threshold when watcher trades outside their specialty
 const WATCHER_ORDERBOOK_THRESHOLD = 0.55; // bid pressure ratio needed to count as corroboration
 const WATCHER_MIN_CORROBORATIONS = 2;    // out of 3 checks must pass for rank 2-5 trades
 
@@ -156,6 +158,16 @@ export class ConfirmationLayer {
    * Requires ≥2 of 3 checks: Glint signal match, AI confidence ≥0.75, orderbook bid pressure > 55%.
    */
   private async confirmWatcher(trade: LeaderTrade, start: number): Promise<ConfirmationResult> {
+    // Detect specialist/out-of-specialty situation
+    const tradeCategory = categoriseMarket(trade.marketQuestion);
+    const specialistCategory = trade.specialistCategory;
+    const isOutOfSpecialty = specialistCategory != null && specialistCategory !== tradeCategory;
+    const aiThreshold = isOutOfSpecialty ? WATCHER_OUT_OF_SPECIALTY_CONFIDENCE : WATCHER_AI_MIN_CONFIDENCE;
+
+    if (isOutOfSpecialty) {
+      logger.info(`ConfirmationLayer: Out-of-specialty trade — watcher specialises in ${specialistCategory} but trading ${tradeCategory} — AI threshold raised to ${aiThreshold}`);
+    }
+
     logger.info(`ConfirmationLayer: Watcher corroboration check for rank-${trade.rank} "${trade.marketQuestion.slice(0, 50)}"`);
 
     // Check 1: Glint — any recent signal for this market within 2hr window
@@ -182,7 +194,7 @@ export class ConfirmationLayer {
       );
       aiConfidence = aiResult.confidence;
       aiReasoning = aiResult.reasoning;
-      aiPass = aiResult.recommendation !== 'veto' && aiResult.confidence >= WATCHER_AI_MIN_CONFIDENCE;
+      aiPass = aiResult.recommendation !== 'veto' && aiResult.confidence >= aiThreshold;
     } catch (err) {
       logger.warn(`ConfirmationLayer: AI check failed for watcher trade: ${err}`);
       aiPass = false;
@@ -200,7 +212,7 @@ export class ConfirmationLayer {
     const threshold = checksAvailable === 2 ? 1 : WATCHER_MIN_CORROBORATIONS;
 
     const glintStr = glintPass ? `Y(${glintSignals.length}sig)` : 'N';
-    const aiStr = aiPass ? `Y(${aiConfidence.toFixed(2)})` : `N(${aiConfidence.toFixed(2)})`;
+    const aiStr = aiPass ? `Y(${aiConfidence.toFixed(2)})` : `N(${aiConfidence.toFixed(2)},need≥${aiThreshold})`;
     const obStr = bidPressure !== null
       ? (orderbookPass ? `Y(${bidPressure.toFixed(2)})` : `N(${bidPressure.toFixed(2)})`)
       : 'unavail';

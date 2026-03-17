@@ -251,6 +251,7 @@ export interface LeaderTrade {
   timestamp: string;
   tradeId?: string;
   rank?: number; // 1 = leader, 2-5 = watcher
+  specialistCategory?: string | null; // wallet's primary category (null = generalist, undefined = unknown)
 }
 
 export type CopyTradeStatus = 'pending' | 'open' | 'closed' | 'stopped' | 'vetoed';
