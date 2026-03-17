@@ -23,6 +23,7 @@ export class WalletMonitor extends EventEmitter {
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private seenTradeIds = new Set<string>();
   private currentPositions: Map<string, DataAPIPosition> = new Map();
+  private snapshotInProgress = false; // pause polling while seeding baseline
   private pollCount = 0;
   private lastPollTime = 0;
 
@@ -37,11 +38,17 @@ export class WalletMonitor extends EventEmitter {
     const prev = this.currentLeader?.walletAddress;
     this.currentLeader = leader;
 
-    // Clear seen trades when switching leaders to avoid missing first trades
+    // Clear seen trades and re-seed baseline for the new leader.
+    // snapshotInProgress pauses poll() until seeding completes so we don't
+    // emit historical trades as "new".
     this.seenTradeIds.clear();
     this.currentPositions.clear();
 
     logger.info(`WalletMonitor: Switched to leader ${leader.walletAddress.slice(0, 10)}...${prev ? ` (was: ${prev.slice(0, 10)}...)` : ''}`);
+
+    // Fire-and-forget snapshot — poll() will skip until this resolves
+    this.snapshotInProgress = true;
+    this.initSnapshot().finally(() => { this.snapshotInProgress = false; });
   }
 
   start(): void {
@@ -78,6 +85,7 @@ export class WalletMonitor extends EventEmitter {
 
   private async poll(): Promise<void> {
     if (!this.currentLeader) return;
+    if (this.snapshotInProgress) { logger.debug('WalletMonitor: Snapshot in progress — skipping poll'); return; }
 
     this.pollCount++;
     const addr = this.currentLeader.walletAddress;
@@ -142,12 +150,29 @@ export class WalletMonitor extends EventEmitter {
       side: this.normalizeSide(t.side || t.type || 'buy'),
       entryPrice: Number(t.price || 0),
       size: Number(t.size || 0) * Number(t.price || 1), // Convert shares → USDC
-      timestamp: t.timestamp || new Date(t.created_at * 1000).toISOString(),
+      timestamp: this.toISOTimestamp(t.timestamp || t.created_at),
       tradeId: t.id || t.taker_order_id,
     };
 
     logger.info(`WalletMonitor: New leader trade → ${leaderTrade.side.toUpperCase()} ${leaderTrade.outcome} on "${leaderTrade.marketQuestion.slice(0, 50)}" @ $${leaderTrade.entryPrice.toFixed(3)}`);
     this.emit('new-trade', leaderTrade);
+  }
+
+  /**
+   * Normalize a raw API timestamp to ISO string.
+   * Polymarket Data API returns Unix timestamps in seconds; treat any value
+   * less than 1e12 as seconds and multiply by 1000 to get milliseconds.
+   */
+  private toISOTimestamp(raw: number | string | undefined): string {
+    if (!raw) return new Date().toISOString();
+    if (typeof raw === 'string') {
+      // Already an ISO string or parseable date string
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+    }
+    // Numeric: <1e12 → Unix seconds, >=1e12 → Unix milliseconds
+    const ms = raw < 1e12 ? raw * 1000 : raw;
+    return new Date(ms).toISOString();
   }
 
   private async fetchTrades(address: string, limit = 50): Promise<DataAPITrade[]> {
