@@ -29,6 +29,15 @@ const RANK_MULTIPLIERS: Record<number, number> = {
   5: 0.30,
 };
 
+// Watcher trades will not fill beyond (maxPositions - RANK1_RESERVED) slots.
+// Ensures the rank-1 leader always has capacity to copy when they trade.
+const RANK1_RESERVED_SLOTS = 2;
+
+// Skip near-certainty bets: price > this threshold or < (1 - threshold) have
+// near-zero alpha — the edge is already fully priced in.
+const MAX_WATCHER_PRICE = 0.92;
+const MIN_WATCHER_PRICE = 0.08;
+
 export class CopyExecutor {
   private paperEngine: PaperTradingEngine;
   private riskManager: RiskManager;
@@ -102,6 +111,26 @@ export class CopyExecutor {
       logger.info(`CopyExecutor: Rank-1 collision — closing rank-${watcherRank} watcher position for ${leaderTrade.marketId.slice(0, 12)}, re-entering at rank-1 size`);
       await this.closePosition(leaderTrade.marketId, leaderTrade.entryPrice, 'rank1_override');
       this.watcherPositions.delete(leaderTrade.marketId);
+    }
+
+    // For rank 2-5 watcher trades: apply extra filters before using a position slot
+    if (leaderTrade.rank && leaderTrade.rank >= 2) {
+      // Filter 1: near-certainty bets have near-zero alpha — skip them
+      const price = leaderTrade.entryPrice;
+      if (price > MAX_WATCHER_PRICE || price < MIN_WATCHER_PRICE) {
+        this.blockedCount++;
+        logger.info(`CopyExecutor: Watcher trade skipped — near-certainty price $${price.toFixed(3)} outside [${MIN_WATCHER_PRICE}, ${MAX_WATCHER_PRICE}] range`);
+        return { success: false, reason: `Near-certainty price $${price.toFixed(3)} — no alpha to copy` };
+      }
+
+      // Filter 2: reserve slots for rank-1 leader
+      // watcherPositions tracks open positions opened by rank 2-5 trades
+      const watcherLimit = Math.max(1, 5 - RANK1_RESERVED_SLOTS); // 5 = paper maxOpenPositions
+      if (this.watcherPositions.size >= watcherLimit) {
+        this.blockedCount++;
+        logger.debug(`CopyExecutor: Watcher slot limit reached (${this.watcherPositions.size}/${watcherLimit}) — reserving ${RANK1_RESERVED_SLOTS} for rank-1`);
+        return { success: false, reason: `Watcher slot limit ${watcherLimit} reached — slots reserved for rank-1` };
+      }
     }
 
     // Reject trades with no market identifier — can't track or close them reliably
