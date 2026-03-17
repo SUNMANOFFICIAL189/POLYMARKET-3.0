@@ -8,6 +8,11 @@ let client: SupabaseClient;
 export function initSupabase(url: string, key: string): SupabaseClient {
   client = createClient(url, key);
   logger.info('Supabase client initialized');
+  // Probe schema immediately so missing tables surface at boot, not on first trade
+  client.from('leaders').select('wallet_address').limit(1).then(({ error }) => {
+    if (error) logger.error(`Supabase: schema check FAILED — ${error.message}`);
+    else logger.info('Supabase: schema OK — leaders table confirmed');
+  });
   return client;
 }
 

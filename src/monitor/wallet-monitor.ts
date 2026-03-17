@@ -154,6 +154,7 @@ export class WalletMonitor extends EventEmitter {
       tradeId: t.id || t.taker_order_id,
     };
 
+    logger.debug(`WalletMonitor: trade ts raw=${t.timestamp} created_at=${t.created_at} → ${leaderTrade.timestamp}`);
     logger.info(`WalletMonitor: New leader trade → ${leaderTrade.side.toUpperCase()} ${leaderTrade.outcome} on "${leaderTrade.marketQuestion.slice(0, 50)}" @ $${leaderTrade.entryPrice.toFixed(3)}`);
     this.emit('new-trade', leaderTrade);
   }

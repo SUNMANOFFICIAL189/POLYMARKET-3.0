@@ -274,11 +274,12 @@ export class Runner {
         this.consecutiveVetoes = 0;
       }
 
-      // Step 4: Persist to Supabase
-      if (result.copyTrade && this.config.supabase.url) {
+      // Step 4: Persist to Supabase — skip 'skipped' decisions (age/stale noise)
+      if (result.copyTrade && this.config.supabase.url && confirmation.decision !== 'skipped') {
         const dbId = await db.insertCopyTrade(result.copyTrade);
-        if (dbId && result.copyTrade.id) {
-          result.copyTrade.id = dbId;
+        if (dbId) {
+          if (result.copyTrade.id) result.copyTrade.id = dbId;
+          logger.info(`Supabase: copy trade saved ${dbId}`);
         }
 
         // Update leader tenure stats
