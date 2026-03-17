@@ -53,6 +53,7 @@ export class GlintScraper extends EventEmitter {
   private cdpSession: any = null;
   private running = false;
   private connected = false;
+  private reconnecting = false; // guard against cascading reconnects during page refresh
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private livenessTimer: ReturnType<typeof setInterval> | null = null;
   private pageRefreshFailures = 0;
@@ -181,12 +182,14 @@ export class GlintScraper extends EventEmitter {
   private async pageRefreshReconnect(reason: string): Promise<void> {
     if (!this.running || !this.page) return;
 
+    this.reconnecting = true;
     this.reconnectCount++;
     this.pageRefreshFailures++;
     logger.info(`GlintScraper: Page-refresh reconnect #${this.reconnectCount} (reason: ${reason}, consecutive failures: ${this.pageRefreshFailures})`);
 
     if (this.pageRefreshFailures > this.MAX_PAGE_REFRESH_FAILURES) {
       logger.warn(`GlintScraper: ${this.pageRefreshFailures} consecutive page-refresh failures — full browser restart`);
+      this.reconnecting = false;
       await this.fullRestart();
       return;
     }
@@ -196,8 +199,11 @@ export class GlintScraper extends EventEmitter {
       await this.setupCDPAndNavigate();
     } catch (err) {
       logger.error(`GlintScraper: Page-refresh failed: ${err}`);
+      this.reconnecting = false;
       this.scheduleReconnect('page_refresh_failed');
+      return;
     }
+    this.reconnecting = false;
   }
 
   private async fullRestart(): Promise<void> {
@@ -219,6 +225,8 @@ export class GlintScraper extends EventEmitter {
 
   private scheduleReconnect(reason: string): void {
     if (!this.running) return;
+    // Don't stack another reconnect while pageRefreshReconnect is already executing
+    if (this.reconnecting) { logger.debug(`GlintScraper: Ignoring scheduleReconnect(${reason}) — reconnect already in progress`); return; }
     if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
 
     const delay = Math.min(

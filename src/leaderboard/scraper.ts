@@ -72,25 +72,31 @@ export class LeaderboardScraper {
       raw = await this.fetchFromDataAPI();
       if (raw.length > 0) {
         logger.info(`LeaderboardScraper: ${raw.length} entries from Data API`);
-      } else {
-        // 2. Gamma API
+      }
+
+      // 2. Gamma API
+      if (raw.length === 0) {
         raw = await this.fetchFromGammaAPI();
-        if (raw.length > 0) {
-          logger.info(`LeaderboardScraper: ${raw.length} entries from Gamma API`);
-        } else {
-          // 3. Next.js API routes
-          raw = await this.fetchFromNextAPI();
-          if (raw.length > 0) {
-            logger.info(`LeaderboardScraper: ${raw.length} entries from Next.js API`);
-          } else {
-            // 4+5. Puppeteer
-            logger.info('LeaderboardScraper: Falling back to Puppeteer...');
-            raw = await this.fetchWithPuppeteer();
-            if (raw.length > 0) {
-              logger.info(`LeaderboardScraper: ${raw.length} entries via Puppeteer`);
-            }
-          }
-        }
+        if (raw.length > 0) logger.info(`LeaderboardScraper: ${raw.length} entries from Gamma API`);
+      }
+
+      // 3. Next.js API routes
+      if (raw.length === 0) {
+        raw = await this.fetchFromNextAPI();
+        if (raw.length > 0) logger.info(`LeaderboardScraper: ${raw.length} entries from Next.js API`);
+      }
+
+      // 4. Direct HTML fetch + __NEXT_DATA__ parse (no browser)
+      if (raw.length === 0) {
+        raw = await this.fetchViaHTMLParse();
+        if (raw.length > 0) logger.info(`LeaderboardScraper: ${raw.length} entries from HTML parse`);
+      }
+
+      // 5. Puppeteer — intercept XHR + DOM extraction
+      if (raw.length === 0) {
+        logger.info('LeaderboardScraper: Falling back to Puppeteer...');
+        raw = await this.fetchWithPuppeteer();
+        if (raw.length > 0) logger.info(`LeaderboardScraper: ${raw.length} entries via Puppeteer`);
       }
 
       if (raw.length === 0) {
@@ -186,7 +192,33 @@ export class LeaderboardScraper {
     return [];
   }
 
-  // ─── Strategy 4+5: Puppeteer ───────────────────────────────────
+  // ─── Strategy 4: Direct HTML fetch + __NEXT_DATA__ parse ──────
+  // No browser needed — Next.js SSR apps embed initial state in the HTML.
+
+  private async fetchViaHTMLParse(): Promise<RawLeaderboardEntry[]> {
+    try {
+      const res = await this.fetchWithTimeout(LEADERBOARD_URL, 15_000);
+      if (!res.ok) return [];
+      const html = await res.text();
+
+      // Extract __NEXT_DATA__ JSON from the page HTML
+      const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+      if (!match) return [];
+
+      const nextData = JSON.parse(match[1]);
+      const entries = this.extractEntries(nextData);
+      if (entries.length > 0) {
+        logger.info(`LeaderboardScraper: HTML parse found ${entries.length} entries in __NEXT_DATA__`);
+        return entries;
+      }
+    } catch (err) {
+      logger.debug(`LeaderboardScraper: HTML parse failed: ${err}`);
+    }
+    return [];
+  }
+
+  // ─── Strategy 5: Puppeteer with page.on('response') ───────────
+  // More reliable than CDP getResponseBody — captures all XHR/fetch responses.
 
   private async fetchWithPuppeteer(): Promise<RawLeaderboardEntry[]> {
     try {
@@ -200,77 +232,49 @@ export class LeaderboardScraper {
       }
 
       const page = await this.puppeteerBrowser.newPage();
-
-      // Suppress console noise
-      await page.setRequestInterception(false);
       page.on('console', () => {});
 
       const capturedEntries: RawLeaderboardEntry[] = [];
+      const seenUrls: string[] = [];
 
-      // CRITICAL: Set up CDP BEFORE navigation so we don't miss early responses
-      const cdp = await page.createCDPSession();
-      await cdp.send('Network.enable');
+      // Use page.on('response') — more reliable than CDP Network.getResponseBody
+      page.on('response', async (response: any) => {
+        const url: string = response.url();
+        const ct: string = response.headers()['content-type'] || '';
+        if (!ct.includes('json')) return;
 
-      // Buffer response bodies as they arrive
-      const responseBuffer = new Map<string, string>();
-
-      cdp.on('Network.responseReceived', async (event: any) => {
-        const url: string = event.response?.url ?? '';
-        if (!url) return;
-
-        const isRelevant = url.includes('leaderboard') ||
-          url.includes('activity') ||
-          url.includes('user') ||
-          url.includes('profile') ||
-          url.includes('trader') ||
-          (url.includes('polymarket') && url.includes('limit'));
-
-        if (!isRelevant) return;
+        seenUrls.push(url.split('?')[0].slice(-80));
 
         try {
-          const body = await cdp.send('Network.getResponseBody', { requestId: event.requestId });
-          if (body?.body) responseBuffer.set(url, body.body);
+          const data = await response.json();
+          const entries = this.extractEntries(data);
+          if (entries.length > 0) {
+            logger.info(`LeaderboardScraper: Captured ${entries.length} entries from ${url.split('?')[0].slice(-80)}`);
+            capturedEntries.push(...entries);
+          }
         } catch {}
       });
 
       try {
-        await page.goto(LEADERBOARD_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-
-        // Wait for dynamic JS content to load
-        await new Promise(resolve => setTimeout(resolve, 5_000));
-
-        // Check if the leaderboard table appeared
-        try {
-          await page.waitForSelector('[data-testid*="leaderboard"], table, [class*="Leaderboard"], [class*="leaderboard"]', { timeout: 5_000 });
-        } catch {}
-
-        // Another wait for API calls triggered after hydration
-        await new Promise(resolve => setTimeout(resolve, 2_000));
-
+        await page.goto(LEADERBOARD_URL, { waitUntil: 'networkidle2', timeout: 30_000 });
+        // Extra wait for lazy-loaded leaderboard data
+        await new Promise(resolve => setTimeout(resolve, 3_000));
       } catch (err) {
-        logger.warn(`LeaderboardScraper: Puppeteer page load error: ${err}`);
+        logger.warn(`LeaderboardScraper: Puppeteer goto error: ${err}`);
       }
 
-      // Process buffered API responses
-      for (const [url, body] of responseBuffer) {
-        try {
-          const data = JSON.parse(body);
-          const entries = this.extractEntries(data);
-          if (entries.length > 0) {
-            logger.info(`LeaderboardScraper: Puppeteer captured ${entries.length} entries from ${url.split('?')[0].slice(-60)}`);
-            capturedEntries.push(...entries);
-          }
-        } catch {}
+      // Log all JSON URLs we saw (helps diagnose the right endpoint)
+      if (seenUrls.length > 0) {
+        logger.info(`LeaderboardScraper: JSON URLs seen: ${[...new Set(seenUrls)].join(' | ')}`);
       }
 
       if (capturedEntries.length === 0) {
-        // Strategy 5: Extract from __NEXT_DATA__ embedded in page
+        // Try __NEXT_DATA__ from the loaded page
         const nextDataEntries = await this.extractNextData(page);
         capturedEntries.push(...nextDataEntries);
       }
 
       if (capturedEntries.length === 0) {
-        // Strategy 5b: DOM text extraction of wallet addresses
         const domEntries = await this.extractFromDOM(page);
         capturedEntries.push(...domEntries);
       }
