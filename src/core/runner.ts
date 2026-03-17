@@ -276,14 +276,16 @@ export class Runner {
         leaderPortfolio,
       );
 
-      // Step 3: Track consecutive vetoes (alert threshold)
-      if (confirmation.decision === 'vetoed') {
+      // Step 3: Track consecutive vetoes (alert threshold).
+      // Only count rank-1 vetoes — watcher corroboration failures are expected, not anomalies.
+      this.vetoedTodayCount += confirmation.decision === 'vetoed' ? 1 : 0;
+      const isRank1Veto = confirmation.decision === 'vetoed' && (!trade.rank || trade.rank === 1);
+      if (isRank1Veto) {
         this.consecutiveVetoes++;
-        this.vetoedTodayCount++;
         if (this.consecutiveVetoes >= 3) {
-          logger.warn(`WARNING: ${this.consecutiveVetoes} consecutive vetoes — check confirmation layer`);
+          logger.warn(`WARNING: ${this.consecutiveVetoes} consecutive rank-1 vetoes — check confirmation layer`);
         }
-      } else {
+      } else if (confirmation.decision !== 'vetoed') {
         this.consecutiveVetoes = 0;
       }
 

@@ -189,17 +189,25 @@ export class ConfirmationLayer {
     const orderbookPass = bidPressure !== null && bidPressure > WATCHER_ORDERBOOK_THRESHOLD;
 
     const passes = [glintPass, aiPass, orderbookPass].filter(Boolean).length;
+    // If orderbook data is unavailable (tokenId missing or market not on CLOB), only 2 checks
+    // are possible. In that case require 1/2 instead of 2/3 to avoid permanently blocking all
+    // watcher trades from markets that don't have CLOB coverage (e.g. sports prediction markets).
+    const checksAvailable = bidPressure !== null ? 3 : 2;
+    const threshold = checksAvailable === 2 ? 1 : WATCHER_MIN_CORROBORATIONS;
+
     const glintStr = glintPass ? `Y(${glintSignals.length}sig)` : 'N';
     const aiStr = aiPass ? `Y(${aiConfidence.toFixed(2)})` : `N(${aiConfidence.toFixed(2)})`;
-    const obStr = orderbookPass ? `Y(${bidPressure?.toFixed(2)})` : `N(${bidPressure?.toFixed(2) ?? 'null'})`;
+    const obStr = bidPressure !== null
+      ? (orderbookPass ? `Y(${bidPressure.toFixed(2)})` : `N(${bidPressure.toFixed(2)})`)
+      : 'unavail';
 
     const latencyMs = Date.now() - start;
     this.totalLatencyMs += latencyMs;
     this.callCount++;
 
-    const corrobLog = `Corroboration rank=${trade.rank}: glint=${glintStr} ai=${aiStr} orderbook=${obStr} → ${passes}/${WATCHER_MIN_CORROBORATIONS} needed`;
+    const corrobLog = `Corroboration rank=${trade.rank}: glint=${glintStr} ai=${aiStr} orderbook=${obStr} → ${passes}/${threshold} needed`;
 
-    if (passes >= WATCHER_MIN_CORROBORATIONS) {
+    if (passes >= threshold) {
       this.approvedCount++;
       const reason = `${corrobLog} — APPROVED`;
       logger.info(`Confirmation APPROVED (watcher): ${reason}`);
@@ -213,7 +221,7 @@ export class ConfirmationLayer {
       };
     } else {
       this.vetoedCount++;
-      const reason = `${corrobLog} — insufficient corroboration (${passes}/${WATCHER_MIN_CORROBORATIONS})`;
+      const reason = `${corrobLog} — insufficient corroboration (${passes}/${threshold})`;
       logger.info(`Confirmation VETOED (watcher): ${reason}`);
       return {
         decision: 'vetoed',

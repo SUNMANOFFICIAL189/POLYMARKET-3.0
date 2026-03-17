@@ -43,11 +43,23 @@ export class WalletMonitor extends EventEmitter {
    * have their state cleaned up. Existing addresses just get their rank updated.
    */
   setWatchers(list: WatcherConfig[]): void {
-    const newAddressSet = new Set(list.map(w => w.walletAddress));
+    // Normalise to lowercase and deduplicate (leaderboard may return same address with different casing).
+    // Keep the lowest rank (highest priority) for any duplicate.
+    const deduped = new Map<string, WatcherConfig>();
+    for (const w of list) {
+      const key = w.walletAddress.toLowerCase();
+      const existing = deduped.get(key);
+      if (!existing || w.rank < existing.rank) {
+        deduped.set(key, { walletAddress: w.walletAddress, rank: w.rank });
+      }
+    }
+    list = Array.from(deduped.values());
+
+    const newAddressSet = new Set(list.map(w => w.walletAddress.toLowerCase()));
 
     // Remove wallets no longer in the list
     for (const addr of this.watchers.keys()) {
-      if (!newAddressSet.has(addr)) {
+      if (!newAddressSet.has(addr.toLowerCase())) {
         this.watchers.delete(addr);
         this.seenTradeIds.delete(addr);
         this.walletPositions.delete(addr);
