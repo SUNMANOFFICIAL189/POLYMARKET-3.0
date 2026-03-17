@@ -216,9 +216,18 @@ export class Runner {
 
     this.walletMonitor.on('leader-closed', (data: { marketId: string; marketQuestion: string; leaderWallet: string }) => {
       logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}"`);
-      // Close our copy if we have one
-      this.copyExecutor.closePosition(data.marketId, 0.5, 'leader_closed').then(closed => {
-        if (closed) logger.info(`Closed our copy position for ${data.marketId.slice(0, 12)}...`);
+      // Close our copy if we have one, then persist PNL to Supabase
+      this.copyExecutor.closePosition(data.marketId, 0.5, 'leader_closed').then(closedTrade => {
+        if (!closedTrade) return;
+        const pnlStr = closedTrade.pnl !== undefined ? `$${closedTrade.pnl.toFixed(2)}` : 'n/a';
+        logger.info(`Closed our copy position for ${data.marketId.slice(0, 12)}... pnl=${pnlStr}`);
+        if (closedTrade.id && this.config.supabase.url) {
+          db.updateCopyTrade(closedTrade.id, {
+            status: 'closed',
+            pnl: closedTrade.pnl,
+            exitTime: closedTrade.exitTime,
+          }).catch(err => logger.warn(`Supabase: failed to update closed trade pnl: ${err}`));
+        }
       });
     });
   }
