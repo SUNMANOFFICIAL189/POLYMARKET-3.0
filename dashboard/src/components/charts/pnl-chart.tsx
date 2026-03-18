@@ -5,19 +5,13 @@ import {
   Area,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import type { DailyPerformance } from '@/lib/types'
+import type { ChartPoint } from '@/lib/types'
 
 interface PnlChartProps {
-  data: DailyPerformance[]
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  data: ChartPoint[]
 }
 
 function formatUSD(value: number): string {
@@ -29,58 +23,38 @@ function formatUSD(value: number): string {
   }).format(value)
 }
 
-interface TooltipPayloadEntry {
-  value: number
-  dataKey: string
-  payload: DailyPerformance & { dateLabel: string }
-}
-
 interface CustomTooltipProps {
   active?: boolean
-  payload?: TooltipPayloadEntry[]
-  label?: string
+  payload?: Array<{ value: number; payload: ChartPoint }>
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null
-
-  const entry = payload[0]?.payload
-  if (!entry) return null
-
-  const pnlPositive = entry.pnl_usdc >= 0
+  const point = payload[0]?.payload
+  if (!point) return null
 
   return (
     <div
       style={{
         background: '#0a0a0a',
         border: '1px solid #222222',
-        padding: '6px 10px',
+        padding: '5px 9px',
         fontFamily: 'var(--font-mono)',
         fontSize: '9px',
         letterSpacing: '0.05em',
         lineHeight: '1.6',
       }}
     >
-      <div style={{ color: '#888888', marginBottom: '4px', textTransform: 'uppercase' }}>
-        {label}
-      </div>
+      <div style={{ color: '#555555', marginBottom: '2px' }}>{point.time}</div>
       <div style={{ color: '#e8e8e8' }}>
-        BAL{' '}
-        <span style={{ color: '#ffffff' }}>{formatUSD(entry.balance_usdc)}</span>
-      </div>
-      <div style={{ color: '#888888' }}>
-        PNL{' '}
-        <span style={{ color: pnlPositive ? 'var(--green)' : 'var(--red)' }}>
-          {pnlPositive ? '+' : ''}
-          {formatUSD(entry.pnl_usdc)}
-        </span>
+        BAL <span style={{ color: '#ffffff' }}>{formatUSD(point.balance)}</span>
       </div>
     </div>
   )
 }
 
 export function PnlChart({ data }: PnlChartProps) {
-  if (data.length === 0) {
+  if (data.length <= 1) {
     return (
       <div
         style={{
@@ -96,44 +70,39 @@ export function PnlChart({ data }: PnlChartProps) {
           color: '#333333',
         }}
       >
-        NO PERFORMANCE DATA
+        AWAITING TRADES
       </div>
     )
   }
 
-  const chartData = data.map((d) => ({
-    ...d,
-    dateLabel: formatDate(d.date),
-  }))
-
-  const balances = data.map((d) => d.balance_usdc)
+  const balances = data.map(d => d.balance)
   const minBal = Math.min(...balances)
   const maxBal = Math.max(...balances)
-  const pad = (maxBal - minBal) * 0.1 || 100
+  const pad = (maxBal - minBal) * 0.15 || 200
   const yMin = Math.floor((minBal - pad) / 100) * 100
   const yMax = Math.ceil((maxBal + pad) / 100) * 100
 
+  // Determine line colour: green if net positive, red if net negative
+  const startBal = data[0]?.balance ?? 0
+  const endBal = data[data.length - 1]?.balance ?? 0
+  const lineColor = endBal >= startBal ? '#00ff88' : '#ff3b3b'
+  const gradientColor = endBal >= startBal ? 'rgba(0,255,136,' : 'rgba(255,59,59,'
+
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <AreaChart data={chartData} margin={{ top: 6, right: 6, left: 2, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 10, right: 8, left: 2, bottom: 0 }}>
         <defs>
           <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="0%" stopColor={`${gradientColor}0.12)`} />
+            <stop offset="100%" stopColor={`${gradientColor}0)`} />
           </linearGradient>
         </defs>
 
-        <CartesianGrid
-          strokeDasharray="2 4"
-          stroke="#111111"
-          vertical={false}
-        />
-
         <XAxis
-          dataKey="dateLabel"
-          stroke="#333333"
-          tick={{ fill: '#444444', fontSize: 9, fontFamily: 'monospace' }}
-          axisLine={{ stroke: '#333333' }}
+          dataKey="time"
+          stroke="#222222"
+          tick={{ fill: '#444444', fontSize: 8, fontFamily: 'monospace' }}
+          axisLine={{ stroke: '#222222' }}
           tickLine={false}
           interval="preserveStartEnd"
         />
@@ -141,26 +110,27 @@ export function PnlChart({ data }: PnlChartProps) {
         <YAxis
           domain={[yMin, yMax]}
           tickFormatter={(v: number) => formatUSD(v)}
-          stroke="#333333"
-          tick={{ fill: '#444444', fontSize: 9, fontFamily: 'monospace' }}
-          axisLine={{ stroke: '#333333' }}
+          stroke="#222222"
+          tick={{ fill: '#444444', fontSize: 8, fontFamily: 'monospace' }}
+          axisLine={{ stroke: '#222222' }}
           tickLine={false}
-          width={64}
+          width={60}
         />
 
         <Tooltip
           content={<CustomTooltip />}
-          cursor={{ stroke: '#333333', strokeWidth: 1 }}
+          cursor={{ stroke: '#333333', strokeWidth: 1, strokeDasharray: '3 3' }}
         />
 
         <Area
-          type="monotone"
-          dataKey="balance_usdc"
-          stroke="#ffffff"
+          type="stepAfter"
+          dataKey="balance"
+          stroke={lineColor}
           strokeWidth={1.5}
           fill="url(#pnlGradient)"
           dot={false}
-          activeDot={{ r: 3, fill: '#ffffff', strokeWidth: 0 }}
+          activeDot={{ r: 3, fill: lineColor, strokeWidth: 0 }}
+          isAnimationActive={false}
         />
       </AreaChart>
     </ResponsiveContainer>

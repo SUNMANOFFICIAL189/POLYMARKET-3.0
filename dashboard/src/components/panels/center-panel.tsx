@@ -1,10 +1,11 @@
 'use client'
 
 import { PnlChart } from '@/components/charts/pnl-chart'
-import type { DailyPerformance, CopyTrade } from '@/lib/types'
+import type { DailyPerformance, CopyTrade, ChartPoint } from '@/lib/types'
 
 interface CenterPanelProps {
   performanceData: DailyPerformance[]
+  chartPoints: ChartPoint[]
   recentTrades: CopyTrade[]
   currentBalance: number
   highWaterMark?: number
@@ -141,7 +142,8 @@ function TradeRow({ trade, index }: TradeRowProps) {
 }
 
 export function CenterPanel({
-  performanceData,
+  performanceData: _performanceData,
+  chartPoints,
   recentTrades,
   currentBalance,
   highWaterMark,
@@ -192,7 +194,7 @@ export function CenterPanel({
           )}
         </div>
 
-        <PnlChart data={performanceData} />
+        <PnlChart data={chartPoints} />
       </div>
 
       {/* Divider */}

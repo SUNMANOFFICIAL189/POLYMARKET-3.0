@@ -58,6 +58,11 @@ export interface DailyPerformance {
   win_rate: number | null
 }
 
+export interface ChartPoint {
+  time: string
+  balance: number
+}
+
 export interface SystemStatus {
   leader: Leader | null
   balance: number

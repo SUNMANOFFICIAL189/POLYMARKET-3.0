@@ -7,7 +7,38 @@ import LeftPanel from '@/components/panels/left-panel'
 import { CenterPanel } from '@/components/panels/center-panel'
 import { RightPanel } from '@/components/panels/right-panel'
 import { NeuralGlobe } from '@/components/globe'
-import type { Leader, CopyTrade, DailyPerformance, LeaderHistory } from '@/lib/types'
+import type { Leader, CopyTrade, DailyPerformance, LeaderHistory, ChartPoint } from '@/lib/types'
+
+function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoint[] {
+  // Build a chronological event stream: each trade open/close is a balance delta
+  const events: { time: string; delta: number }[] = []
+
+  for (const t of trades) {
+    if (t.status === 'vetoed' || t.status === 'skipped') continue
+    // Capital reserved when trade opens
+    events.push({ time: t.entry_time, delta: -(t.our_size ?? 0) })
+    // Capital + P&L returned when trade closes
+    if (t.status === 'closed' && t.exit_time) {
+      events.push({ time: t.exit_time, delta: (t.our_size ?? 0) + (t.pnl ?? 0) })
+    }
+  }
+
+  events.sort((a, b) => a.time.localeCompare(b.time))
+
+  const points: ChartPoint[] = [{ time: 'START', balance: depositAmount }]
+  let running = depositAmount
+  for (const e of events) {
+    running += e.delta
+    const label = new Date(e.time).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    points.push({ time: label, balance: Math.max(0, running) })
+  }
+
+  return points
+}
 
 function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[], depositAmount: number) {
   const reservedCapital = trades
@@ -52,6 +83,8 @@ export default async function DashboardPage() {
 
   const { balance, totalReturnPct, totalReturnUsd, winRate, openPositions, paperMode } =
     deriveMetrics(trades, performance, 6300)
+
+  const chartPoints = deriveChartPoints(trades, 6300)
 
   return (
     <div style={{
@@ -104,6 +137,7 @@ export default async function DashboardPage() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
           <CenterPanel
             performanceData={performance}
+            chartPoints={chartPoints}
             recentTrades={trades}
             currentBalance={balance}
           />
