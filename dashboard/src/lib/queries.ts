@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabaseServer as supabase } from './supabase-server'
 import type { Leader, LeaderHistory, CopyTrade, DailyPerformance } from './types'
 
 export async function getLeaders(): Promise<Leader[]> {
