@@ -29,7 +29,7 @@ export interface ConfirmationResult {
 const MAX_TRADE_AGE_MS = 5 * 60 * 1000;         // Skip rank-1 trades older than 5 minutes
 const WATCHER_MAX_TRADE_AGE_MS = 15 * 60 * 1000; // Rank 2-5: corroboration gate is the filter, 15min ok
 const VETO_CONFIDENCE_THRESHOLD = 0.70;  // AI must be this confident to veto (rank 1)
-const WATCHER_AI_MIN_CONFIDENCE = 0.75;       // AI confidence needed to count as corroboration (rank 2-5)
+const WATCHER_AI_MIN_CONFIDENCE = 0.65;       // AI confidence needed to count as corroboration (rank 2-5)
 const WATCHER_OUT_OF_SPECIALTY_CONFIDENCE = 0.85; // Higher threshold when watcher trades outside their specialty
 const WATCHER_ORDERBOOK_THRESHOLD = 0.55; // bid pressure ratio needed to count as corroboration
 const WATCHER_MIN_CORROBORATIONS = 2;    // out of 3 checks must pass for rank 2-5 trades

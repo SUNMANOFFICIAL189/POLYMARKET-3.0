@@ -18,10 +18,13 @@ import type { Leader, LeaderTrade, DataAPITrade, DataAPIPosition, WatcherConfig 
  */
 
 const DATA_API_BASE = 'https://data-api.polymarket.com';
+const GAMMA_API_BASE = 'https://gamma-api.polymarket.com';
 
 export class WalletMonitor extends EventEmitter {
   // address → rank (1=leader, 2-5=watchers)
   private watchers: Map<string, number> = new Map();
+  // slug:outcome → CLOB tokenId cache
+  private tokenIdCache: Map<string, string> = new Map();
   // per-wallet seen trade key sets
   private seenTradeIds: Map<string, Set<string>> = new Map();
   // per-wallet open positions
@@ -210,7 +213,8 @@ export class WalletMonitor extends EventEmitter {
           const cat = categoriseMarket(t.title || t.slug || t.market || '');
           categories.push(cat);
           if (categories.length > 30) categories.splice(0, categories.length - 30);
-          this.emitLeaderTrade(t, addr, rank, detectSpecialistCategory(categories));
+          const tokenId = await this.resolveTokenId(t.slug || t.market || '', t.outcome || 'Yes');
+          this.emitLeaderTrade(t, addr, rank, detectSpecialistCategory(categories), tokenId);
         }
         this.walletCategories.set(addr, categories);
       }
@@ -238,12 +242,12 @@ export class WalletMonitor extends EventEmitter {
     }
   }
 
-  private emitLeaderTrade(t: DataAPITrade, leaderWallet: string, rank: number, specialistCategory?: MarketCategory | null): void {
+  private emitLeaderTrade(t: DataAPITrade, leaderWallet: string, rank: number, specialistCategory?: MarketCategory | null, tokenId?: string): void {
     const leaderTrade: LeaderTrade = {
       leaderWallet,
       marketId: t.market || t.condition_id || t.slug || '',
       marketQuestion: t.title || t.slug || t.market || '',
-      tokenId: t.asset_id || '',
+      tokenId: tokenId || t.asset_id || '',
       outcome: t.outcome || 'Yes',
       side: this.normalizeSide(t.side || t.type || 'buy'),
       entryPrice: Number(t.price || 0),
@@ -307,6 +311,41 @@ export class WalletMonitor extends EventEmitter {
       return await fetch(url, { signal: controller.signal });
     } finally {
       clearTimeout(timeout);
+    }
+  }
+
+  /**
+   * Resolve a CLOB token ID for a given market slug and outcome.
+   * Uses the Gamma API and caches results to avoid repeated lookups.
+   */
+  private async resolveTokenId(slug: string, outcome: string): Promise<string> {
+    if (!slug) return '';
+    const cacheKey = `${slug}:${outcome}`;
+    if (this.tokenIdCache.has(cacheKey)) return this.tokenIdCache.get(cacheKey)!;
+
+    try {
+      const res = await this.fetchWithTimeout(`${GAMMA_API_BASE}/markets?slug=${encodeURIComponent(slug)}`, 8_000);
+      if (!res.ok) return '';
+      const data = await res.json();
+      const market = Array.isArray(data) ? data[0] : data;
+      if (!market) return '';
+
+      const rawOutcomes = market.outcomes ?? '[]';
+      const rawTokenIds = market.clobTokenIds ?? '[]';
+      const outcomes: string[] = typeof rawOutcomes === 'string' ? JSON.parse(rawOutcomes) : rawOutcomes;
+      const tokenIds: string[] = typeof rawTokenIds === 'string' ? JSON.parse(rawTokenIds) : rawTokenIds;
+
+      const idx = outcomes.findIndex((o: string) => o.toLowerCase() === outcome.toLowerCase());
+      const tokenId = idx >= 0 ? (tokenIds[idx] ?? '') : '';
+
+      if (tokenId) {
+        this.tokenIdCache.set(cacheKey, tokenId);
+        logger.debug(`WalletMonitor: Resolved tokenId for "${slug}" / ${outcome} → ${tokenId.slice(0, 16)}...`);
+      }
+      return tokenId;
+    } catch (err) {
+      logger.debug(`WalletMonitor: tokenId lookup failed for ${slug}: ${err}`);
+      return '';
     }
   }
 
