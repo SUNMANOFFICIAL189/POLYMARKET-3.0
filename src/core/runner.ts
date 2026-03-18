@@ -235,12 +235,27 @@ export class Runner {
   private async onLeaderboardUpdate(rawLeaders: Leader[]): Promise<void> {
     const scored = this.scorer.scoreAndRank(rawLeaders);
 
+    // Enrich leaders that are actively monitored with real trade stats
+    const enriched = scored.map(leader => {
+      const stats = this.walletMonitor.getWalletStats(leader.walletAddress);
+      if (stats.tradeCount > 0) {
+        return {
+          ...leader,
+          tradeCount30d: Math.max(leader.tradeCount30d, stats.tradeCount),
+          lastTradeTime: stats.lastTradeTime || leader.lastTradeTime,
+        };
+      }
+      return leader;
+    });
+    // Re-score with enriched data so active wallets score higher
+    const rescored = this.scorer.scoreAndRank(enriched);
+
     // Await upsert before selector.update() so setCurrentLeader finds rows in DB
     if (this.config.supabase.url) {
-      await db.upsertLeaders(scored).catch(err => logger.warn(`Supabase leader update failed: ${err}`));
+      await db.upsertLeaders(rescored).catch(err => logger.warn(`Supabase leader update failed: ${err}`));
     }
 
-    const newLeader = this.selector.update(scored);
+    const newLeader = this.selector.update(rescored);
     if (newLeader && newLeader.walletAddress !== this.currentLeader?.walletAddress) {
       this.currentLeader = newLeader;
     }
@@ -254,7 +269,7 @@ export class Runner {
     }
 
     const watcherSummary = top5.map((l, i) => `${l.walletAddress.slice(0, 8)}(r${i + 1})`).join(', ');
-    logger.info(`Leaderboard update: ${scored.length} traders scored. Watching top ${top5.length}: ${watcherSummary}`);
+    logger.info(`Leaderboard update: ${rescored.length} traders scored. Watching top ${top5.length}: ${watcherSummary}`);
   }
 
   private async handleLeaderTrade(trade: LeaderTrade): Promise<void> {

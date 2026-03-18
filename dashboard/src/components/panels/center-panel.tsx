@@ -146,7 +146,9 @@ export function CenterPanel({
   currentBalance,
   highWaterMark,
 }: CenterPanelProps) {
-  const displayTrades = recentTrades.slice(0, 20)
+  const openTrades = recentTrades.filter(t => t.status === 'open')
+  const otherTrades = recentTrades.filter(t => t.status !== 'open').slice(0, Math.max(0, 20 - openTrades.length))
+  const displayTrades = [...openTrades, ...otherTrades]
 
   return (
     <div

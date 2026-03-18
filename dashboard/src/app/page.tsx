@@ -9,14 +9,16 @@ import { RightPanel } from '@/components/panels/right-panel'
 import { NeuralGlobe } from '@/components/globe'
 import type { Leader, CopyTrade, DailyPerformance, LeaderHistory } from '@/lib/types'
 
-function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[]) {
-  const latest = performance[performance.length - 1]
-  const first = performance[0]
-  const balance = latest?.balance_usdc ?? 6300
-  const totalReturnPct = first?.balance_usdc
-    ? ((balance - first.balance_usdc) / first.balance_usdc) * 100
-    : 0
-  const totalReturnUsd = balance - (first?.balance_usdc ?? balance)
+function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[], depositAmount: number) {
+  const reservedCapital = trades
+    .filter(t => t.status === 'open')
+    .reduce((s, t) => s + (t.our_size ?? 0), 0)
+  const realizedPnl = trades
+    .filter(t => t.status === 'closed')
+    .reduce((s, t) => s + (t.pnl ?? 0), 0)
+  const balance = depositAmount - reservedCapital + realizedPnl
+  const totalReturnUsd = balance - depositAmount
+  const totalReturnPct = ((balance - depositAmount) / depositAmount) * 100
 
   const totalWins = performance.reduce((s, d) => s + d.win_count, 0)
   const totalDecided = performance.reduce((s, d) => s + d.win_count + d.loss_count, 0)
@@ -49,7 +51,7 @@ export default async function DashboardPage() {
   }
 
   const { balance, totalReturnPct, totalReturnUsd, winRate, openPositions, paperMode } =
-    deriveMetrics(trades, performance)
+    deriveMetrics(trades, performance, 6300)
 
   return (
     <div style={{

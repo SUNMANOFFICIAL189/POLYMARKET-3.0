@@ -31,6 +31,8 @@ export class WalletMonitor extends EventEmitter {
   private walletPositions: Map<string, Map<string, DataAPIPosition>> = new Map();
   // per-wallet category history (last 30 trades) for specialist detection
   private walletCategories: Map<string, MarketCategory[]> = new Map();
+  // per-wallet most recent trade timestamp
+  private walletLastTradeTime: Map<string, string> = new Map();
   // addresses currently running initSnapshot (poll skips them)
   private snapshotActive: Set<string> = new Set();
 
@@ -71,6 +73,7 @@ export class WalletMonitor extends EventEmitter {
         this.seenTradeIds.delete(addr);
         this.walletPositions.delete(addr);
         this.walletCategories.delete(addr);
+        this.walletLastTradeTime.delete(addr);
         this.snapshotActive.delete(addr);
         logger.debug(`WalletMonitor: Removed watcher ${addr.slice(0, 10)}...`);
       }
@@ -159,6 +162,9 @@ export class WalletMonitor extends EventEmitter {
         seenSet.add(this.tradeKey(t));
         const cat = categoriseMarket(t.title || t.slug || t.market || '');
         categories.push(cat);
+        const ts = this.toISOTimestamp(t.timestamp || t.created_at);
+        const cur = this.walletLastTradeTime.get(address);
+        if (!cur || ts > cur) this.walletLastTradeTime.set(address, ts);
       }
       if (categories.length > 30) categories.splice(0, categories.length - 30);
       this.seenTradeIds.set(address, seenSet);
@@ -213,6 +219,9 @@ export class WalletMonitor extends EventEmitter {
           const cat = categoriseMarket(t.title || t.slug || t.market || '');
           categories.push(cat);
           if (categories.length > 30) categories.splice(0, categories.length - 30);
+          const ts = this.toISOTimestamp(t.timestamp || t.created_at);
+          const cur = this.walletLastTradeTime.get(addr);
+          if (!cur || ts > cur) this.walletLastTradeTime.set(addr, ts);
           const tokenId = await this.resolveTokenId(t.slug || t.market || '', t.outcome || 'Yes');
           this.emitLeaderTrade(t, addr, rank, detectSpecialistCategory(categories), tokenId);
         }
@@ -347,6 +356,13 @@ export class WalletMonitor extends EventEmitter {
       logger.debug(`WalletMonitor: tokenId lookup failed for ${slug}: ${err}`);
       return '';
     }
+  }
+
+  getWalletStats(address: string): { tradeCount: number; lastTradeTime?: string } {
+    return {
+      tradeCount: this.seenTradeIds.get(address)?.size ?? 0,
+      lastTradeTime: this.walletLastTradeTime.get(address),
+    };
   }
 
   getCurrentLeader(): Leader | null { return this.currentLeader; }
