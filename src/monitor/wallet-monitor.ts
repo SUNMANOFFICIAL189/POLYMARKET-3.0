@@ -38,13 +38,16 @@ export class WalletMonitor extends EventEmitter {
 
   private currentLeader: Leader | null = null; // kept for getCurrentLeader() compat
   private pollIntervalMs: number;
-  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private rank1PollIntervalMs: number;
+  private intervalId: ReturnType<typeof setInterval> | null = null;       // rank 2-5
+  private rank1IntervalId: ReturnType<typeof setInterval> | null = null;  // rank 1 fast-poll
   private pollCount = 0;
   private lastPollTime = 0;
 
-  constructor(opts: { pollIntervalMs?: number } = {}) {
+  constructor(opts: { pollIntervalMs?: number; rank1PollIntervalMs?: number } = {}) {
     super();
     this.pollIntervalMs = opts.pollIntervalMs ?? 30_000;
+    this.rank1PollIntervalMs = opts.rank1PollIntervalMs ?? 10_000;
   }
 
   /**
@@ -125,13 +128,13 @@ export class WalletMonitor extends EventEmitter {
 
   start(): void {
     if (this.intervalId) return;
-    logger.info(`WalletMonitor starting — poll every ${this.pollIntervalMs / 1000}s`);
+    logger.info(`WalletMonitor starting — rank-1 poll every ${this.rank1PollIntervalMs / 1000}s, rank 2-5 every ${this.pollIntervalMs / 1000}s`);
 
-    // Seed all current watchers before starting the interval
+    // Seed all current watchers before starting the intervals
     const addrs = Array.from(this.watchers.keys());
     if (addrs.length === 0) {
-      // No watchers yet — start interval immediately; setWatchers will seed on arrival
-      this.intervalId = setInterval(() => this.poll(), this.pollIntervalMs);
+      this.rank1IntervalId = setInterval(() => this.pollByRank(1), this.rank1PollIntervalMs);
+      this.intervalId = setInterval(() => this.pollByRank(2, 5), this.pollIntervalMs);
       return;
     }
 
@@ -141,11 +144,13 @@ export class WalletMonitor extends EventEmitter {
     );
 
     Promise.all(seeds).then(() => {
-      this.intervalId = setInterval(() => this.poll(), this.pollIntervalMs);
+      this.rank1IntervalId = setInterval(() => this.pollByRank(1), this.rank1PollIntervalMs);
+      this.intervalId = setInterval(() => this.pollByRank(2, 5), this.pollIntervalMs);
     });
   }
 
   stop(): void {
+    if (this.rank1IntervalId) { clearInterval(this.rank1IntervalId); this.rank1IntervalId = null; }
     if (this.intervalId) { clearInterval(this.intervalId); this.intervalId = null; }
     logger.info('WalletMonitor stopped');
   }
@@ -182,13 +187,13 @@ export class WalletMonitor extends EventEmitter {
     }
   }
 
-  private async poll(): Promise<void> {
+  private async pollByRank(minRank: number, maxRank = minRank): Promise<void> {
     if (this.watchers.size === 0) return;
     this.pollCount++;
     this.lastPollTime = Date.now();
 
-    // Poll each watcher sequentially to avoid API flooding
     for (const [addr, rank] of this.watchers) {
+      if (rank < minRank || rank > maxRank) continue;
       if (this.snapshotActive.has(addr)) {
         logger.debug(`WalletMonitor: Snapshot in progress for ${addr.slice(0, 10)}... — skipping`);
         continue;
