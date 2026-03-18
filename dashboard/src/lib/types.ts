@@ -26,21 +26,23 @@ export interface LeaderHistory {
 export interface CopyTrade {
   id: string
   leader_wallet: string
+  leader_trade_id: string | null
   market_id: string
   market_question: string
-  side: 'YES' | 'NO'
-  size_usdc: number
-  price: number
-  confirmation_glint: boolean
-  confirmation_ai: boolean
-  confirmation_news: boolean
-  ai_confidence: number | null
-  status: 'open' | 'closed' | 'vetoed' | 'skipped'
-  paper_mode: boolean
-  pnl_usdc: number | null
-  opened_at: string
-  closed_at: string | null
-  veto_reason: string | null
+  token_id: string | null
+  outcome: string
+  side: string
+  leader_entry_price: number
+  our_entry_price: number | null
+  our_size: number
+  confirmation_result: string
+  confirmation_reason: string | null
+  status: 'open' | 'closed' | 'vetoed' | 'skipped' | 'pending' | 'stopped'
+  risk_level: string
+  pnl: number | null
+  entry_time: string
+  exit_time: string | null
+  created_at: string
 }
 
 export interface DailyPerformance {

@@ -70,8 +70,8 @@ function TradeRow({ trade, index }: TradeRowProps) {
   const isEven = index % 2 === 0
   const actionLabel = getActionLabel(trade)
   const actionColor = getActionColor(trade)
-  const hasPnl = trade.pnl_usdc !== null && trade.pnl_usdc !== undefined
-  const pnlPositive = hasPnl && (trade.pnl_usdc as number) >= 0
+  const hasPnl = trade.pnl !== null && trade.pnl !== undefined
+  const pnlPositive = hasPnl && (trade.pnl as number) >= 0
 
   return (
     <div
@@ -91,7 +91,7 @@ function TradeRow({ trade, index }: TradeRowProps) {
     >
       {/* Timestamp */}
       <span style={{ color: '#444444', whiteSpace: 'nowrap' }}>
-        {formatTime(trade.opened_at)}
+        {formatTime(trade.entry_time)}
       </span>
 
       {/* Action */}
@@ -133,7 +133,7 @@ function TradeRow({ trade, index }: TradeRowProps) {
         }}
       >
         {hasPnl
-          ? `${pnlPositive ? '+' : ''}${formatUSD(trade.pnl_usdc as number)}`
+          ? `${pnlPositive ? '+' : ''}${formatUSD(trade.pnl as number)}`
           : '—'}
       </span>
     </div>

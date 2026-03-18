@@ -238,7 +238,7 @@ export function RightPanel({ leaders, currentLeaderWallet, recentTrades }: Right
                 {trade.market_question.slice(0, 22)}
               </div>
               <div style={S.eventEdge}>
-                {edgeCents(trade.price)} edge
+                {edgeCents(trade.our_entry_price ?? trade.leader_entry_price)} edge
               </div>
             </div>
           ))
@@ -270,7 +270,7 @@ export function RightPanel({ leaders, currentLeaderWallet, recentTrades }: Right
                 trade.status === 'vetoed' ? 'var(--red)' :
                 '#666'
 
-              const pnl = trade.pnl_usdc ?? 0
+              const pnl = trade.pnl ?? 0
               const pnlStr = pnl >= 0
                 ? `+$${pnl.toFixed(2)}`
                 : `-$${Math.abs(pnl).toFixed(2)}`
@@ -288,7 +288,7 @@ export function RightPanel({ leaders, currentLeaderWallet, recentTrades }: Right
                   <span style={{ color: '#555', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {marketName}
                   </span>
-                  {trade.pnl_usdc !== null && (
+                  {trade.pnl !== null && (
                     <span style={{ color: pnlColor, flexShrink: 0 }}>{pnlStr}</span>
                   )}
                 </div>

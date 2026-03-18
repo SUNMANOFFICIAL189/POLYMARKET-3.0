@@ -23,7 +23,7 @@ function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[]) {
   const winRate = totalDecided > 0 ? totalWins / totalDecided : null
 
   const openPositions = trades.filter(t => t.status === 'open').length
-  const paperMode = trades.length === 0 ? true : trades.some(t => t.paper_mode)
+  const paperMode = process.env.PAPER_MODE !== 'false'
 
   return { balance, totalReturnPct, totalReturnUsd, winRate, openPositions, paperMode }
 }

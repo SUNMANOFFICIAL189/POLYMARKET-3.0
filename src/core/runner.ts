@@ -232,12 +232,12 @@ export class Runner {
     });
   }
 
-  private onLeaderboardUpdate(rawLeaders: Leader[]): void {
+  private async onLeaderboardUpdate(rawLeaders: Leader[]): Promise<void> {
     const scored = this.scorer.scoreAndRank(rawLeaders);
 
-    // Update Supabase with fresh scores
+    // Await upsert before selector.update() so setCurrentLeader finds rows in DB
     if (this.config.supabase.url) {
-      db.upsertLeaders(scored).catch(err => logger.warn(`Supabase leader update failed: ${err}`));
+      await db.upsertLeaders(scored).catch(err => logger.warn(`Supabase leader update failed: ${err}`));
     }
 
     const newLeader = this.selector.update(scored);

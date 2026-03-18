@@ -11,28 +11,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmationIcons } from './confirmation-icons'
-
-// ---------- Types ----------
-
-export interface CopyTrade {
-  id: string
-  leader_wallet: string
-  market_id: string
-  market_question: string
-  side: 'YES' | 'NO'
-  size_usdc: number
-  price: number
-  confirmation_glint: boolean
-  confirmation_ai: boolean
-  confirmation_news: boolean
-  ai_confidence: number | null
-  status: 'open' | 'closed' | 'vetoed' | 'skipped'
-  paper_mode: boolean
-  pnl_usdc: number | null
-  opened_at: string
-  closed_at: string | null
-  veto_reason: string | null
-}
+import type { CopyTrade } from '@/lib/types'
 
 type FilterValue = 'all' | 'open' | 'closed' | 'vetoed'
 
@@ -55,8 +34,8 @@ function truncate(str: string, max: number): string {
 
 // ---------- Sub-components ----------
 
-function SideBadge({ side }: { side: 'YES' | 'NO' }) {
-  if (side === 'YES') {
+function SideBadge({ side }: { side: string }) {
+  if (side?.toUpperCase() === 'YES') {
     return (
       <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/40 font-bold text-xs">
         YES
@@ -74,7 +53,7 @@ function StatusBadge({
   status,
   vetoReason,
 }: {
-  status: CopyTrade['status']
+  status: string
   vetoReason: string | null
 }) {
   const title =
@@ -125,7 +104,7 @@ function PnlCell({
   status,
 }: {
   pnl: number | null
-  status: CopyTrade['status']
+  status: string
 }) {
   if (status !== 'closed' || pnl === null) {
     return <span className="text-slate-600">—</span>
@@ -181,7 +160,7 @@ export function TradeHistoryTable({ trades }: TradeHistoryTableProps) {
   // Sort newest first
   const sorted = [...trades].sort(
     (a, b) =>
-      new Date(b.opened_at).getTime() - new Date(a.opened_at).getTime(),
+      new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime(),
   )
 
   const filtered =
@@ -247,7 +226,7 @@ export function TradeHistoryTable({ trades }: TradeHistoryTableProps) {
               >
                 {/* Time */}
                 <TableCell className="pl-5 font-mono text-xs text-slate-400 whitespace-nowrap">
-                  {formatDate(trade.opened_at)}
+                  {formatDate(trade.entry_time)}
                 </TableCell>
 
                 {/* Market */}
@@ -259,7 +238,7 @@ export function TradeHistoryTable({ trades }: TradeHistoryTableProps) {
                     >
                       {truncate(trade.market_question, 50)}
                     </span>
-                    {trade.paper_mode && (
+                    {process.env.PAPER_MODE !== 'false' && (
                       <Badge className="shrink-0 bg-yellow-500/20 text-yellow-400 border-yellow-500/40 text-[10px] font-bold uppercase tracking-wide">
                         PAPER
                       </Badge>
@@ -274,21 +253,21 @@ export function TradeHistoryTable({ trades }: TradeHistoryTableProps) {
 
                 {/* Size */}
                 <TableCell className="font-mono text-xs text-slate-300 tabular-nums whitespace-nowrap">
-                  ${trade.size_usdc.toFixed(2)}
+                  ${(trade.our_size ?? 0).toFixed(2)}
                 </TableCell>
 
                 {/* Price */}
                 <TableCell className="font-mono text-xs text-slate-300 tabular-nums whitespace-nowrap">
-                  {(trade.price * 100).toFixed(1)}¢
+                  {((trade.our_entry_price ?? trade.leader_entry_price) * 100).toFixed(1)}¢
                 </TableCell>
 
                 {/* Confirmations */}
                 <TableCell>
                   <ConfirmationIcons
-                    glint={trade.confirmation_glint}
-                    ai={trade.confirmation_ai}
-                    news={trade.confirmation_news}
-                    aiConfidence={trade.ai_confidence}
+                    glint={trade.confirmation_result === 'approved'}
+                    ai={trade.confirmation_result === 'approved'}
+                    news={false}
+                    aiConfidence={null}
                   />
                 </TableCell>
 
@@ -296,13 +275,13 @@ export function TradeHistoryTable({ trades }: TradeHistoryTableProps) {
                 <TableCell>
                   <StatusBadge
                     status={trade.status}
-                    vetoReason={trade.veto_reason}
+                    vetoReason={trade.confirmation_reason}
                   />
                 </TableCell>
 
                 {/* P&L */}
                 <TableCell className="pr-5">
-                  <PnlCell pnl={trade.pnl_usdc} status={trade.status} />
+                  <PnlCell pnl={trade.pnl} status={trade.status} />
                 </TableCell>
               </TableRow>
             ))
