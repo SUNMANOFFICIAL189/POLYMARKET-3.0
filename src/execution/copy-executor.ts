@@ -289,8 +289,9 @@ export class CopyExecutor {
 
   /**
    * Close our copy position when the leader closes theirs.
+   * Returns the closed CopyTrade (with pnl filled in) on success, null if no position found.
    */
-  async closePosition(marketId: string, currentPrice: number, reason = 'leader_closed'): Promise<boolean> {
+  async closePosition(marketId: string, currentPrice: number, reason = 'leader_closed'): Promise<CopyTrade | null> {
     const copyTrade = this.openCopyTrades.get(marketId);
 
     if (this.paperMode) {
@@ -303,7 +304,7 @@ export class CopyExecutor {
           this.openCopyTrades.delete(marketId);
         }
         this.watcherPositions.delete(marketId);
-        return true;
+        return copyTrade ?? null;
       }
     } else {
       // Live mode: execute sell order
@@ -313,14 +314,14 @@ export class CopyExecutor {
           copyTrade.status = 'closed';
           this.openCopyTrades.delete(marketId);
           this.watcherPositions.delete(marketId);
-          return true;
+          return copyTrade;
         } catch (err) {
           logger.error(`CopyExecutor: Live close failed for market ${marketId}: ${err}`);
         }
       }
     }
 
-    return false;
+    return null;
   }
 
   /**

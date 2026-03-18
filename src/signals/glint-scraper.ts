@@ -230,10 +230,10 @@ export class GlintScraper extends EventEmitter {
     if (this.reconnecting) { logger.debug(`GlintScraper: Ignoring scheduleReconnect(${reason}) — reconnect already in progress`); return; }
     if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
 
-    // Only reset failure counter if the last connection was stable for >60s.
-    // If Glint keeps dropping quickly (<60s), backoff accumulates and slows the loop.
+    // Only reset failure counter on a clean disconnect (ws_closed / liveness_timeout),
+    // NOT on page_refresh_failed — that would prevent fullRestart from ever triggering.
     const connectionAge = this.connectedAt > 0 ? Date.now() - this.connectedAt : 0;
-    if (connectionAge > 60_000) {
+    if (connectionAge > 60_000 && reason !== 'page_refresh_failed') {
       this.pageRefreshFailures = 0;
       logger.debug(`GlintScraper: Connection was stable ${(connectionAge / 1000).toFixed(0)}s — reset failure count`);
     }
@@ -246,6 +246,11 @@ export class GlintScraper extends EventEmitter {
 
     this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = null;
+      // WS may have reconnected on its own during the delay — skip page refresh if already connected.
+      if (this.connected) {
+        logger.debug(`GlintScraper: Skipping page-refresh — already reconnected (reason: ${reason})`);
+        return;
+      }
       await this.pageRefreshReconnect(reason);
     }, delay);
   }

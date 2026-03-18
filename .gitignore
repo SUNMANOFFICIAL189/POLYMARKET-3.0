@@ -1,6 +1,16 @@
 node_modules/
 dist/
 .env
-.glint/
+.env.local
 *.log
+.glint/
 .DS_Store
+.claude-flow/
+
+# Dashboard
+dashboard/node_modules/
+dashboard/.next/
+dashboard/.env.local
+
+# API keys
+_API_KEYS/
