@@ -3,6 +3,9 @@ import { logger } from '../utils/logger.js';
 /**
  * AIClassifier — PATS-Copy version.
  *
+ * Uses Ollama (local, free, no rate limits) via its OpenAI-compatible endpoint.
+ * Model: llama3.2 (default) — fast, capable enough for simple trade confirmation.
+ *
  * Two modes:
  *  1. classifyNews(): general news classification (legacy, used by confirmation layer)
  *  2. classifyTrade(): specific trade confirmation — should we copy this trade?
@@ -25,18 +28,19 @@ export interface TradeConfirmationResult {
   hasSupportingSignals: boolean;
 }
 
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+const OLLAMA_MODEL    = process.env.OLLAMA_MODEL    ?? 'llama3.2';
+
 export class AIClassifier {
-  private apiKey: string;
   private callCount = 0;
   private errorCount = 0;
   private retryCount = 0;
-  private readonly COST_PER_CALL = 0.003;
+  private readonly COST_PER_CALL = 0; // free — local inference
   private readonly MAX_RETRIES = 3;
   private readonly BASE_RETRY_DELAY_MS = 1000;
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
+  // apiKey kept for interface compatibility — unused with Ollama
+  constructor(_apiKey?: string) {}
 
   /**
    * Classify a news headline for general market relevance.
@@ -50,8 +54,7 @@ JSON format:
 {"impactScore": 0-100, "direction": "yes|no|neutral", "confidence": 0.0-1.0, "matchedMarkets": [], "reasoning": "brief", "category": "politics|economics|crypto|other"}`;
 
     return this.callAPI<ClassificationResult>(prompt, (content) => {
-      const result = JSON.parse(content);
-      return result as ClassificationResult;
+      return JSON.parse(content) as ClassificationResult;
     }, {
       impactScore: 0,
       direction: 'neutral',
@@ -101,8 +104,7 @@ Respond with ONLY a JSON object, no markdown:
 {"recommendation": "copy|skip|veto", "confidence": 0.0-1.0, "reasoning": "one sentence", "hasOpposingSignals": true|false, "hasSupportingSignals": true|false}`;
 
     return this.callAPI<TradeConfirmationResult>(prompt, (content) => {
-      const result = JSON.parse(content);
-      return result as TradeConfirmationResult;
+      return JSON.parse(content) as TradeConfirmationResult;
     }, {
       recommendation: 'copy',
       confidence: 0.5,
@@ -117,33 +119,34 @@ Respond with ONLY a JSON object, no markdown:
       try {
         this.callCount++;
 
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': this.apiKey,
-            'anthropic-version': '2023-06-01',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 512,
+            model: OLLAMA_MODEL,
             messages: [{ role: 'user', content: prompt }],
+            stream: false,
           }),
         });
 
         if (!response.ok) {
-          throw new Error(`API error: ${response.status} ${response.statusText}`);
+          throw new Error(`Ollama error: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json() as { content: Array<{ text: string }> };
-        const content = data.content[0].text;
+        const data = await response.json() as {
+          choices: Array<{ message: { content: string } }>;
+        };
+        const content = data.choices[0]?.message?.content ?? '';
         const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
+        // Extract JSON from response (model may add surrounding text)
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON object found in response');
+
         try {
-          return parser(cleaned);
+          return parser(jsonMatch[0]);
         } catch {
-          // Regex fallback for truncated JSON
-          logger.warn('AI: JSON parse failed, attempting regex fallback');
+          logger.warn('AI: JSON parse failed, using fallback');
           return fallback;
         }
 
@@ -153,9 +156,7 @@ Respond with ONLY a JSON object, no markdown:
           error?.cause?.code === 'ETIMEDOUT' ||
           error?.cause?.code === 'ENOTFOUND' ||
           error?.message?.includes('fetch failed') ||
-          error?.message?.includes('502') ||
-          error?.message?.includes('503') ||
-          error?.message?.includes('529');
+          error?.message?.includes('ECONNREFUSED');
 
         if (isRetryable && attempt < this.MAX_RETRIES) {
           this.retryCount++;
@@ -176,7 +177,7 @@ Respond with ONLY a JSON object, no markdown:
   getStats() {
     return {
       callCount: this.callCount,
-      estimatedCost: this.callCount * this.COST_PER_CALL,
+      estimatedCost: 0, // free — local Ollama inference
       errorCount: this.errorCount,
       retryCount: this.retryCount,
     };
