@@ -180,6 +180,13 @@ export class GlintScraper extends EventEmitter {
     this.emit('connected', {});
   }
 
+  private isBrowserDeadError(err: unknown): boolean {
+    const msg = String(err).toLowerCase();
+    return msg.includes('connectionclosed') || msg.includes('connection closed') ||
+           msg.includes('target closed') || msg.includes('session closed') ||
+           msg.includes('protocol error') || msg.includes('browser has disconnected');
+  }
+
   private async pageRefreshReconnect(reason: string): Promise<void> {
     if (!this.running || !this.page) return;
 
@@ -199,6 +206,13 @@ export class GlintScraper extends EventEmitter {
       this.connected = false;
       await this.setupCDPAndNavigate();
     } catch (err) {
+      // If the browser itself is dead, escalate immediately — page refresh is futile
+      if (this.isBrowserDeadError(err)) {
+        logger.warn(`GlintScraper: Browser dead (${err}) — escalating to full restart immediately`);
+        this.reconnecting = false;
+        await this.fullRestart();
+        return;
+      }
       logger.error(`GlintScraper: Page-refresh failed: ${err}`);
       this.reconnecting = false;
       this.scheduleReconnect('page_refresh_failed');
