@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AutoRefresh } from '@/components/layout/auto-refresh'
 
 export const metadata: Metadata = {
   title: 'PATS-COPY | POLYMARKET AUTOTRADER',
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {children}
+        <AutoRefresh />
       </body>
     </html>
   )
