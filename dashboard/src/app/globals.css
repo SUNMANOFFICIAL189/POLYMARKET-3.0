@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #000000;
+  --bg-panel: #0a0a0a;
+  --bg-card: #0f0f0f;
+  --border: #1a1a1a;
+  --border-bright: #2a2a2a;
+  --text: #e8e8e8;
+  --text-muted: #666666;
+  --text-dim: #333333;
+  --green: #00ff41;
+  --green-dim: #00cc33;
+  --green-muted: #004d14;
+  --red: #ff3333;
+  --red-dim: #cc0000;
+  --yellow: #ffcc00;
+  --font-mono: 'Space Mono', 'IBM Plex Mono', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); }
+
+/* Typography utilities */
+.label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.value-large {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.value-medium {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.green { color: var(--green); }
+.red { color: var(--red); }
+.muted { color: var(--text-muted); }
+.dim { color: var(--text-dim); }
+
+/* Ticker animation */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-track {
+  display: flex;
+  animation: ticker-scroll 40s linear infinite;
+  white-space: nowrap;
+}
+
+.ticker-track:hover { animation-play-state: paused; }
+
+/* Dot pulse */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.pulse { animation: pulse-dot 1.5s ease-in-out infinite; }
+
+/* Panel borders */
+.panel {
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.panel-card {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  padding: 8px 10px;
+}
