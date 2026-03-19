@@ -114,6 +114,8 @@ export class Runner {
     // Init Supabase
     if (this.config.supabase.url && this.config.supabase.serviceKey) {
       db.initSupabase(this.config.supabase.url, this.config.supabase.serviceKey);
+      // Hydrate paper trading engine from Supabase so restarts don't lose state
+      await this.paperEngine.hydrateFromSupabase();
     } else {
       logger.warn('Supabase not configured — running without persistence');
     }

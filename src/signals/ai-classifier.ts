@@ -130,7 +130,8 @@ Respond with ONLY a JSON object, no markdown:
         });
 
         if (!response.ok) {
-          throw new Error(`Ollama error: ${response.status} ${response.statusText}`);
+          const errBody = await response.text().catch(() => '');
+          throw new Error(`Ollama error: ${response.status} ${response.statusText} — ${errBody.slice(0, 200)}`);
         }
 
         const data = await response.json() as {

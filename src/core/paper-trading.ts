@@ -3,6 +3,7 @@ import { RiskDial } from './config.js';
 import { RiskManager } from './risk-manager.js';
 import type { Trade, DailyPerformance, RiskLevel, Side } from '../types/index.js';
 import { randomUUID } from 'crypto';
+import * as db from '../data/supabase.js';
 
 export interface CopyTradeInput {
   marketId: string;
@@ -196,6 +197,76 @@ export class PaperTradingEngine {
     this.riskManager.updateBalance(this.balance);
     this.riskManager.setOpenTrades(Array.from(this.openTrades.values()));
     this.riskManager.updateDailyPnl(this.dailyPnl);
+  }
+
+  /**
+   * Hydrate engine state from Supabase on startup — restores open/closed trades
+   * so restarts don't wipe paper trading history.
+   */
+  async hydrateFromSupabase(): Promise<void> {
+    try {
+      const client = db.getClient();
+
+      // Load open trades
+      const { data: openRows, error: openErr } = await client
+        .from('copy_trades')
+        .select('*')
+        .in('status', ['open', 'pending'])
+        .order('entry_time', { ascending: true });
+
+      if (openErr) { logger.warn(`Hydrate: failed to load open trades: ${openErr.message}`); return; }
+
+      // Load closed trades for balance calculation
+      const { data: closedRows, error: closedErr } = await client
+        .from('copy_trades')
+        .select('*')
+        .eq('status', 'closed')
+        .order('exit_time', { ascending: true });
+
+      if (closedErr) { logger.warn(`Hydrate: failed to load closed trades: ${closedErr.message}`); return; }
+
+      // Rebuild closed trade P&L
+      let realizedPnl = 0;
+      for (const row of closedRows ?? []) {
+        realizedPnl += row.pnl ?? 0;
+      }
+
+      // Rebuild open positions
+      let reservedCapital = 0;
+      for (const row of openRows ?? []) {
+        const trade: Trade = {
+          id: row.id,
+          marketId: row.market_id,
+          question: row.market_question,
+          tokenId: row.token_id ?? '',
+          outcome: row.outcome,
+          side: row.side as Side,
+          entryPrice: row.our_entry_price ?? row.leader_entry_price,
+          size: (row.our_size ?? 0) / (row.our_entry_price ?? row.leader_entry_price ?? 1),
+          usdcAmount: row.our_size ?? 0,
+          convictionScore: 75,
+          riskLevel: row.risk_level as RiskLevel,
+          status: 'open',
+          stopLoss: this.riskDial.config.stopLossPct,
+          signalIds: [],
+          entryTime: row.entry_time,
+        };
+
+        this.openTrades.set(trade.id, trade);
+        this.openMarketIds.add(trade.marketId);
+        reservedCapital += trade.usdcAmount;
+      }
+
+      // Reconstruct balance: initial - reserved + realized
+      this.balance = this.initialBalance - reservedCapital + realizedPnl;
+      this.syncState();
+
+      const openCount = openRows?.length ?? 0;
+      const closedCount = closedRows?.length ?? 0;
+      logger.info(`Hydrated from Supabase: ${openCount} open, ${closedCount} closed, balance=$${this.balance.toFixed(2)}, realizedPnl=$${realizedPnl.toFixed(2)}`);
+    } catch (err) {
+      logger.warn(`Hydrate failed (will start fresh): ${err}`);
+    }
   }
 
   getBalance(): number { return this.balance; }
