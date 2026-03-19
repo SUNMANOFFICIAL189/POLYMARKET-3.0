@@ -73,6 +73,37 @@ export class CopyExecutor {
     this.ourPortfolio = balance;
   }
 
+  /**
+   * Hydrate open positions from Supabase rows so that close detection works after restart.
+   */
+  hydrateOpenTrades(rows: Array<Record<string, unknown>>): void {
+    for (const row of rows) {
+      const marketId = row.market_id as string;
+      if (!marketId || this.openCopyTrades.has(marketId)) continue;
+      const copyTrade: CopyTrade = {
+        id: row.id as string,
+        leaderWallet: row.leader_wallet as string,
+        leaderTradeId: row.leader_trade_id as string | undefined,
+        marketId,
+        marketQuestion: row.market_question as string,
+        tokenId: row.token_id as string | undefined,
+        outcome: row.outcome as string,
+        side: row.side as 'buy' | 'sell',
+        leaderEntryPrice: row.leader_entry_price as number,
+        ourEntryPrice: row.our_entry_price as number | undefined,
+        ourSize: row.our_size as number,
+        confirmationResult: row.confirmation_result as ConfirmationDecision,
+        confirmationReason: row.confirmation_reason as string | undefined,
+        status: 'open',
+        riskLevel: row.risk_level as RiskLevel,
+        entryTime: row.entry_time as string,
+        createdAt: row.created_at as string | undefined,
+      };
+      this.openCopyTrades.set(marketId, copyTrade);
+    }
+    logger.info(`CopyExecutor: Hydrated ${this.openCopyTrades.size} open positions from Supabase`);
+  }
+
   hasOpenPositionForMarket(marketId: string): boolean {
     return this.openCopyTrades.has(marketId) || this.paperEngine.hasOpenPositionForMarket(marketId);
   }

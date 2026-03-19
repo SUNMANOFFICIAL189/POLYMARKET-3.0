@@ -116,6 +116,12 @@ export class Runner {
       db.initSupabase(this.config.supabase.url, this.config.supabase.serviceKey);
       // Hydrate paper trading engine from Supabase so restarts don't lose state
       await this.paperEngine.hydrateFromSupabase();
+      // Hydrate executor's open positions so close detection persists Supabase updates
+      const { data: openRows } = await db.getClient()
+        .from('copy_trades')
+        .select('*')
+        .in('status', ['open', 'pending']);
+      if (openRows) this.copyExecutor.hydrateOpenTrades(openRows);
     } else {
       logger.warn('Supabase not configured — running without persistence');
     }

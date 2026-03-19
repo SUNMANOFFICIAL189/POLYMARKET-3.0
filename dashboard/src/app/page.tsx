@@ -42,10 +42,10 @@ function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoi
 
 function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[], depositAmount: number) {
   const reservedCapital = trades
-    .filter(t => t.status === 'open')
+    .filter(t => t.status === 'open' || t.status === 'pending')
     .reduce((s, t) => s + (t.our_size ?? 0), 0)
   const realizedPnl = trades
-    .filter(t => t.status === 'closed')
+    .filter(t => t.status === 'closed' || t.status === 'stopped')
     .reduce((s, t) => s + (t.pnl ?? 0), 0)
   const balance = depositAmount - reservedCapital + realizedPnl
   const totalReturnUsd = balance - depositAmount
