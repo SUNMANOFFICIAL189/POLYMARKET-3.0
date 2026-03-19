@@ -1,0 +1,39 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2758
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red180\green36\blue25;\red46\green174\blue187;
+\red64\green11\blue217;}
+{\*\expandedcolortbl;;\csgray\c0;\cssrgb\c76411\c21697\c12527;\cssrgb\c20199\c73241\c78251;
+\cssrgb\c32309\c18666\c88229;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf0 \
+
+\f1\b SCRIPT TO SEE TRADES IN TERMINAL:
+\f0\b0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \CocoaLigature0 tail -f /tmp/pats-live.log\
+\
+\
+
+\f1\b If I want cleaner output with only the important events (trades, approvals, vetoes \'97 no noise):
+\f0\b0 \
+tail -f /tmp/pats-live.log | grep --line-buffered -E \cf3 "COPY\cf2  \cf3 TRADE|APPROVED|VETOED|new\cf2  \cf3 trade|LEADER|Glint:"\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 \CocoaLigature1 IF GLINT FUCKS UP:
+\f0\b0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf4 \CocoaLigature0 cd\cf2  /Users/sunil_rajput/Desktop/POLYMARKET_TRADING_3.0\
+pkill -f \cf3 "tsx\cf2  \cf3 src/index"\cf2 \
+rm -rf .glint/browser-data\
+GLINT_HEADLESS=\cf5 false\cf2  npx tsx src/index.ts\
+\
+\
+
+\f1\b TO START THE TRADE BOT IN TERMINAL:
+\f0\b0 \
+\cf4 cd\cf2  /Users/sunil_rajput/Desktop/POLYMARKET_TRADING_3.0\
+GLINT_HEADLESS=\cf5 false\cf2  npx tsx src/index.ts}

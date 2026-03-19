@@ -321,8 +321,8 @@ export class Runner {
         this.consecutiveVetoes = 0;
       }
 
-      // Step 4: Persist to Supabase — skip 'skipped' decisions (age/stale noise)
-      if (result.copyTrade && this.config.supabase.url && confirmation.decision !== 'skipped') {
+      // Step 4: Persist to Supabase — only save executed trades (open/closed), skip vetoes and skips
+      if (result.copyTrade && this.config.supabase.url && result.success) {
         const dbId = await db.insertCopyTrade(result.copyTrade);
         if (dbId) {
           if (result.copyTrade.id) result.copyTrade.id = dbId;

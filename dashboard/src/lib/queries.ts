@@ -35,6 +35,7 @@ export async function getCopyTrades(limit = 100): Promise<CopyTrade[]> {
   const { data, error } = await supabase
     .from('copy_trades')
     .select('*')
+    .in('status', ['open', 'closed', 'stopped', 'pending'])
     .order('entry_time', { ascending: false })
     .limit(limit)
   if (error) throw error
