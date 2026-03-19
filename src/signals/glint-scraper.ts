@@ -169,7 +169,9 @@ export class GlintScraper extends EventEmitter {
         if (loggedIn) break;
         logger.info('GlintScraper: Still waiting for login...');
       }
-      if (!loggedIn) { logger.error('GlintScraper: Login timeout.'); await this.stop(); return; }
+      if (!loggedIn) {
+        logger.warn('GlintScraper: Login detection timed out — proceeding anyway (may already be logged in)');
+      }
     }
 
     await this.saveCookies();
@@ -299,10 +301,15 @@ export class GlintScraper extends EventEmitter {
     try {
       return await this.page.evaluate(() => {
         const text = document.body?.innerText || '';
-        if (text.includes('Sign in to unlock') || text.includes('Get Started')) return false;
-        if (text.includes('Feed') && (text.includes('CRITICAL') || text.includes('HIGH') || text.includes('MEDIUM'))) return true;
+        // Definite NOT logged in
+        if (text.includes('Sign in to unlock') || text.includes('Get Started') || text.includes('Sign up')) return false;
+        // Definite logged in — any of these indicate an authenticated page
+        if (text.includes('Feed') || text.includes('CRITICAL') || text.includes('HIGH') || text.includes('MEDIUM')) return true;
+        if (text.includes('Portfolio') || text.includes('Settings') || text.includes('Alerts')) return true;
         const nav = document.querySelector('nav');
         if (nav?.textContent?.includes('Portfolio')) return true;
+        // If no sign-in prompt found and page has content, assume logged in
+        if (text.length > 500 && !text.includes('Sign in')) return true;
         return false;
       });
     } catch { return false; }
