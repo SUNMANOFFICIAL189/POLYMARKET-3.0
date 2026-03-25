@@ -4,7 +4,8 @@ import type { AIConfig } from '../core/config.js';
 /**
  * AIClassifier — PATS-Copy version.
  *
- * Supports two providers (both OpenAI-compatible):
+ * Supports three providers (all OpenAI-compatible):
+ *   - cerebras: Free tier, very fast, llama-3.3-70b
  *   - groq: Free tier, fast (200ms), llama-3.3-70b-versatile
  *   - ollama: Local, free, no rate limits, llama3.2
  *
@@ -31,7 +32,7 @@ export interface TradeConfirmationResult {
 }
 
 export class AIClassifier {
-  private provider: 'groq' | 'ollama';
+  private provider: 'groq' | 'ollama' | 'cerebras';
   private baseUrl: string;
   private model: string;
   private apiKey: string | null;
@@ -42,8 +43,19 @@ export class AIClassifier {
   private readonly BASE_RETRY_DELAY_MS = 1000;
 
   constructor(config?: AIConfig) {
-    this.provider = config?.provider ?? (process.env.AI_PROVIDER as 'groq' | 'ollama') ?? 'ollama';
-    if (this.provider === 'groq') {
+    this.provider = config?.provider ?? (process.env.AI_PROVIDER as 'groq' | 'ollama' | 'cerebras') ?? 'ollama';
+    if (this.provider === 'cerebras') {
+      this.baseUrl = 'https://api.cerebras.ai/v1';
+      this.model = process.env.CEREBRAS_MODEL ?? 'llama-3.3-70b';
+      this.apiKey = process.env.CEREBRAS_API_KEY ?? null;
+      if (!this.apiKey) {
+        logger.warn('AIClassifier: CEREBRAS_API_KEY not set — falling back to Ollama');
+        this.provider = 'ollama';
+        this.baseUrl = config?.ollamaBaseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+        this.model = config?.ollamaModel ?? process.env.OLLAMA_MODEL ?? 'llama3.2';
+        this.apiKey = null;
+      }
+    } else if (this.provider === 'groq') {
       this.baseUrl = 'https://api.groq.com/openai/v1';
       this.model = config?.groqModel ?? 'llama-3.3-70b-versatile';
       this.apiKey = config?.groqApiKey ?? process.env.GROQ_API_KEY ?? null;

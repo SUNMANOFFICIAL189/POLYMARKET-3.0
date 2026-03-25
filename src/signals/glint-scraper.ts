@@ -150,7 +150,20 @@ export class GlintScraper extends EventEmitter {
     });
 
     logger.info('GlintScraper: Navigating to glint.trade...');
-    await this.page.goto('https://glint.trade/events', { waitUntil: 'networkidle2', timeout: 60_000 });
+    await this.page.goto('https://glint.trade/events', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+
+    // Inject localStorage auth from saved file
+    try {
+      const lsPath = join(process.cwd(), '.glint', 'localStorage.json');
+      if (existsSync(lsPath)) {
+        const lsData = JSON.parse(readFileSync(lsPath, 'utf-8'));
+        for (const [key, value] of Object.entries(lsData)) {
+          await this.page.evaluate((k: string, v: string) => localStorage.setItem(k, v), key, value as string);
+        }
+        logger.info('GlintScraper: Injected localStorage auth - reloading page');
+        await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
+      }
+    } catch (lsErr) { logger.warn('GlintScraper: localStorage injection failed: ' + lsErr); }
 
     const isLoggedIn = await this.checkLoginStatus();
     if (!isLoggedIn) {

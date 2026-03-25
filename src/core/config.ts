@@ -33,9 +33,11 @@ export interface HoldToResolutionConfig {
 }
 
 export interface AIConfig {
-  provider: 'groq' | 'ollama';
+  provider: 'groq' | 'ollama' | 'cerebras';
   groqApiKey?: string;
   groqModel?: string;
+  cerebrasApiKey?: string;
+  cerebrasModel?: string;
   ollamaBaseUrl?: string;
   ollamaModel?: string;
 }
@@ -156,9 +158,11 @@ export function loadConfig(): AppConfig {
       cutLossCurrentThreshold: parseFloat(envOpt('CUT_LOSS_CURRENT_THRESHOLD', '0.50')),
     },
     ai: {
-      provider: (envOpt('AI_PROVIDER', 'groq') as 'groq' | 'ollama'),
+      provider: (envOpt('AI_PROVIDER', 'cerebras') as 'groq' | 'ollama' | 'cerebras'),
       groqApiKey: process.env.GROQ_API_KEY,
       groqModel: envOpt('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+      cerebrasApiKey: process.env.CEREBRAS_API_KEY,
+      cerebrasModel: envOpt('CEREBRAS_MODEL', 'llama-3.3-70b'),
       ollamaBaseUrl: envOpt('OLLAMA_BASE_URL', 'http://localhost:11434'),
       ollamaModel: envOpt('OLLAMA_MODEL', 'llama3.2'),
     },

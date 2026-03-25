@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 import { getLeaders, getCurrentLeader, getCopyTrades, getDailyPerformance, getLeaderHistory } from '@/lib/queries'
 import { TickerBar } from '@/components/layout/ticker-bar'
 import { NavBar } from '@/components/layout/nav-bar'
