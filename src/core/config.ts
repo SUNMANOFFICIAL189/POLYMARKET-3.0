@@ -32,6 +32,14 @@ export interface HoldToResolutionConfig {
   cutLossCurrentThreshold: number;
 }
 
+export interface AIConfig {
+  provider: 'groq' | 'ollama';
+  groqApiKey?: string;
+  groqModel?: string;
+  ollamaBaseUrl?: string;
+  ollamaModel?: string;
+}
+
 export interface AppConfig {
   paperMode: boolean;
   risk: RiskConfig;
@@ -63,6 +71,7 @@ export interface AppConfig {
   positions: PositionConfig;
   liquidity: LiquidityConfig;
   holdToResolution: HoldToResolutionConfig;
+  ai: AIConfig;
 }
 
 function envOpt(key: string, fallback: string): string {
@@ -145,6 +154,13 @@ export function loadConfig(): AppConfig {
       holdCurrentThreshold: parseFloat(envOpt('HOLD_CURRENT_THRESHOLD', '0.60')),
       cutLossEntryThreshold: parseFloat(envOpt('CUT_LOSS_ENTRY_THRESHOLD', '0.70')),
       cutLossCurrentThreshold: parseFloat(envOpt('CUT_LOSS_CURRENT_THRESHOLD', '0.50')),
+    },
+    ai: {
+      provider: (envOpt('AI_PROVIDER', 'groq') as 'groq' | 'ollama'),
+      groqApiKey: process.env.GROQ_API_KEY,
+      groqModel: envOpt('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+      ollamaBaseUrl: envOpt('OLLAMA_BASE_URL', 'http://localhost:11434'),
+      ollamaModel: envOpt('OLLAMA_MODEL', 'llama3.2'),
     },
   };
 

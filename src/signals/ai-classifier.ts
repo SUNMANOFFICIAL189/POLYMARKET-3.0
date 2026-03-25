@@ -1,13 +1,15 @@
 import { logger } from '../utils/logger.js';
+import type { AIConfig } from '../core/config.js';
 
 /**
  * AIClassifier — PATS-Copy version.
  *
- * Uses Ollama (local, free, no rate limits) via its OpenAI-compatible endpoint.
- * Model: llama3.2 (default) — fast, capable enough for simple trade confirmation.
+ * Supports two providers (both OpenAI-compatible):
+ *   - groq: Free tier, fast (200ms), llama-3.3-70b-versatile
+ *   - ollama: Local, free, no rate limits, llama3.2
  *
  * Two modes:
- *  1. classifyNews(): general news classification (legacy, used by confirmation layer)
+ *  1. classifyNews(): general news classification
  *  2. classifyTrade(): specific trade confirmation — should we copy this trade?
  */
 
@@ -28,23 +30,38 @@ export interface TradeConfirmationResult {
   hasSupportingSignals: boolean;
 }
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
-const OLLAMA_MODEL    = process.env.OLLAMA_MODEL    ?? 'llama3.2';
-
 export class AIClassifier {
+  private provider: 'groq' | 'ollama';
+  private baseUrl: string;
+  private model: string;
+  private apiKey: string | null;
   private callCount = 0;
   private errorCount = 0;
   private retryCount = 0;
-  private readonly COST_PER_CALL = 0; // free — local inference
   private readonly MAX_RETRIES = 3;
   private readonly BASE_RETRY_DELAY_MS = 1000;
 
-  // apiKey kept for interface compatibility — unused with Ollama
-  constructor(_apiKey?: string) {}
+  constructor(config?: AIConfig) {
+    this.provider = config?.provider ?? (process.env.AI_PROVIDER as 'groq' | 'ollama') ?? 'ollama';
+    if (this.provider === 'groq') {
+      this.baseUrl = 'https://api.groq.com/openai/v1';
+      this.model = config?.groqModel ?? 'llama-3.3-70b-versatile';
+      this.apiKey = config?.groqApiKey ?? process.env.GROQ_API_KEY ?? null;
+      if (!this.apiKey) {
+        logger.warn('AIClassifier: GROQ_API_KEY not set — falling back to Ollama');
+        this.provider = 'ollama';
+        this.baseUrl = config?.ollamaBaseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+        this.model = config?.ollamaModel ?? process.env.OLLAMA_MODEL ?? 'llama3.2';
+        this.apiKey = null;
+      }
+    } else {
+      this.baseUrl = config?.ollamaBaseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+      this.model = config?.ollamaModel ?? process.env.OLLAMA_MODEL ?? 'llama3.2';
+      this.apiKey = null;
+    }
+    logger.info(`AIClassifier: Using ${this.provider} (${this.model}) at ${this.baseUrl}`);
+  }
 
-  /**
-   * Classify a news headline for general market relevance.
-   */
   async classifyNews(headline: string, body?: string): Promise<ClassificationResult> {
     const prompt = `Rate this news headline's impact on prediction markets. Respond with ONLY a JSON object, no markdown.
 
@@ -65,14 +82,6 @@ JSON format:
     });
   }
 
-  /**
-   * Confirm whether to copy a leader's trade given recent news context.
-   *
-   * Returns:
-   *   copy   — no opposing signals found, safe to proceed
-   *   skip   — insufficient data to confirm (neutral, no strong signals either way)
-   *   veto   — strong opposing signals found, do NOT copy
-   */
   async classifyTrade(
     marketQuestion: string,
     leaderSide: 'buy' | 'sell',
@@ -136,11 +145,20 @@ Respond with ONLY a JSON object, no markdown:
       try {
         this.callCount++;
 
-        const response = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (this.apiKey) {
+          headers['Authorization'] = `Bearer ${this.apiKey}`;
+        }
+
+        const url = this.provider === 'ollama'
+          ? `${this.baseUrl}/v1/chat/completions`
+          : `${this.baseUrl}/chat/completions`;
+
+        const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
-            model: OLLAMA_MODEL,
+            model: this.model,
             messages: [{ role: 'user', content: prompt }],
             stream: false,
           }),
@@ -148,7 +166,7 @@ Respond with ONLY a JSON object, no markdown:
 
         if (!response.ok) {
           const errBody = await response.text().catch(() => '');
-          throw new Error(`Ollama error: ${response.status} ${response.statusText} — ${errBody.slice(0, 200)}`);
+          throw new Error(`${this.provider} error: ${response.status} ${response.statusText} — ${errBody.slice(0, 200)}`);
         }
 
         const data = await response.json() as {
@@ -157,7 +175,6 @@ Respond with ONLY a JSON object, no markdown:
         const content = data.choices[0]?.message?.content ?? '';
         const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-        // Extract JSON from response (model may add surrounding text)
         const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('No JSON object found in response');
 
@@ -174,7 +191,8 @@ Respond with ONLY a JSON object, no markdown:
           error?.cause?.code === 'ETIMEDOUT' ||
           error?.cause?.code === 'ENOTFOUND' ||
           error?.message?.includes('fetch failed') ||
-          error?.message?.includes('ECONNREFUSED');
+          error?.message?.includes('ECONNREFUSED') ||
+          error?.message?.includes('429'); // Rate limit
 
         if (isRetryable && attempt < this.MAX_RETRIES) {
           this.retryCount++;
@@ -194,8 +212,10 @@ Respond with ONLY a JSON object, no markdown:
 
   getStats() {
     return {
+      provider: this.provider,
+      model: this.model,
       callCount: this.callCount,
-      estimatedCost: 0, // free — local Ollama inference
+      estimatedCost: 0, // groq free tier / ollama local
       errorCount: this.errorCount,
       retryCount: this.retryCount,
     };

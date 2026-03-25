@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  bot:
+    build: .
+    container_name: pats-copy
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - glint-data:/app/.glint
+      - bot-logs:/app/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-files: "3"
+
+volumes:
+  glint-data:
+  bot-logs:

@@ -4,7 +4,7 @@ import { OrderbookChecker } from '../signals/orderbook-checker.js';
 import { categoriseMarket } from '../signals/market-categoriser.js';
 import type { GlintAdapter } from '../signals/glint-adapter.js';
 import type { LeaderTrade, ConfirmationDecision } from '../types/index.js';
-import type { ConfirmationConfig } from '../core/config.js';
+import type { ConfirmationConfig, AIConfig } from '../core/config.js';
 
 /**
  * ConfirmationLayer — validates a leader's trade before we copy it.
@@ -41,11 +41,11 @@ export class ConfirmationLayer {
   private recentDecisions: TimestampedDecision[] = [];
 
   constructor(
-    apiKey: string,
     glintAdapter: GlintAdapter | null = null,
     config?: ConfirmationConfig,
+    aiConfig?: AIConfig,
   ) {
-    this.classifier = new AIClassifier(apiKey);
+    this.classifier = new AIClassifier(aiConfig);
     this.orderbookChecker = new OrderbookChecker();
     this.glintAdapter = glintAdapter;
     this.config = config ?? {
