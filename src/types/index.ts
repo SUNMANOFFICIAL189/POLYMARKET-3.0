@@ -232,6 +232,7 @@ export interface Leader {
   isCurrentLeader: boolean;
   trackedSince?: string;
   updatedAt?: string;
+  specialistCategory?: string | null;
 }
 
 export interface WatcherConfig {

@@ -31,11 +31,16 @@ export class TraderScorer {
     const frequencyScore = this.scoreFrequency(leader.tradeCount30d);
     const recencyScore = this.scoreRecency(leader.lastTradeTime);
 
-    const compositeScore =
+    let compositeScore =
       winRateScore * WEIGHTS.winRate +
       profitFactorScore * WEIGHTS.profitFactor +
       frequencyScore * WEIGHTS.frequency +
       recencyScore * WEIGHTS.recency;
+
+    // Specialist bonus: domain experts outperform generalists (+3 points)
+    if (leader.specialistCategory) {
+      compositeScore += 3;
+    }
 
     return {
       ...leader,

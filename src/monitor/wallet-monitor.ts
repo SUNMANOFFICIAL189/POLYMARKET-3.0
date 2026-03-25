@@ -363,6 +363,11 @@ export class WalletMonitor extends EventEmitter {
     }
   }
 
+  getSpecialistCategory(address: string): MarketCategory | null {
+    const categories = this.walletCategories.get(address) ?? [];
+    return detectSpecialistCategory(categories);
+  }
+
   getWalletStats(address: string): { tradeCount: number; lastTradeTime?: string } {
     return {
       tradeCount: this.seenTradeIds.get(address)?.size ?? 0,

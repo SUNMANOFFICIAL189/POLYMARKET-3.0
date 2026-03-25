@@ -9,6 +9,7 @@ import { LeaderSelector } from '../leaderboard/selector.js';
 import { WalletMonitor } from '../monitor/wallet-monitor.js';
 import { ConfirmationLayer } from '../confirmation/confirmation-layer.js';
 import { CopyExecutor } from '../execution/copy-executor.js';
+import { OrderbookChecker } from '../signals/orderbook-checker.js';
 import { GlintScraper } from '../signals/glint-scraper.js';
 import { GlintAdapter } from '../signals/glint-adapter.js';
 import { NewsScanner } from '../signals/news-scanner.js';
@@ -69,8 +70,6 @@ export class Runner {
       onRotation: async (event) => {
         logger.info(`LEADER ROTATION: ${event.previousLeader?.walletAddress?.slice(0, 10) ?? 'none'} → ${event.newLeader.walletAddress.slice(0, 10)} (${event.reason})`);
         this.currentLeader = event.newLeader;
-        // setWatchers is now called in onLeaderboardUpdate — no need to call setLeader here.
-        // Keep rotation event for logging and Supabase history only.
 
         if (cfg.supabase.url) {
           await db.setCurrentLeader(event.newLeader.walletAddress);
@@ -89,14 +88,19 @@ export class Runner {
     this.confirmationLayer = new ConfirmationLayer(
       cfg.apiKeys.anthropic,
       this.glintAdapter,
+      cfg.confirmation,
     );
 
     this.copyExecutor = new CopyExecutor({
       paperEngine: this.paperEngine,
       riskManager: this.riskManager,
+      orderbookChecker: new OrderbookChecker(),
       paperMode: cfg.paperMode,
       ourPortfolio: cfg.totalCapitalUsdc,
       riskLevel: cfg.risk.level,
+      positionConfig: cfg.positions,
+      liquidityConfig: cfg.liquidity,
+      holdConfig: cfg.holdToResolution,
     });
   }
 
@@ -109,6 +113,10 @@ export class Runner {
     logger.info(`Mode: ${this.config.paperMode ? 'PAPER' : 'LIVE'}`);
     logger.info(`Risk: ${this.config.risk.level}`);
     logger.info(`Capital: $${this.config.totalCapitalUsdc}`);
+    logger.info(`Max positions: ${this.config.positions.maxOpenPositions} (${this.config.positions.rank1ReservedSlots} reserved for rank-1)`);
+    logger.info(`Veto threshold: ${this.config.confirmation.vetoConfidenceThreshold} | Corroborations: ${this.config.confirmation.watcherMinCorroborations}-of-3`);
+    logger.info(`Liquidity check: ${this.config.liquidity.enabled ? `ON (max ${this.config.liquidity.maxSlippagePct * 100}% slippage)` : 'OFF'}`);
+    logger.info(`Hold to resolution: ${this.config.holdToResolution.enabled ? 'ON' : 'OFF'}`);
     logger.info('='.repeat(60));
 
     // Init Supabase
@@ -224,7 +232,20 @@ export class Runner {
 
     this.walletMonitor.on('leader-closed', (data: { marketId: string; marketQuestion: string; leaderWallet: string }) => {
       logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}"`);
-      // Close our copy if we have one, then persist PNL to Supabase
+
+      // Check hold-to-resolution before closing
+      const copyTrade = this.copyExecutor.getOpenTradeForMarket(data.marketId);
+      if (copyTrade) {
+        const currentPrice = 0.5; // Default; real price comes from position data
+        const exitDecision = this.copyExecutor.shouldFollowLeaderExit(copyTrade, currentPrice);
+
+        if (!exitDecision.follow) {
+          logger.info(`HOLD TO RESOLUTION: Not following leader exit for "${data.marketQuestion.slice(0, 50)}" — ${exitDecision.reason}`);
+          return;
+        }
+      }
+
+      // Close our copy, then persist PNL to Supabase
       this.copyExecutor.closePosition(data.marketId, 0.5, 'leader_closed').then(closedTrade => {
         if (!closedTrade) return;
         const pnlStr = closedTrade.pnl !== undefined ? `$${closedTrade.pnl.toFixed(2)}` : 'n/a';
@@ -243,19 +264,18 @@ export class Runner {
   private async onLeaderboardUpdate(rawLeaders: Leader[]): Promise<void> {
     const scored = this.scorer.scoreAndRank(rawLeaders);
 
-    // Enrich leaders that are actively monitored with real trade stats
+    // Enrich leaders with real trade stats and specialist category
     const enriched = scored.map(leader => {
       const stats = this.walletMonitor.getWalletStats(leader.walletAddress);
+      const specialistCategory = this.walletMonitor.getSpecialistCategory(leader.walletAddress);
+      const updates: Partial<Leader> = { specialistCategory };
       if (stats.tradeCount > 0) {
-        return {
-          ...leader,
-          tradeCount30d: Math.max(leader.tradeCount30d, stats.tradeCount),
-          lastTradeTime: stats.lastTradeTime || leader.lastTradeTime,
-        };
+        updates.tradeCount30d = Math.max(leader.tradeCount30d, stats.tradeCount);
+        updates.lastTradeTime = stats.lastTradeTime || leader.lastTradeTime;
       }
-      return leader;
+      return { ...leader, ...updates };
     });
-    // Re-score with enriched data so active wallets score higher
+    // Re-score with enriched data (specialist bonus + active wallet boost)
     const rescored = this.scorer.scoreAndRank(enriched);
 
     // Await upsert before selector.update() so setCurrentLeader finds rows in DB
@@ -276,7 +296,7 @@ export class Runner {
       );
     }
 
-    const watcherSummary = top5.map((l, i) => `${l.walletAddress.slice(0, 8)}(r${i + 1})`).join(', ');
+    const watcherSummary = top5.map((l, i) => `${l.walletAddress.slice(0, 8)}(r${i + 1}${l.specialistCategory ? `:${l.specialistCategory}` : ''})`).join(', ');
     logger.info(`Leaderboard update: ${rescored.length} traders scored. Watching top ${top5.length}: ${watcherSummary}`);
   }
 
@@ -377,12 +397,14 @@ export class Runner {
       rotations: selectorStats.totalRotations,
       balance: `$${paperStats.balance.toFixed(2)}`,
       totalReturn: `${paperStats.totalReturn.toFixed(2)}%`,
-      openPositions: paperStats.openTrades,
+      openPositions: `${paperStats.openTrades}/${this.config.positions.maxOpenPositions}`,
+      stalePositions: copyStats.stalePositions,
       closedTrades: paperStats.totalTrades,
       winRate: paperStats.totalTrades > 0 ? `${paperStats.winRate.toFixed(1)}%` : 'n/a',
       pnl: `$${paperStats.totalPnl.toFixed(2)}`,
       executions: copyStats.executed,
       vetoes: confirmStats.vetoed,
+      vetoRate24h: `${(confirmStats.vetoRate24h * 100).toFixed(1)}%`,
       consecutiveVetoes: this.consecutiveVetoes,
       aiCost: `$${confirmStats.aiStats.estimatedCost.toFixed(3)}`,
       walletPolls: walletStats.pollCount,
