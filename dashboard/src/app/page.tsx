@@ -1,4 +1,4 @@
-import { getLeaders, getCurrentLeader, getCopyTrades, getDailyPerformance, getLeaderHistory } from '@/lib/queries'
+import { getLeaders, getCurrentLeader, getCopyTrades, getDailyPerformance, getLeaderHistory, getMirofishScans } from '@/lib/queries'
 import { TickerBar } from '@/components/layout/ticker-bar'
 import { NavBar } from '@/components/layout/nav-bar'
 import { Clock } from '@/components/layout/clock'
@@ -7,7 +7,7 @@ import LeftPanel from '@/components/panels/left-panel'
 import { CenterPanel } from '@/components/panels/center-panel'
 import { RightPanel } from '@/components/panels/right-panel'
 import { NeuralGlobe } from '@/components/globe'
-import type { Leader, CopyTrade, DailyPerformance, LeaderHistory, ChartPoint } from '@/lib/types'
+import type { Leader, CopyTrade, DailyPerformance, LeaderHistory, ChartPoint, MirofishScan } from '@/lib/types'
 
 function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoint[] {
   // Build a chronological event stream: each trade open/close is a balance delta
@@ -68,14 +68,16 @@ export default async function DashboardPage() {
   let performance: DailyPerformance[] = []
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let leaderHistory: LeaderHistory[] = []
+  let mirofishScans: MirofishScan[] = []
 
   try {
-    ;[leaders, currentLeader, trades, performance, leaderHistory] = await Promise.all([
+    ;[leaders, currentLeader, trades, performance, leaderHistory, mirofishScans] = await Promise.all([
       getLeaders(),
       getCurrentLeader(),
       getCopyTrades(200),
       getDailyPerformance(30),
       getLeaderHistory(),
+      getMirofishScans(),
     ])
   } catch {
     // Supabase unavailable — render with empty states
@@ -177,6 +179,7 @@ export default async function DashboardPage() {
           leaders={leaders}
           currentLeaderWallet={currentLeader?.wallet_address ?? null}
           recentTrades={trades}
+          mirofishScans={mirofishScans}
         />
 
       </div>

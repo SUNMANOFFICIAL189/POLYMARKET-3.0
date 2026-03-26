@@ -1,11 +1,12 @@
 'use client'
 
-import type { Leader, CopyTrade } from '@/lib/types'
+import type { Leader, CopyTrade, MirofishScan } from '@/lib/types'
 
 interface RightPanelProps {
   leaders: Leader[]
   currentLeaderWallet: string | null
   recentTrades: CopyTrade[]
+  mirofishScans: MirofishScan[]
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -169,7 +170,7 @@ const S = {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function RightPanel({ leaders, currentLeaderWallet, recentTrades }: RightPanelProps) {
+export function RightPanel({ leaders, currentLeaderWallet, recentTrades, mirofishScans }: RightPanelProps) {
   const top8 = leaders.slice(0, 8)
 
   const openTrades = recentTrades
@@ -245,52 +246,77 @@ export function RightPanel({ leaders, currentLeaderWallet, recentTrades }: Right
         )}
       </div>
 
-      {/* ── SECTION 3: GLOBAL SCANNER ───────────────────────────────────── */}
+      {/* ── SECTION 3: SWARM INTELLIGENCE ──────────────────────────────── */}
       <div style={S.section3}>
         <div style={S.sectionHeader}>
-          <span style={S.diamond}>◆</span>
-          <span>GLOBAL SCANNER</span>
+          <span style={{ color: '#00ccff', fontSize: '8px' }}>◆</span>
+          <span>SWARM INTELLIGENCE</span>
         </div>
 
         <div style={S.section3Inner}>
-          {scanFeed.length === 0 ? (
+          {mirofishScans.length === 0 ? (
             <div style={{ padding: '10px', fontSize: '9px', color: '#333', fontStyle: 'italic' }}>
-              No trades
+              Waiting for first scan...
             </div>
           ) : (
-            scanFeed.map((trade, i) => {
-              const label =
-                trade.status === 'open' ? 'EXECUTED' :
-                trade.status === 'closed' ? 'SETTLED' :
-                trade.status === 'vetoed' ? 'VETOED' :
-                'SKIPPED'
-
-              const labelColor =
-                trade.status === 'open' ? 'var(--green)' :
-                trade.status === 'vetoed' ? 'var(--red)' :
+            mirofishScans.map((scan, i) => {
+              const signalColor =
+                scan.signal === 'YES' ? 'var(--green)' :
+                scan.signal === 'NO' ? 'var(--red)' :
                 '#666'
 
-              const pnl = trade.pnl ?? 0
-              const pnlStr = pnl >= 0
-                ? `+$${pnl.toFixed(2)}`
-                : `-$${Math.abs(pnl).toFixed(2)}`
-              const pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)'
+              const strengthLabel =
+                scan.signal_strength === 'very_strong' ? '!!!' :
+                scan.signal_strength === 'strong' ? '!!' :
+                scan.signal_strength === 'moderate' ? '!' :
+                ''
 
-              const marketName = trade.market_question.slice(0, 20)
+              const edgeColor = scan.edge_pct > 0 ? 'var(--green)' : scan.edge_pct < 0 ? 'var(--red)' : '#555'
+              const edgeStr = `${scan.edge_pct > 0 ? '+' : ''}${scan.edge_pct.toFixed(1)}%`
+
+              const confidenceColor =
+                scan.confidence === 'high' ? 'var(--green)' :
+                scan.confidence === 'medium' ? '#888' :
+                '#444'
 
               return (
-                <div key={trade.id} style={S.scanRow(i % 2 === 1)}>
-                  <span style={{ color: '#444', flexShrink: 0 }}>[{tradeId(trade.id)}]</span>
-                  <span style={{ color: labelColor, flexShrink: 0 }}>{label}</span>
-                  <span style={{ color: trade.side === 'YES' ? '#888' : '#666', flexShrink: 0 }}>
-                    {trade.side}
-                  </span>
-                  <span style={{ color: '#555', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {marketName}
-                  </span>
-                  {trade.pnl !== null && (
-                    <span style={{ color: pnlColor, flexShrink: 0 }}>{pnlStr}</span>
-                  )}
+                <div key={scan.condition_id} style={{
+                  padding: '6px 8px',
+                  borderBottom: '1px solid #0a0a0a',
+                  background: i % 2 === 1 ? '#030303' : '#000',
+                }}>
+                  <div style={{
+                    fontSize: '9px',
+                    color: '#ccc',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    marginBottom: '2px',
+                  }}>
+                    {scan.question.slice(0, 35)}
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '9px',
+                  }}>
+                    <span style={{ color: '#555' }}>
+                      Mkt: {scan.market_price.toFixed(0)}%
+                    </span>
+                    <span style={{ color: '#00ccff' }}>
+                      Swarm: {scan.swarm_probability.toFixed(0)}%
+                    </span>
+                    <span style={{ color: edgeColor, fontWeight: 'bold' }}>
+                      {edgeStr}
+                    </span>
+                    <span style={{ color: signalColor, fontWeight: 'bold' }}>
+                      {scan.signal}{strengthLabel}
+                    </span>
+                    <span style={{ color: confidenceColor, marginLeft: 'auto', fontSize: '8px' }}>
+                      n={scan.sample_size}
+                    </span>
+                  </div>
                 </div>
               )
             })

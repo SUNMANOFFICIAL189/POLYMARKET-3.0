@@ -63,6 +63,23 @@ export interface ChartPoint {
   balance: number
 }
 
+export interface MirofishScan {
+  condition_id: string
+  question: string
+  category: string
+  market_price: number
+  swarm_probability: number
+  swarm_median: number
+  edge_pct: number
+  signal: 'YES' | 'NO' | 'NEUTRAL'
+  signal_strength: 'weak' | 'moderate' | 'strong' | 'very_strong'
+  confidence: 'high' | 'medium' | 'low' | 'none'
+  sample_size: number
+  sentiment: { yes_pct: number; no_pct: number; uncertain_pct: number }
+  scanned_at: string
+  volume_24h: number
+}
+
 export interface SystemStatus {
   leader: Leader | null
   balance: number

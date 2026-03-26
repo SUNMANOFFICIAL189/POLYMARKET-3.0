@@ -1,5 +1,5 @@
 import { supabaseServer as supabase } from './supabase-server'
-import type { Leader, LeaderHistory, CopyTrade, DailyPerformance } from './types'
+import type { Leader, LeaderHistory, CopyTrade, DailyPerformance, MirofishScan } from './types'
 
 export async function getLeaders(): Promise<Leader[]> {
   const { data, error } = await supabase
@@ -52,4 +52,19 @@ export async function getDailyPerformance(days = 30): Promise<DailyPerformance[]
     .order('date', { ascending: true })
   if (error) throw error
   return data ?? []
+}
+
+export async function getMirofishScans(): Promise<MirofishScan[]> {
+  try {
+    const bridgeUrl = process.env.MIROFISH_BRIDGE_URL || 'http://localhost:5050'
+    const res = await fetch(`${bridgeUrl}/api/swarm-scores`, {
+      next: { revalidate: 0 },
+      signal: AbortSignal.timeout(3000),
+    })
+    if (!res.ok) return []
+    const json = await res.json()
+    return (json.results ?? []) as MirofishScan[]
+  } catch {
+    return []
+  }
 }
