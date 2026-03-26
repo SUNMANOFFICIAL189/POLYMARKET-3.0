@@ -269,15 +269,29 @@ export class Runner {
     }
 
     // Update the watcher pool: top 5 traders (rank 1 = leader, 2-5 = watchers)
+    // Plus any priority wallets that should always be tracked
+    const PRIORITY_WALLETS = [
+      { walletAddress: '0x6ac5bb06a9eb05641fd5e82640268b92f3ab4b6e', label: 'Op0jogggg' }, // $1M+ profit, 21K+ trades
+    ];
+
     const top5 = this.selector.getTopN(5);
-    if (top5.length > 0) {
-      this.walletMonitor.setWatchers(
-        top5.map((leader, i) => ({ walletAddress: leader.walletAddress, rank: i + 1 }))
-      );
+    const watcherList = top5.map((leader, i) => ({ walletAddress: leader.walletAddress, rank: i + 1 }));
+
+    // Add priority wallets as watchers (rank 2) if not already in the list
+    for (const pw of PRIORITY_WALLETS) {
+      const alreadyTracked = watcherList.some(w => w.walletAddress.toLowerCase() === pw.walletAddress.toLowerCase());
+      if (!alreadyTracked) {
+        watcherList.push({ walletAddress: pw.walletAddress, rank: 2 });
+        logger.info(`Priority wallet added: ${pw.label} (${pw.walletAddress.slice(0, 10)}...)`);
+      }
     }
 
-    const watcherSummary = top5.map((l, i) => `${l.walletAddress.slice(0, 8)}(r${i + 1})`).join(', ');
-    logger.info(`Leaderboard update: ${rescored.length} traders scored. Watching top ${top5.length}: ${watcherSummary}`);
+    if (watcherList.length > 0) {
+      this.walletMonitor.setWatchers(watcherList);
+    }
+
+    const watcherSummary = watcherList.map((w, i) => `${w.walletAddress.slice(0, 8)}(r${w.rank})`).join(', ');
+    logger.info(`Leaderboard update: ${rescored.length} traders scored. Watching ${watcherList.length}: ${watcherSummary}`);
   }
 
   private async handleLeaderTrade(trade: LeaderTrade): Promise<void> {
