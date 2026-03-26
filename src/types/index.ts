@@ -276,6 +276,7 @@ export interface CopyTrade {
   pnl?: number;
   entryTime: string;
   exitTime?: string;
+  exitReason?: string;
   createdAt?: string;
   watcherRank?: number; // rank of trader who triggered this copy (1-5)
 }

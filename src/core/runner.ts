@@ -13,6 +13,7 @@ import { GlintScraper } from '../signals/glint-scraper.js';
 import { GlintAdapter } from '../signals/glint-adapter.js';
 import { NewsScanner } from '../signals/news-scanner.js';
 import * as db from '../data/supabase.js';
+import { PositionLifecycleManager } from './position-lifecycle.js';
 import type { Leader, LeaderTrade } from '../types/index.js';
 
 export class Runner {
@@ -42,6 +43,7 @@ export class Runner {
   // Execution
   private confirmationLayer: ConfirmationLayer;
   private copyExecutor: CopyExecutor;
+  private lifecycleManager: PositionLifecycleManager;
 
   // State
   private currentLeader: Leader | null = null;
@@ -98,6 +100,25 @@ export class Runner {
       ourPortfolio: cfg.totalCapitalUsdc,
       riskLevel: cfg.risk.level,
     });
+
+    // Position Lifecycle Manager — auto-closes resolved, stale, and stop-loss positions
+    this.lifecycleManager = new PositionLifecycleManager({
+      closePosition: (marketId, exitPrice, reason) =>
+        this.copyExecutor.closePosition(marketId, exitPrice, reason),
+      getOpenTrades: () => this.copyExecutor.getOpenTrades(),
+      persistClose: async (trade) => {
+        if (trade.id && cfg.supabase.url) {
+          await db.updateCopyTrade(trade.id, {
+            status: 'closed' as any,
+            pnl: trade.pnl,
+            exitTime: trade.exitTime,
+            exitReason: trade.exitReason ?? 'lifecycle_auto_close',
+          }).catch(err => logger.warn(`Lifecycle: Supabase update failed: ${err}`));
+        }
+      },
+      maxPositionAgeMs: parseInt(process.env.MAX_POSITION_AGE_HOURS ?? '48') * 3600000,
+      stopLossPct: parseFloat(process.env.STOP_LOSS_PCT ?? '0.30'),
+    });
   }
 
   async start(): Promise<void> {
@@ -141,6 +162,9 @@ export class Runner {
 
     // Day rollover check every hour
     this.dayRolloverTimer = setInterval(() => this.handleDayRollover(), 60 * 60 * 1000);
+
+    // Position Lifecycle Manager — auto-closes resolved/stale/stop-loss positions
+    this.lifecycleManager.start();
 
     logger.info('PATS-Copy fully started. Waiting for leaderboard data...');
   }
