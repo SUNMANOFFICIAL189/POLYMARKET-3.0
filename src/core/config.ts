@@ -52,6 +52,13 @@ export function loadConfig(): AppConfig {
   const risk = RISK_PRESETS[riskLevel];
   if (!risk) throw new Error(`Invalid RISK_LEVEL: ${riskLevel}`);
 
+  // Allow env override for max open positions
+  const maxOpenOverride = process.env.MAX_OPEN_POSITIONS;
+  if (maxOpenOverride) {
+    risk.maxOpenPositions = parseInt(maxOpenOverride);
+    logger.info(`MAX_OPEN_POSITIONS overridden to ${risk.maxOpenPositions} from env`);
+  }
+
   const config: AppConfig = {
     paperMode,
     risk,

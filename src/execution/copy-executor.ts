@@ -168,7 +168,8 @@ export class CopyExecutor {
 
       // Filter 3: reserve slots for rank-1 leader
       // watcherPositions tracks open positions opened by rank 2-5 trades
-      const watcherLimit = Math.max(1, 5 - RANK1_RESERVED_SLOTS); // 5 = paper maxOpenPositions
+      const maxPos = parseInt(process.env.MAX_OPEN_POSITIONS ?? '10');
+      const watcherLimit = Math.max(1, maxPos - RANK1_RESERVED_SLOTS);
       if (this.watcherPositions.size >= watcherLimit) {
         this.blockedCount++;
         logger.debug(`CopyExecutor: Watcher slot limit reached (${this.watcherPositions.size}/${watcherLimit}) — reserving ${RANK1_RESERVED_SLOTS} for rank-1`);
