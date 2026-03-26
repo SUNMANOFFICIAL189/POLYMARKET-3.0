@@ -115,10 +115,24 @@ Respond with ONLY a JSON object, no markdown:
     });
   }
 
+  // Simple throttle: ensure minimum gap between API calls (Cerebras = 30 RPM = 2s gap)
+  private static lastCallTime = 0;
+  private static readonly MIN_CALL_GAP_MS = 2200; // ~27 RPM to stay under 30 RPM limit
+
+  private async throttle(): Promise<void> {
+    const now = Date.now();
+    const elapsed = now - AIClassifier.lastCallTime;
+    if (elapsed < AIClassifier.MIN_CALL_GAP_MS) {
+      await new Promise(resolve => setTimeout(resolve, AIClassifier.MIN_CALL_GAP_MS - elapsed));
+    }
+    AIClassifier.lastCallTime = Date.now();
+  }
+
   private async callAPI<T>(prompt: string, parser: (content: string) => T, fallback: T): Promise<T> {
     for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         this.callCount++;
+        await this.throttle();
 
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (OLLAMA_API_KEY) headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
@@ -161,7 +175,8 @@ Respond with ONLY a JSON object, no markdown:
           error?.cause?.code === 'ETIMEDOUT' ||
           error?.cause?.code === 'ENOTFOUND' ||
           error?.message?.includes('fetch failed') ||
-          error?.message?.includes('ECONNREFUSED');
+          error?.message?.includes('ECONNREFUSED') ||
+          error?.message?.includes('429');
 
         if (isRetryable && attempt < this.MAX_RETRIES) {
           this.retryCount++;
