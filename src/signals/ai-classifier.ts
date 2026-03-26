@@ -30,6 +30,7 @@ export interface TradeConfirmationResult {
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
 const OLLAMA_MODEL    = process.env.OLLAMA_MODEL    ?? 'llama3.2';
+const OLLAMA_API_KEY  = process.env.CEREBRAS_API_KEY ?? process.env.GROQ_API_KEY ?? '';
 
 export class AIClassifier {
   private callCount = 0;
@@ -119,9 +120,12 @@ Respond with ONLY a JSON object, no markdown:
       try {
         this.callCount++;
 
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (OLLAMA_API_KEY) headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
+
         const response = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             model: OLLAMA_MODEL,
             messages: [{ role: 'user', content: prompt }],
