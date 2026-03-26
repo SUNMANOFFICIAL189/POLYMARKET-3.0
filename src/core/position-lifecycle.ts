@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger.js';
+import { sendTelegramAlert } from '../utils/telegram.js';
 import type { CopyTrade } from '../types/index.js';
 
 const GAMMA_API_BASE = 'https://gamma-api.polymarket.com';
@@ -118,7 +119,9 @@ export class PositionLifecycleManager {
           if (closed) {
             closedCount++;
             await this.persistClose(closed);
-            logger.info(`PositionLifecycle: Auto-closed resolved position on "${marketId}" — pnl: $${closed.pnl?.toFixed(2) ?? 'n/a'}`);
+            const pnl = closed.pnl?.toFixed(2) ?? 'n/a';
+            logger.info(`PositionLifecycle: Auto-closed resolved position on "${marketId}" — pnl: $${pnl}`);
+            sendTelegramAlert(`📊 <b>MARKET RESOLVED</b>\n${marketId.slice(0, 50)}\nP&L: $${pnl}`);
           }
         }
       } catch (err) {
@@ -199,6 +202,7 @@ export class PositionLifecycleManager {
           const closed = await this.closePosition(marketId, currentPrice, 'stop_loss');
           if (closed) {
             await this.persistClose(closed);
+            sendTelegramAlert(`🛑 <b>STOP-LOSS</b>\n${marketId.slice(0, 50)}\nLoss: ${(lossPct * 100).toFixed(1)}% | P&L: $${closed.pnl?.toFixed(2) ?? 'n/a'}`);
           }
         }
       } catch (err) {

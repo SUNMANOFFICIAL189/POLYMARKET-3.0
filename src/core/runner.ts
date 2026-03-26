@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger.js';
+import { sendTelegramAlert } from '../utils/telegram.js';
 import { loadConfig } from './config.js';
 import { RiskDial } from './config.js';
 import { RiskManager } from './risk-manager.js';
@@ -374,7 +375,10 @@ export class Runner {
       }
 
       if (result.success) {
-        logger.info(`COPY TRADE EXECUTED: $${result.copyTrade?.ourSize?.toFixed(2)} on "${trade.marketQuestion.slice(0, 40)}"`);
+        const size = result.copyTrade?.ourSize?.toFixed(2) ?? '?';
+        const market = trade.marketQuestion?.slice(0, 50) ?? trade.marketId;
+        logger.info(`COPY TRADE EXECUTED: $${size} on "${market}"`);
+        sendTelegramAlert(`🟢 <b>TRADE EXECUTED</b>\n💰 $${size} on "${market}"\n📊 Side: ${trade.side?.toUpperCase()} ${trade.outcome ?? ''}`);
       } else {
         logger.info(`Trade not copied: ${result.reason}`);
       }

@@ -10,16 +10,16 @@ import { NeuralGlobe } from '@/components/globe'
 import type { Leader, CopyTrade, DailyPerformance, LeaderHistory, ChartPoint, MirofishScan } from '@/lib/types'
 
 function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoint[] {
-  // Build a chronological event stream: each trade open/close is a balance delta
+  // Chart shows PORTFOLIO VALUE (deposit + realized P&L), not available cash.
+  // Open trades don't reduce the displayed value — only realized gains/losses move the line.
+  // This matches what the "PORTFOLIO BALANCE" number shows.
   const events: { time: string; delta: number }[] = []
 
   for (const t of trades) {
     if (t.status === 'vetoed' || t.status === 'skipped') continue
-    // Capital reserved when trade opens
-    events.push({ time: t.entry_time, delta: -(t.our_size ?? 0) })
-    // Capital + P&L returned when trade closes
-    if (t.status === 'closed' && t.exit_time) {
-      events.push({ time: t.exit_time, delta: (t.our_size ?? 0) + (t.pnl ?? 0) })
+    // Only show P&L impact when trades close — not capital allocation
+    if ((t.status === 'closed' || t.status === 'stopped') && t.exit_time) {
+      events.push({ time: t.exit_time, delta: t.pnl ?? 0 })
     }
   }
 
