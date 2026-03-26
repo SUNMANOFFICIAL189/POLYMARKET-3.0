@@ -1,6 +1,7 @@
 import { logger } from '../utils/logger.js';
 import { AIClassifier } from '../signals/ai-classifier.js';
 import { OrderbookChecker } from '../signals/orderbook-checker.js';
+import { MirofishClient } from '../signals/mirofish-client.js';
 import { categoriseMarket } from '../signals/market-categoriser.js';
 import type { GlintAdapter } from '../signals/glint-adapter.js';
 import type { LeaderTrade, ConfirmationDecision } from '../types/index.js';
@@ -37,6 +38,7 @@ const WATCHER_MIN_CORROBORATIONS = 2;    // out of 3 checks must pass for rank 2
 export class ConfirmationLayer {
   private classifier: AIClassifier;
   private orderbookChecker: OrderbookChecker;
+  private mirofishClient: MirofishClient;
   private glintAdapter: GlintAdapter | null;
   private approvedCount = 0;
   private vetoedCount = 0;
@@ -50,6 +52,7 @@ export class ConfirmationLayer {
   ) {
     this.classifier = new AIClassifier(apiKey);
     this.orderbookChecker = new OrderbookChecker();
+    this.mirofishClient = new MirofishClient();
     this.glintAdapter = glintAdapter;
   }
 
@@ -115,22 +118,60 @@ export class ConfirmationLayer {
       };
     }
 
-    // Map AI recommendation to decision
+    // Check MiroFish swarm consensus (non-blocking — uses cached scan data)
+    let mirofishVerdict = 'unavailable';
+    let mirofishReason = '';
+    try {
+      const mirofishResult = await this.mirofishClient.evaluateTrade(
+        trade.marketQuestion,
+        trade.side as 'buy' | 'sell',
+        trade.outcome,
+        undefined, // conditionId not on LeaderTrade
+      );
+      mirofishVerdict = mirofishResult.verdict;
+      mirofishReason = mirofishResult.reason;
+      if (mirofishVerdict !== 'unavailable') {
+        logger.info(`MiroFish: ${mirofishVerdict} — ${mirofishReason}`);
+      }
+    } catch (err) {
+      logger.debug(`MiroFish check skipped: ${err}`);
+    }
+
+    // Map AI recommendation to decision (with MiroFish as additional signal)
     let decision: ConfirmationDecision;
     let reason: string;
 
     if (aiResult.recommendation === 'veto' && aiResult.confidence >= VETO_CONFIDENCE_THRESHOLD) {
       decision = 'vetoed';
       reason = `AI veto (${(aiResult.confidence * 100).toFixed(0)}% confidence): ${aiResult.reasoning}`;
+      if (mirofishVerdict === 'contradicts') {
+        reason += ` | MiroFish also contradicts: ${mirofishReason}`;
+      }
       this.vetoedCount++;
     } else if (aiResult.recommendation === 'veto' && aiResult.confidence < VETO_CONFIDENCE_THRESHOLD) {
-      // Weak veto signal — still approve (trust the leader)
-      decision = 'approved';
-      reason = `Weak veto signal (${(aiResult.confidence * 100).toFixed(0)}% < ${VETO_CONFIDENCE_THRESHOLD * 100}% threshold) — trusting leader. ${aiResult.reasoning}`;
-      this.approvedCount++;
+      // Weak AI veto — check if MiroFish strongly contradicts
+      if (mirofishVerdict === 'contradicts') {
+        // Both AI and swarm are skeptical — veto despite weak AI confidence
+        decision = 'vetoed';
+        reason = `Weak AI veto + MiroFish contradiction — combined skepticism triggers veto. AI: ${aiResult.reasoning} | Swarm: ${mirofishReason}`;
+        this.vetoedCount++;
+      } else {
+        decision = 'approved';
+        reason = `Weak veto signal (${(aiResult.confidence * 100).toFixed(0)}% < ${VETO_CONFIDENCE_THRESHOLD * 100}% threshold) — trusting leader. ${aiResult.reasoning}`;
+        if (mirofishVerdict === 'supports') {
+          reason += ` | MiroFish supports: ${mirofishReason}`;
+        }
+        this.approvedCount++;
+      }
     } else {
       decision = 'approved';
       reason = aiResult.reasoning;
+      if (mirofishVerdict === 'supports') {
+        reason += ` | MiroFish confirms: ${mirofishReason}`;
+      } else if (mirofishVerdict === 'contradicts') {
+        // AI says copy but swarm disagrees — still approve but flag it
+        reason += ` | ⚠️ MiroFish contradicts: ${mirofishReason} (proceeding with leader)`;
+      }
       this.approvedCount++;
     }
 
@@ -204,7 +245,34 @@ export class ConfirmationLayer {
     const bidPressure = await this.orderbookChecker.getBidPressure(trade.tokenId);
     const orderbookPass = bidPressure !== null && bidPressure > WATCHER_ORDERBOOK_THRESHOLD;
 
-    const passes = [glintPass, aiPass, orderbookPass].filter(Boolean).length;
+    // Check 4: MiroFish swarm consensus (bonus check, doesn't penalize if unavailable)
+    let mirofishPass = false;
+    let mirofishStr = 'unavail';
+    try {
+      const mfResult = await this.mirofishClient.evaluateTrade(
+        trade.marketQuestion,
+        trade.side as 'buy' | 'sell',
+        trade.outcome,
+        undefined, // conditionId not on LeaderTrade
+      );
+      if (mfResult.verdict === 'supports') {
+        mirofishPass = true;
+        mirofishStr = `Y(${mfResult.score?.swarmProbability.toFixed(0)}%,${mfResult.score?.signalStrength})`;
+      } else if (mfResult.verdict === 'contradicts') {
+        mirofishPass = false;
+        mirofishStr = `N(${mfResult.score?.swarmProbability.toFixed(0)}%,contradicts)`;
+      } else {
+        mirofishStr = `neutral`;
+        mirofishPass = false; // neutral doesn't count as a pass
+      }
+    } catch {
+      mirofishStr = 'unavail';
+    }
+
+    // Corroboration: count passes from available checks
+    // MiroFish is additive — it can help reach threshold but its absence doesn't hurt
+    const basePasses = [glintPass, aiPass, orderbookPass].filter(Boolean).length;
+    const passes = basePasses + (mirofishPass ? 1 : 0);
     // If orderbook data is unavailable (tokenId missing or market not on CLOB), only 2 checks
     // are possible. In that case require 1/2 instead of 2/3 to avoid permanently blocking all
     // watcher trades from markets that don't have CLOB coverage (e.g. sports prediction markets).
@@ -221,7 +289,7 @@ export class ConfirmationLayer {
     this.totalLatencyMs += latencyMs;
     this.callCount++;
 
-    const corrobLog = `Corroboration rank=${trade.rank}: glint=${glintStr} ai=${aiStr} orderbook=${obStr} → ${passes}/${threshold} needed`;
+    const corrobLog = `Corroboration rank=${trade.rank}: glint=${glintStr} ai=${aiStr} orderbook=${obStr} mirofish=${mirofishStr} → ${passes}/${threshold} needed`;
 
     if (passes >= threshold) {
       this.approvedCount++;

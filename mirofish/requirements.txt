@@ -1,0 +1,12 @@
+# MiroFish Lightweight Scanner - Polymarket Integration
+# Core simulation engine
+camel-oasis==0.2.5
+camel-ai[all]==0.2.78
+
+# LLM client (OpenAI-compatible, works with Cerebras)
+openai>=1.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+aiohttp>=3.9.0
