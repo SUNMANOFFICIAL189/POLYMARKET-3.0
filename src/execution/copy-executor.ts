@@ -140,6 +140,13 @@ export class CopyExecutor {
       return { success: false, copyTrade, reason: confirmationReason };
     }
 
+    // Deduplication: if we already have an open position in this market, skip
+    if (this.openCopyTrades.has(leaderTrade.marketId)) {
+      const existing = this.openCopyTrades.get(leaderTrade.marketId)!;
+      logger.debug(`CopyExecutor: Already have open position in ${leaderTrade.marketId.slice(0, 20)} ($${existing.ourSize.toFixed(2)}) — skipping duplicate`);
+      return { success: false, reason: `Already have open position in this market` };
+    }
+
     // Rank-1 collision: if a watcher opened this market, close it and re-enter at full rank-1 size
     const isRank1 = !leaderTrade.rank || leaderTrade.rank === 1;
     if (isRank1 && this.watcherPositions.has(leaderTrade.marketId)) {
