@@ -22,6 +22,7 @@ export class Runner {
   private running = false;
   private statusTimer: ReturnType<typeof setInterval> | null = null;
   private dayRolloverTimer: ReturnType<typeof setInterval> | null = null;
+  private reconciliationTimer: ReturnType<typeof setInterval> | null = null;
 
   // Core modules
   private riskDial: RiskDial;
@@ -109,12 +110,18 @@ export class Runner {
       getOpenTrades: () => this.copyExecutor.getOpenTrades(),
       persistClose: async (trade) => {
         if (trade.id && cfg.supabase.url) {
-          await db.updateCopyTrade(trade.id, {
-            status: 'closed' as any,
-            pnl: trade.pnl,
-            exitTime: trade.exitTime,
-            exitReason: trade.exitReason ?? 'lifecycle_auto_close',
-          }).catch(err => logger.warn(`Lifecycle: Supabase update failed: ${err}`));
+          try {
+            await db.updateCopyTrade(trade.id, {
+              status: 'closed' as any,
+              pnl: trade.pnl,
+              exitTime: trade.exitTime,
+              exitReason: trade.exitReason ?? 'lifecycle_auto_close',
+            });
+            logger.info(`Lifecycle: Supabase close persisted ${trade.id}`);
+          } catch (err) {
+            logger.error(`Lifecycle: CRITICAL — Supabase close failed for ${trade.id}: ${err}`);
+            sendTelegramAlert(`🔴 SYNC ERROR: Lifecycle close failed for trade ${trade.id}`);
+          }
         }
       },
       maxPositionAgeMs: parseInt(process.env.MAX_POSITION_AGE_HOURS ?? '48') * 3600000,
@@ -167,6 +174,11 @@ export class Runner {
     // Position Lifecycle Manager — auto-closes resolved/stale/stop-loss positions
     this.lifecycleManager.start();
 
+    // Reconciliation: sync in-memory state with Supabase every 5 minutes
+    if (this.config.supabase.url) {
+      this.reconciliationTimer = setInterval(() => this.reconcileWithSupabase(), 5 * 60 * 1000);
+    }
+
     logger.info('PATS-Copy fully started. Waiting for leaderboard data...');
   }
 
@@ -174,6 +186,7 @@ export class Runner {
     this.running = false;
     if (this.statusTimer) { clearInterval(this.statusTimer); this.statusTimer = null; }
     if (this.dayRolloverTimer) { clearInterval(this.dayRolloverTimer); this.dayRolloverTimer = null; }
+    if (this.reconciliationTimer) { clearInterval(this.reconciliationTimer); this.reconciliationTimer = null; }
 
     this.scraper.stop();
     this.walletMonitor.stop();
@@ -247,21 +260,27 @@ export class Runner {
       this.handleLeaderTrade(trade);
     });
 
-    this.walletMonitor.on('leader-closed', (data: { marketId: string; marketQuestion: string; leaderWallet: string }) => {
+    this.walletMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string }) => {
       logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}"`);
       // Close our copy if we have one, then persist PNL to Supabase
-      this.copyExecutor.closePosition(data.marketId, 0.5, 'leader_closed').then(closedTrade => {
-        if (!closedTrade) return;
-        const pnlStr = closedTrade.pnl !== undefined ? `$${closedTrade.pnl.toFixed(2)}` : 'n/a';
-        logger.info(`Closed our copy position for ${data.marketId.slice(0, 12)}... pnl=${pnlStr}`);
-        if (closedTrade.id && this.config.supabase.url) {
-          db.updateCopyTrade(closedTrade.id, {
+      const closedTrade = await this.copyExecutor.closePosition(data.marketId, 0.5, 'leader_closed');
+      if (!closedTrade) return;
+      const pnlStr = closedTrade.pnl !== undefined ? `$${closedTrade.pnl.toFixed(2)}` : 'n/a';
+      logger.info(`Closed our copy position for ${data.marketId.slice(0, 12)}... pnl=${pnlStr}`);
+      // Write-through: persist close to Supabase (await, don't fire-and-forget)
+      if (closedTrade.id && this.config.supabase.url) {
+        try {
+          await db.updateCopyTrade(closedTrade.id, {
             status: 'closed',
             pnl: closedTrade.pnl,
             exitTime: closedTrade.exitTime,
-          }).catch(err => logger.warn(`Supabase: failed to update closed trade pnl: ${err}`));
+          });
+          logger.info(`Supabase: trade close persisted ${closedTrade.id}`);
+        } catch (err) {
+          logger.error(`Supabase: CRITICAL — failed to persist close for ${closedTrade.id}: ${err}`);
+          sendTelegramAlert(`🔴 SYNC ERROR: Failed to persist trade close for ${data.marketQuestion.slice(0, 30)}`);
         }
-      });
+      }
     });
   }
 
@@ -360,12 +379,20 @@ export class Runner {
         this.consecutiveVetoes = 0;
       }
 
-      // Step 4: Persist to Supabase — only save executed trades (open/closed), skip vetoes and skips
+      // Step 4: Write-through — persist to Supabase FIRST, then confirm in memory
       if (result.copyTrade && this.config.supabase.url && result.success) {
         const dbId = await db.insertCopyTrade(result.copyTrade);
         if (dbId) {
-          if (result.copyTrade.id) result.copyTrade.id = dbId;
+          // Always assign DB id back to in-memory trade (fixes Gap 2)
+          result.copyTrade.id = dbId;
+          // Also update the executor's in-memory map with the correct id
+          const inMemory = this.copyExecutor.getTradeByMarket(trade.marketId);
+          if (inMemory) inMemory.id = dbId;
           logger.info(`Supabase: copy trade saved ${dbId}`);
+        } else {
+          // Supabase insert failed — remove from memory to stay in sync
+          logger.warn(`Supabase insert failed — rolling back in-memory trade for ${trade.marketId.slice(0, 20)}`);
+          this.copyExecutor.rollbackTrade(trade.marketId);
         }
 
         // Update leader tenure stats
@@ -401,6 +428,55 @@ export class Runner {
       db.upsertDailyPerformance(perf).catch(err =>
         logger.error(`Failed to save daily performance: ${err}`)
       );
+    }
+  }
+
+  /**
+   * Reconciliation: every 5 minutes, sync in-memory state with Supabase.
+   * Fixes any drift caused by failed writes, restarts, or race conditions.
+   */
+  private async reconcileWithSupabase(): Promise<void> {
+    try {
+      const supabaseOpen = await db.getOpenCopyTrades();
+      const memoryTrades = this.copyExecutor.getOpenTrades();
+
+      const supabaseIds = new Set(supabaseOpen.map(t => t.marketId));
+      const memoryIds = new Set(memoryTrades.map(t => t.marketId));
+
+      let orphansClosed = 0;
+      let missingAdded = 0;
+
+      // Gap A: Supabase has "open" trades that memory doesn't know about → close as orphaned
+      for (const sbTrade of supabaseOpen) {
+        if (!memoryIds.has(sbTrade.marketId) && sbTrade.id) {
+          await db.updateCopyTrade(sbTrade.id, {
+            status: 'stopped' as any,
+            exitTime: new Date().toISOString(),
+            exitReason: 'reconciliation_orphan',
+          });
+          orphansClosed++;
+        }
+      }
+
+      // Gap B: Memory has trades that Supabase doesn't → insert them
+      for (const memTrade of memoryTrades) {
+        if (!supabaseIds.has(memTrade.marketId) && memTrade.status === 'open') {
+          const dbId = await db.insertCopyTrade(memTrade);
+          if (dbId) {
+            memTrade.id = dbId;
+            missingAdded++;
+          }
+        }
+      }
+
+      if (orphansClosed > 0 || missingAdded > 0) {
+        logger.info(`Reconciliation: closed ${orphansClosed} orphans, added ${missingAdded} missing trades`);
+        if (orphansClosed > 3) {
+          sendTelegramAlert(`⚠️ Reconciliation: closed ${orphansClosed} orphaned positions in Supabase`);
+        }
+      }
+    } catch (err) {
+      logger.warn(`Reconciliation failed: ${err}`);
     }
   }
 

@@ -108,6 +108,23 @@ export class CopyExecutor {
     return this.openCopyTrades.has(marketId) || this.paperEngine.hasOpenPositionForMarket(marketId);
   }
 
+  /** Get a trade from the in-memory map by marketId (for write-through ID patching) */
+  getTradeByMarket(marketId: string): CopyTrade | undefined {
+    return this.openCopyTrades.get(marketId);
+  }
+
+  /** Rollback: remove a trade from memory if Supabase insert failed (write-through consistency) */
+  rollbackTrade(marketId: string): void {
+    const trade = this.openCopyTrades.get(marketId);
+    if (trade) {
+      this.openCopyTrades.delete(marketId);
+      this.watcherPositions.delete(marketId);
+      this.paperEngine.closeTradeByMarketId(marketId, trade.ourEntryPrice ?? 0, 'rollback');
+      this.executedCount = Math.max(0, this.executedCount - 1);
+      logger.warn(`CopyExecutor: Rolled back trade for ${marketId.slice(0, 20)} (Supabase write failed)`);
+    }
+  }
+
   /**
    * Execute a copy of the leader's trade.
    */
