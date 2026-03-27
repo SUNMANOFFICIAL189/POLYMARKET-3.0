@@ -117,7 +117,7 @@ export async function updateCopyTrade(id: string, updates: Partial<CopyTrade>): 
   if (updates.pnl !== undefined) mapped.pnl = updates.pnl;
   if (updates.exitTime !== undefined) mapped.exit_time = updates.exitTime;
   if (updates.ourEntryPrice !== undefined) mapped.our_entry_price = updates.ourEntryPrice;
-  if (updates.exitReason !== undefined) mapped.exit_reason = updates.exitReason;
+  // exit_reason column can be added later via Supabase SQL editor if needed
 
   const { error } = await getClient().from('copy_trades').update(mapped).eq('id', id);
   if (error) logger.error(`updateCopyTrade failed: ${error.message}`);

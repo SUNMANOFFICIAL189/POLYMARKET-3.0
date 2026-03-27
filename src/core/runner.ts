@@ -115,7 +115,6 @@ export class Runner {
               status: 'closed' as any,
               pnl: trade.pnl,
               exitTime: trade.exitTime,
-              exitReason: trade.exitReason ?? 'lifecycle_auto_close',
             });
             logger.info(`Lifecycle: Supabase close persisted ${trade.id}`);
           } catch (err) {
@@ -452,7 +451,6 @@ export class Runner {
           await db.updateCopyTrade(sbTrade.id, {
             status: 'stopped' as any,
             exitTime: new Date().toISOString(),
-            exitReason: 'reconciliation_orphan',
           });
           orphansClosed++;
         }
