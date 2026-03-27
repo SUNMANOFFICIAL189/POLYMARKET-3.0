@@ -91,7 +91,6 @@ export class Runner {
     this.newsScanner = new NewsScanner();
 
     this.confirmationLayer = new ConfirmationLayer(
-      cfg.apiKeys.anthropic,
       this.glintAdapter,
     );
 
@@ -175,7 +174,7 @@ export class Runner {
 
     // Reconciliation: sync in-memory state with Supabase every 5 minutes
     if (this.config.supabase.url) {
-      this.reconciliationTimer = setInterval(() => this.reconcileWithSupabase(), 5 * 60 * 1000);
+      this.reconciliationTimer = setInterval(() => this.reconcileWithSupabase(), 15 * 60 * 1000);
     }
 
     logger.info('PATS-Copy fully started. Waiting for leaderboard data...');

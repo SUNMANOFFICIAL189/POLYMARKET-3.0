@@ -47,10 +47,9 @@ export class ConfirmationLayer {
   private callCount = 0;
 
   constructor(
-    apiKey: string,
     glintAdapter: GlintAdapter | null = null,
   ) {
-    this.classifier = new AIClassifier(apiKey);
+    this.classifier = new AIClassifier();
     this.orderbookChecker = new OrderbookChecker();
     this.mirofishClient = new MirofishClient();
     this.glintAdapter = glintAdapter;

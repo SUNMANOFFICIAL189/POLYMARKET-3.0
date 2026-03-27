@@ -58,7 +58,7 @@ export async function getMirofishScans(): Promise<MirofishScan[]> {
   try {
     const bridgeUrl = process.env.MIROFISH_BRIDGE_URL || 'http://localhost:5050'
     const res = await fetch(`${bridgeUrl}/api/swarm-scores`, {
-      next: { revalidate: 0 },
+      next: { revalidate: 300 },  // 5 min cache — scans run every 90 min
       signal: AbortSignal.timeout(3000),
     })
     if (!res.ok) return []

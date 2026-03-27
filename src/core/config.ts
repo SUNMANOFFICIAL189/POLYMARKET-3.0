@@ -6,9 +6,6 @@ export interface AppConfig {
   paperMode: boolean;
   risk: RiskConfig;
   totalCapitalUsdc: number;
-  apiKeys: {
-    anthropic: string;
-  };
   supabase: {
     url: string;
     serviceKey: string;
@@ -63,9 +60,6 @@ export function loadConfig(): AppConfig {
     paperMode,
     risk,
     totalCapitalUsdc: parseFloat(envOpt('TOTAL_CAPITAL_USDC', '6300')),
-    apiKeys: {
-      anthropic: envOpt('ANTHROPIC_API_KEY', ''),
-    },
     supabase: {
       url: envOpt('SUPABASE_URL', ''),
       serviceKey: envOpt('SUPABASE_SERVICE_KEY', ''),
@@ -91,7 +85,6 @@ export function loadConfig(): AppConfig {
     paperMode: config.paperMode,
     riskLevel: config.risk.level,
     capital: config.totalCapitalUsdc,
-    hasAnthropicKey: !!config.apiKeys.anthropic,
     hasSupabase: !!config.supabase.url,
     glintEnabled: config.glint.enabled,
     leaderboardPollMs: config.leaderboard.pollIntervalMs,
@@ -111,9 +104,6 @@ export class RiskDial {
 
   get config(): RiskConfig { return RISK_PRESETS[this.currentLevel]; }
   get level(): RiskLevel { return this.currentLevel; }
-
-  getCurrentPreset(): RiskConfig { return this.config; }
-  getCurrentLevel(): RiskLevel { return this.level; }
 
   recordWin(): void {
     this.consecutiveWins++;

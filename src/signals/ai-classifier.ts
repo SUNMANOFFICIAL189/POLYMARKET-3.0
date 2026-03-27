@@ -30,7 +30,7 @@ export interface TradeConfirmationResult {
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
 const OLLAMA_MODEL    = process.env.OLLAMA_MODEL    ?? 'llama3.2';
-const OLLAMA_API_KEY  = process.env.CEREBRAS_API_KEY ?? process.env.GROQ_API_KEY ?? '';
+const OLLAMA_API_KEY  = process.env.CEREBRAS_API_KEY ?? '';
 
 export class AIClassifier {
   private callCount = 0;
@@ -115,25 +115,10 @@ Respond with ONLY a JSON object, no markdown:
     });
   }
 
-  // Sequential request queue — Cerebras free tier = 30 RPM, so 2.2s gap between calls.
-  // Uses a promise chain to ensure requests are truly sequential, not just timestamp-checked.
-  private static requestQueue: Promise<void> = Promise.resolve();
-  private static readonly MIN_CALL_GAP_MS = 2200;
-
-  private throttle(): Promise<void> {
-    return new Promise<void>((resolve) => {
-      AIClassifier.requestQueue = AIClassifier.requestQueue.then(async () => {
-        await new Promise(r => setTimeout(r, AIClassifier.MIN_CALL_GAP_MS));
-        resolve();
-      });
-    });
-  }
-
   private async callAPI<T>(prompt: string, parser: (content: string) => T, fallback: T): Promise<T> {
     for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         this.callCount++;
-        await this.throttle();
 
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (OLLAMA_API_KEY) headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
