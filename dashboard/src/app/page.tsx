@@ -1,3 +1,8 @@
+// CRITICAL: force-dynamic ensures every request queries Supabase live
+// Without this, Next.js statically renders the page at build time and serves stale data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { getLeaders, getCurrentLeader, getCopyTrades, getDailyPerformance, getLeaderHistory, getMirofishScans } from '@/lib/queries'
 import { TickerBar } from '@/components/layout/ticker-bar'
 import { NavBar } from '@/components/layout/nav-bar'
