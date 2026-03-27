@@ -230,50 +230,58 @@ async def run_fallback_simulation(
         "a market microstructure expert who reads order flow and liquidity signals",
     ]
 
-    async def query_agent(perspective: str, prompt: str, temp: float = 0.8) -> Optional[Tuple[int, str]]:
-        """Query a single agent and extract probability estimate."""
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            f"You are {perspective}. You are analyzing a prediction market question. "
-                            f"Give your honest probability estimate for the YES outcome. "
-                            f"You MUST include a specific percentage. "
-                            f"Format: 'My estimate: XX%' followed by 1-2 sentences of reasoning."
-                        ),
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=250,
-                temperature=temp,
-            )
-            content = response.choices[0].message.content or ""
-            prob_matches = re.findall(r'(\d{1,3})(?:\s*)?(?:%|percent)', content, re.IGNORECASE)
-            if prob_matches:
-                prob = int(prob_matches[0])
-                if 0 <= prob <= 100:
-                    return (prob, content[:200])
-            return None
-        except Exception as e:
-            logger.warning(f"Agent query failed: {e}")
-            return None
+    # Semaphore limits concurrent API calls to stay under Cerebras 30 RPM
+    api_semaphore = asyncio.Semaphore(4)  # 4 concurrent = ~3x faster than sequential
 
-    # ═══ ROUND 1: Independent estimates ═══
-    logger.info(f"  Delphi Round 1: {agent_count} independent estimates...")
+    async def query_agent(idx: int, perspective: str, prompt: str, temp: float = 0.8, label: str = "R1") -> Optional[Tuple[int, str, int]]:
+        """Query a single agent and extract probability estimate. Returns (prob, reasoning, idx)."""
+        async with api_semaphore:
+            try:
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                f"You are {perspective}. You are analyzing a prediction market question. "
+                                f"Give your honest probability estimate for the YES outcome. "
+                                f"You MUST include a specific percentage. "
+                                f"Format: 'My estimate: XX%' followed by 1-2 sentences of reasoning."
+                            ),
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=250,
+                    temperature=temp,
+                )
+                content = response.choices[0].message.content or ""
+                prob_matches = re.findall(r'(\d{1,3})(?:\s*)?(?:%|percent)', content, re.IGNORECASE)
+                if prob_matches:
+                    prob = int(prob_matches[0])
+                    if 0 <= prob <= 100:
+                        logger.info(f"  {label} Agent {idx+1}/{agent_count} ({perspective[:35]}...): {prob}%")
+                        return (prob, content[:200], idx)
+                return None
+            except Exception as e:
+                logger.warning(f"Agent {idx} failed: {e}")
+                return None
+
+    # ═══ ROUND 1: Independent estimates (parallel) ═══
+    logger.info(f"  Delphi Round 1: {agent_count} independent estimates (parallel, 4 concurrent)...")
+
+    tasks = [
+        query_agent(i, p, market_context, temp=0.7 + (i * 0.04), label="R1")
+        for i, p in enumerate(perspectives[:agent_count])
+    ]
+    results = await asyncio.gather(*tasks)
+
     round1_probs = []
     round1_reasonings = []
-
-    for i, perspective in enumerate(perspectives[:agent_count]):
-        result = await query_agent(perspective, market_context, temp=0.7 + (i * 0.04))
-        if result:
-            prob, reasoning = result
+    for r in results:
+        if r:
+            prob, reasoning, _ = r
             round1_probs.append(prob)
             round1_reasonings.append(reasoning)
-            logger.info(f"  R1 Agent {i+1}/{agent_count} ({perspective[:35]}...): {prob}%")
-        await asyncio.sleep(2.2)  # Stay under 30 RPM
 
     if not round1_probs:
         return {
@@ -311,14 +319,19 @@ async def run_fallback_simulation(
             f"You may keep your original estimate if you believe it was correct."
         )
 
+        r2_tasks = [
+            query_agent(i, p, r1_summary, temp=0.6, label="R2")
+            for i, p in enumerate(perspectives[:agent_count])
+        ]
+        r2_results = await asyncio.gather(*r2_tasks)
+
         round2_probs = []
-        for i, perspective in enumerate(perspectives[:agent_count]):
-            result = await query_agent(perspective, r1_summary, temp=0.6)
-            if result:
-                prob, _ = result
+        for r in r2_results:
+            if r:
+                prob, _, idx = r
                 round2_probs.append(prob)
-                logger.info(f"  R2 Agent {i+1}/{agent_count}: {prob}% (was R1: {round1_probs[i] if i < len(round1_probs) else '?'}%)")
-            await asyncio.sleep(2.2)
+                r1_val = round1_probs[idx] if idx < len(round1_probs) else "?"
+                logger.info(f"  R2 Agent {idx+1}/{agent_count}: {prob}% (was R1: {r1_val}%)")
 
         if round2_probs:
             final_probs = round2_probs
