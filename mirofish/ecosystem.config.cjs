@@ -12,7 +12,7 @@ module.exports = {
       name: 'mirofish-scanner',
       script: 'scanner.py',
       cwd: './mirofish',
-      interpreter: 'python3',
+      interpreter: '/opt/mirofish-venv/bin/python3',
       args: '--daemon',
       env: {
         PYTHONUNBUFFERED: '1',
@@ -28,7 +28,7 @@ module.exports = {
       name: 'mirofish-bridge',
       script: 'bridge.py',
       cwd: './mirofish',
-      interpreter: 'python3',
+      interpreter: '/opt/mirofish-venv/bin/python3',
       env: {
         PYTHONUNBUFFERED: '1',
       },

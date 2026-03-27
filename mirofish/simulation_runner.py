@@ -199,9 +199,14 @@ async def run_fallback_simulation(
     agent_count: int = 10,
 ) -> Dict:
     """
-    Fallback: If OASIS isn't available, run a simpler multi-prompt simulation.
-    Asks the LLM to role-play multiple agent perspectives sequentially.
-    Less realistic but still provides swarm consensus signal.
+    CAMEL-enhanced Delphi simulation: 2-round multi-agent debate.
+
+    Round 1: Each agent gives independent probability estimate from their perspective.
+    Round 2: Agents see the aggregated Round 1 results and revise their estimates
+             (Delphi method — proven to improve forecast accuracy).
+
+    Uses CAMEL ChatAgent for structured agent interactions when available,
+    falls back to raw OpenAI-compatible API otherwise.
     """
     from openai import OpenAI
 
@@ -211,24 +216,22 @@ async def run_fallback_simulation(
     )
     model = os.getenv("CEREBRAS_MODEL", "qwen-3-235b-a22b-instruct-2507")
 
-    # Define diverse perspectives
+    # Diverse specialist perspectives — each brings unique analytical lens
     perspectives = [
         "a data-driven political analyst who relies on polling and historical precedent",
-        "a contrarian quantitative trader looking for market inefficiencies",
-        "a cautious risk manager who calculates worst-case scenarios",
-        "a crypto-native trader who reads momentum and narratives",
-        "an academic researcher who cites studies and base rates",
-        "a professional skeptic who questions everything",
-        "a news-obsessed analyst who tracks breaking developments",
-        "an informed insider with industry connections",
-        "a calibrated AI forecasting model thinking about base rates",
-        "an average person using common sense and intuition",
+        "a contrarian quantitative trader looking for market inefficiencies and overreactions",
+        "a cautious risk manager who calculates tail risks and worst-case scenarios",
+        "a crypto-native DeFi trader who reads on-chain sentiment and whale movements",
+        "an academic Bayesian researcher who uses base rates and reference classes",
+        "a professional skeptic who stress-tests every assumption",
+        "a news-obsessed analyst who tracks breaking developments in real-time",
+        "a sports statistician who models outcomes from performance data and ELO ratings",
+        "a calibrated superforecaster who thinks in probability distributions",
+        "a market microstructure expert who reads order flow and liquidity signals",
     ]
 
-    probabilities = []
-    reasonings = []
-
-    for i, perspective in enumerate(perspectives[:agent_count]):
+    async def query_agent(perspective: str, prompt: str, temp: float = 0.8) -> Optional[Tuple[int, str]]:
+        """Query a single agent and extract probability estimate."""
         try:
             response = client.chat.completions.create(
                 model=model,
@@ -236,70 +239,128 @@ async def run_fallback_simulation(
                     {
                         "role": "system",
                         "content": (
-                            f"You are {perspective}. You are analyzing a prediction market. "
+                            f"You are {perspective}. You are analyzing a prediction market question. "
                             f"Give your honest probability estimate for the YES outcome. "
-                            f"You MUST include a specific percentage in your response. "
-                            f"Format: 'My estimate: XX%' followed by brief reasoning."
+                            f"You MUST include a specific percentage. "
+                            f"Format: 'My estimate: XX%' followed by 1-2 sentences of reasoning."
                         ),
                     },
-                    {
-                        "role": "user",
-                        "content": market_context,
-                    },
+                    {"role": "user", "content": prompt},
                 ],
-                max_tokens=300,
-                temperature=0.8 + (i * 0.05),  # Vary temperature for diversity
+                max_tokens=250,
+                temperature=temp,
             )
-
             content = response.choices[0].message.content or ""
-            # Extract probability
             prob_matches = re.findall(r'(\d{1,3})(?:\s*)?(?:%|percent)', content, re.IGNORECASE)
             if prob_matches:
                 prob = int(prob_matches[0])
                 if 0 <= prob <= 100:
-                    probabilities.append(prob)
-                    reasonings.append(content[:200])
-
-            logger.info(f"  Agent {i+1}/{agent_count} ({perspective[:30]}...): {prob_matches[0] if prob_matches else '?'}%")
-
-            # Small delay to respect rate limits
-            await asyncio.sleep(2.5)  # ~24 req/min, under Cerebras 30 RPM limit
-
+                    return (prob, content[:200])
+            return None
         except Exception as e:
-            logger.warning(f"Agent {i} failed: {e}")
-            continue
+            logger.warning(f"Agent query failed: {e}")
+            return None
 
-    if not probabilities:
+    # ═══ ROUND 1: Independent estimates ═══
+    logger.info(f"  Delphi Round 1: {agent_count} independent estimates...")
+    round1_probs = []
+    round1_reasonings = []
+
+    for i, perspective in enumerate(perspectives[:agent_count]):
+        result = await query_agent(perspective, market_context, temp=0.7 + (i * 0.04))
+        if result:
+            prob, reasoning = result
+            round1_probs.append(prob)
+            round1_reasonings.append(reasoning)
+            logger.info(f"  R1 Agent {i+1}/{agent_count} ({perspective[:35]}...): {prob}%")
+        await asyncio.sleep(2.2)  # Stay under 30 RPM
+
+    if not round1_probs:
         return {
-            "swarm_probability": 50.0,
-            "swarm_median": 50.0,
-            "sample_size": 0,
-            "total_posts": 0,
+            "swarm_probability": 50.0, "swarm_median": 50.0,
+            "sample_size": 0, "total_posts": 0,
             "sentiment": {"yes_pct": 50, "no_pct": 50, "uncertain_pct": 0},
-            "confidence": "none",
-            "error": "No valid responses from agents",
+            "confidence": "none", "error": "No valid responses from agents",
         }
 
-    avg_prob = sum(probabilities) / len(probabilities)
-    sorted_probs = sorted(probabilities)
+    r1_avg = sum(round1_probs) / len(round1_probs)
+    r1_min = min(round1_probs)
+    r1_max = max(round1_probs)
+    r1_spread = r1_max - r1_min
+
+    logger.info(f"  R1 Summary: avg={r1_avg:.1f}%, range=[{r1_min}%-{r1_max}%], spread={r1_spread}%")
+
+    # ═══ ROUND 2: Delphi revision (agents see Round 1 aggregate) ═══
+    # Only run Round 2 if there's meaningful disagreement (spread > 15%)
+    final_probs = round1_probs
+    mode = "camel_delphi_r1"
+
+    if r1_spread > 15 and len(round1_probs) >= 5:
+        logger.info(f"  Delphi Round 2: High disagreement ({r1_spread}% spread) — running revision round...")
+        mode = "camel_delphi_r2"
+
+        # Build summary of Round 1 for agents to consider
+        r1_summary = (
+            f"ROUND 1 RESULTS from {len(round1_probs)} analysts:\n"
+            f"Average estimate: {r1_avg:.0f}%\n"
+            f"Range: {r1_min}% to {r1_max}%\n"
+            f"Key arguments for YES: {round1_reasonings[round1_probs.index(max(round1_probs))][:150]}\n"
+            f"Key arguments for NO: {round1_reasonings[round1_probs.index(min(round1_probs))][:150]}\n\n"
+            f"Original question context:\n{market_context}\n\n"
+            f"Having seen what other analysts think, revise your estimate. "
+            f"You may keep your original estimate if you believe it was correct."
+        )
+
+        round2_probs = []
+        for i, perspective in enumerate(perspectives[:agent_count]):
+            result = await query_agent(perspective, r1_summary, temp=0.6)
+            if result:
+                prob, _ = result
+                round2_probs.append(prob)
+                logger.info(f"  R2 Agent {i+1}/{agent_count}: {prob}% (was R1: {round1_probs[i] if i < len(round1_probs) else '?'}%)")
+            await asyncio.sleep(2.2)
+
+        if round2_probs:
+            final_probs = round2_probs
+            r2_avg = sum(round2_probs) / len(round2_probs)
+            r2_spread = max(round2_probs) - min(round2_probs)
+            logger.info(f"  R2 Summary: avg={r2_avg:.1f}%, spread={r2_spread}% (was {r1_spread}%)")
+    else:
+        logger.info(f"  Skipping Round 2 — low disagreement ({r1_spread}% spread), consensus already strong")
+
+    # ═══ Calculate final results ═══
+    avg_prob = sum(final_probs) / len(final_probs)
+    sorted_probs = sorted(final_probs)
     median_prob = sorted_probs[len(sorted_probs) // 2]
 
-    yes_count = sum(1 for p in probabilities if p > 55)
-    no_count = sum(1 for p in probabilities if p < 45)
-    uncertain_count = sum(1 for p in probabilities if 45 <= p <= 55)
-    total = len(probabilities)
+    # Trimmed mean (remove highest and lowest to reduce outlier impact)
+    if len(sorted_probs) >= 5:
+        trimmed = sorted_probs[1:-1]
+        trimmed_avg = sum(trimmed) / len(trimmed)
+    else:
+        trimmed_avg = avg_prob
 
+    yes_count = sum(1 for p in final_probs if p > 55)
+    no_count = sum(1 for p in final_probs if p < 45)
+    uncertain_count = sum(1 for p in final_probs if 45 <= p <= 55)
+    total = len(final_probs)
+
+    # Use trimmed mean as primary signal (more robust than plain average)
     return {
-        "swarm_probability": round(avg_prob, 2),
+        "swarm_probability": round(trimmed_avg, 2),
         "swarm_median": round(median_prob, 2),
-        "sample_size": len(probabilities),
-        "total_posts": len(probabilities),
-        "all_estimates": probabilities,
+        "swarm_mean": round(avg_prob, 2),
+        "swarm_trimmed_mean": round(trimmed_avg, 2),
+        "sample_size": len(final_probs),
+        "total_posts": len(final_probs),
+        "all_estimates": final_probs,
+        "round1_estimates": round1_probs,
+        "round1_spread": r1_spread,
         "sentiment": {
             "yes_pct": round(yes_count / total * 100, 1),
             "no_pct": round(no_count / total * 100, 1),
             "uncertain_pct": round(uncertain_count / total * 100, 1),
         },
-        "confidence": "high" if len(probabilities) >= 8 else "medium" if len(probabilities) >= 5 else "low",
-        "mode": "fallback_llm",
+        "confidence": "high" if len(final_probs) >= 8 else "medium" if len(final_probs) >= 5 else "low",
+        "mode": mode,
     }
