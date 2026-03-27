@@ -362,6 +362,7 @@ export class Runner {
         confirmation.decision,
         confirmation.reason,
         leaderPortfolio,
+        confirmation.sizeMultiplier,
       );
 
       // Step 3: Track consecutive vetoes (alert threshold).

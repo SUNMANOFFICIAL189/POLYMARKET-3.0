@@ -48,7 +48,7 @@ async def run_fallback_simulation(
     )
     model = os.getenv("CEREBRAS_MODEL", "qwen-3-235b-a22b-instruct-2507")
 
-    # Diverse specialist perspectives — each brings unique analytical lens
+    # 15 diverse specialist perspectives — each brings unique analytical lens
     perspectives = [
         "a data-driven political analyst who relies on polling and historical precedent",
         "a contrarian quantitative trader looking for market inefficiencies and overreactions",
@@ -60,6 +60,12 @@ async def run_fallback_simulation(
         "a sports statistician who models outcomes from performance data and ELO ratings",
         "a calibrated superforecaster who thinks in probability distributions",
         "a market microstructure expert who reads order flow and liquidity signals",
+        # 5 niche specialists for deeper coverage
+        "a geopolitical risk consultant who maps second-order effects of policy decisions",
+        "a behavioural economist who identifies cognitive biases in crowd pricing",
+        "a seasoned bookmaker who sets odds based on sharp money flow and line movement",
+        "a prediction market veteran who has traded Polymarket for 2+ years and knows its quirks",
+        "a domain-agnostic probability calibrator who anchors on outside view and statistical base rates",
     ]
 
     # Semaphore limits concurrent API calls to stay under Cerebras 30 RPM

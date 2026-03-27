@@ -133,6 +133,7 @@ export class CopyExecutor {
     confirmation: ConfirmationDecision,
     confirmationReason: string,
     leaderPortfolioSize: number,
+    sizeMultiplier: number = 1.0,
   ): Promise<ExecutionResult> {
 
     if (confirmation !== 'approved') {
@@ -221,6 +222,13 @@ export class CopyExecutor {
     if (rank > 1) {
       ourSize = Math.round(ourSize * multiplier * 100) / 100;
       logger.info(`CopyExecutor: Rank-scaled: rank=${rank} multiplier=${multiplier} → $${ourSize.toFixed(2)}`);
+    }
+
+    // Apply MiroFish confidence-based sizing (1.5x for high confidence, 0.7x for contradicts)
+    if (sizeMultiplier !== 1.0) {
+      const beforeSize = ourSize;
+      ourSize = Math.round(ourSize * sizeMultiplier * 100) / 100;
+      logger.info(`CopyExecutor: MiroFish sizing: ${sizeMultiplier}x → $${beforeSize.toFixed(2)} → $${ourSize.toFixed(2)}`);
     }
 
     if (ourSize < 1) {

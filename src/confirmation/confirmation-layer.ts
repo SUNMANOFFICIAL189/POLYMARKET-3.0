@@ -25,6 +25,7 @@ export interface ConfirmationResult {
   hasOpposingSignals: boolean;
   hasSupportingSignals: boolean;
   latencyMs: number;
+  sizeMultiplier: number; // 0.7 (low confidence) / 1.0 (normal) / 1.5 (high MiroFish confidence)
 }
 
 const MAX_TRADE_AGE_MS = 5 * 60 * 1000;         // Skip rank-1 trades older than 5 minutes
@@ -71,6 +72,7 @@ export class ConfirmationLayer {
         hasOpposingSignals: false,
         hasSupportingSignals: false,
         latencyMs: Date.now() - start,
+        sizeMultiplier: 1.0,
       };
       this.skippedCount++;
       logger.info(`Confirmation SKIPPED: ${result.reason}`);
@@ -183,6 +185,17 @@ export class ConfirmationLayer {
       latencyMs,
     });
 
+    // Confidence-based position sizing:
+    // MiroFish supports + strong/very_strong signal → size up (1.5x)
+    // MiroFish contradicts or neutral → size down (0.7x)
+    // MiroFish unavailable → normal size (1.0x)
+    let sizeMultiplier = 1.0;
+    if (mirofishVerdict === 'supports') {
+      sizeMultiplier = 1.5;
+    } else if (mirofishVerdict === 'contradicts') {
+      sizeMultiplier = 0.7;
+    }
+
     return {
       decision,
       reason,
@@ -190,6 +203,7 @@ export class ConfirmationLayer {
       hasOpposingSignals: aiResult.hasOpposingSignals,
       hasSupportingSignals: aiResult.hasSupportingSignals,
       latencyMs,
+      sizeMultiplier,
     };
   }
 
@@ -301,6 +315,7 @@ export class ConfirmationLayer {
         hasOpposingSignals: false,
         hasSupportingSignals: glintPass,
         latencyMs,
+        sizeMultiplier: mirofishPass ? 1.5 : 1.0,
       };
     } else {
       this.vetoedCount++;
@@ -313,6 +328,7 @@ export class ConfirmationLayer {
         hasOpposingSignals: true,
         hasSupportingSignals: glintPass,
         latencyMs,
+        sizeMultiplier: 1.0,
       };
     }
   }
