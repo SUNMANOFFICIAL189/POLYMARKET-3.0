@@ -216,19 +216,40 @@ export class PaperTradingEngine {
 
       if (openErr) { logger.warn(`Hydrate: failed to load open trades: ${openErr.message}`); return; }
 
-      // Load closed trades for balance calculation
+      // Load closed + stopped trades for balance calculation
       const { data: closedRows, error: closedErr } = await client
         .from('copy_trades')
         .select('*')
-        .eq('status', 'closed')
+        .in('status', ['closed', 'stopped'])
         .order('exit_time', { ascending: true });
 
       if (closedErr) { logger.warn(`Hydrate: failed to load closed trades: ${closedErr.message}`); return; }
 
-      // Rebuild closed trade P&L
+      // Rebuild closed trade P&L and trade history
       let realizedPnl = 0;
       for (const row of closedRows ?? []) {
         realizedPnl += row.pnl ?? 0;
+        // Hydrate into closedTrades so win rate and stats are correct after restart
+        this.closedTrades.push({
+          id: row.id,
+          marketId: row.market_id,
+          question: row.market_question ?? '',
+          tokenId: row.token_id ?? '',
+          outcome: row.outcome ?? '',
+          side: (row.side ?? 'buy') as Side,
+          entryPrice: row.our_entry_price ?? 0,
+          size: 0,
+          usdcAmount: row.our_size ?? 0,
+          convictionScore: 0,
+          riskLevel: (row.risk_level ?? 'paper') as RiskLevel,
+          status: 'closed',
+          stopLoss: 0,
+          signalIds: [],
+          entryTime: row.entry_time,
+          exitTime: row.exit_time,
+          exitPrice: row.exit_price,
+          pnl: row.pnl ?? 0,
+        });
       }
 
       // Rebuild open positions
