@@ -15,14 +15,13 @@ import { NeuralGlobe } from '@/components/globe'
 import type { Leader, CopyTrade, DailyPerformance, LeaderHistory, ChartPoint, MirofishScan } from '@/lib/types'
 
 function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoint[] {
-  // Chart shows PORTFOLIO VALUE (deposit + realized P&L), not available cash.
-  // Open trades don't reduce the displayed value — only realized gains/losses move the line.
-  // This matches what the "PORTFOLIO BALANCE" number shows.
+  // Chart shows PORTFOLIO VALUE over time.
+  // Realized P&L events move the line historically.
+  // Final point = actual current balance (deposit - reserved + realized).
   const events: { time: string; delta: number }[] = []
 
   for (const t of trades) {
     if (t.status === 'vetoed' || t.status === 'skipped') continue
-    // Only show P&L impact when trades close — not capital allocation
     if ((t.status === 'closed' || t.status === 'stopped') && t.exit_time) {
       events.push({ time: t.exit_time, delta: t.pnl ?? 0 })
     }
@@ -40,6 +39,21 @@ function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoi
       hour12: false,
     })
     points.push({ time: label, balance: Math.max(0, running) })
+  }
+
+  // Add current actual balance as final point (includes unrealized from open positions)
+  const reservedCapital = trades
+    .filter(t => t.status === 'open' || t.status === 'pending')
+    .reduce((s, t) => s + (t.our_size ?? 0), 0)
+  const actualBalance = depositAmount - reservedCapital + (running - depositAmount)
+  const now = new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  // Only add if actual balance differs from last realized point (open positions exist)
+  if (Math.abs(actualBalance - running) > 1) {
+    points.push({ time: now, balance: Math.max(0, actualBalance) })
   }
 
   return points
