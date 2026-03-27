@@ -82,11 +82,11 @@ export function PnlChart({ data }: PnlChartProps) {
   const yMin = Math.floor((minBal - pad) / 100) * 100
   const yMax = Math.ceil((maxBal + pad) / 100) * 100
 
-  // Determine line colour: green if net positive, red if net negative
-  const startBal = data[0]?.balance ?? 0
+  // Determine line colour: green if above initial deposit, red if below
+  const INITIAL_DEPOSIT = 6300
   const endBal = data[data.length - 1]?.balance ?? 0
-  const lineColor = endBal >= startBal ? '#00ff88' : '#ff3b3b'
-  const gradientColor = endBal >= startBal ? 'rgba(0,255,136,' : 'rgba(255,59,59,'
+  const lineColor = endBal >= INITIAL_DEPOSIT ? '#00ff88' : '#ff3b3b'
+  const gradientColor = endBal >= INITIAL_DEPOSIT ? 'rgba(0,255,136,' : 'rgba(255,59,59,'
 
   return (
     <ResponsiveContainer width="100%" height={220}>
