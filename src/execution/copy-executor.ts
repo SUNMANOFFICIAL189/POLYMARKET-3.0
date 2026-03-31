@@ -29,9 +29,6 @@ const RANK_MULTIPLIERS: Record<number, number> = {
   5: 0.30,
 };
 
-// Watcher trades will not fill beyond (maxPositions - RANK1_RESERVED) slots.
-// Ensures the rank-1 leader always has capacity to copy when they trade.
-const RANK1_RESERVED_SLOTS = 2;
 
 // Skip near-certainty bets: price > this threshold or < (1 - threshold) have
 // near-zero alpha — the edge is already fully priced in.
@@ -52,6 +49,15 @@ export class CopyExecutor {
   private openCopyTrades: Map<string, CopyTrade> = new Map(); // marketId → CopyTrade
   // marketId → rank of the watcher who opened the position (for collision detection)
   private watcherPositions: Map<string, number> = new Map();
+  // marketId → timestamp when stop-loss fired. Prevents same-session re-entry on a losing market.
+  private stopLossCooldown: Map<string, number> = new Map();
+  private readonly STOP_LOSS_COOLDOWN_MS = 60 * 60 * 1000; // 60 minutes
+  // Rolling wallet performance window — tracks last N trade outcomes per wallet
+  private walletRollingWindow: Map<string, Array<boolean>> = new Map();
+  private readonly ROLLING_WINDOW_SIZE   = parseInt(process.env.ROLLING_WINDOW         ?? '10');
+  private readonly ROLLING_MIN_WIN_RATE  = parseFloat(process.env.ROLLING_MIN_WIN_RATE  ?? '0.40');
+  private readonly ROLLING_BOOST_RATE    = parseFloat(process.env.ROLLING_BOOST_THRESHOLD ?? '0.60');
+  private readonly ROLLING_MIN_SAMPLE    = 5; // minimum trades before filter activates
   private executedCount = 0;
   private blockedCount = 0;
 
@@ -158,6 +164,16 @@ export class CopyExecutor {
       return { success: false, copyTrade, reason: confirmationReason };
     }
 
+    // Stop-loss cooldown: block re-entry on markets that recently triggered stop-loss
+    const cooldownStart = this.stopLossCooldown.get(leaderTrade.marketId);
+    if (cooldownStart && Date.now() - cooldownStart < this.STOP_LOSS_COOLDOWN_MS) {
+      const remainingMin = Math.ceil((this.STOP_LOSS_COOLDOWN_MS - (Date.now() - cooldownStart)) / 60000);
+      logger.debug(`CopyExecutor: Stop-loss cooldown active for ${leaderTrade.marketId.slice(0, 20)} — ${remainingMin}min remaining`);
+      return { success: false, reason: `Stop-loss cooldown — re-entry blocked for ${remainingMin}min` };
+    } else if (cooldownStart) {
+      this.stopLossCooldown.delete(leaderTrade.marketId); // expired, clean up
+    }
+
     // Deduplication: if we already have an open position in this market, skip
     if (this.openCopyTrades.has(leaderTrade.marketId)) {
       const existing = this.openCopyTrades.get(leaderTrade.marketId)!;
@@ -174,8 +190,30 @@ export class CopyExecutor {
       this.watcherPositions.delete(leaderTrade.marketId);
     }
 
+    // Rolling wallet performance filter — applies to ALL ranks including rank-1
+    // Soft-mutes wallets confirmed to be in a cold streak (< 40% WR over last 10 trades)
+    const rollingStats = this.getWalletRollingStats(leaderTrade.leaderWallet);
+    if (rollingStats.sampleSize >= this.ROLLING_MIN_SAMPLE && rollingStats.winRate < this.ROLLING_MIN_WIN_RATE) {
+      this.blockedCount++;
+      logger.info(`CopyExecutor: COLD STREAK — ${leaderTrade.leaderWallet.slice(0,10)} rolling ${rollingStats.sampleSize}-trade WR ${(rollingStats.winRate * 100).toFixed(0)}% < ${(this.ROLLING_MIN_WIN_RATE * 100).toFixed(0)}% threshold — skipping`);
+      return { success: false, reason: `Cold streak: rolling WR ${(rollingStats.winRate * 100).toFixed(0)}% (${rollingStats.sampleSize} trades)` };
+    }
+
     // For rank 2-5 watcher trades: apply extra filters before using a position slot
     if (leaderTrade.rank && leaderTrade.rank >= 2) {
+      // Filter 0: BANNED market types — binary 99% loss risk
+      // Spread bets on Polymarket resolve all-or-nothing. When wrong they lose ~100%.
+      // Net historical impact: -$118.59 from spreads alone. Hard ban, no exceptions.
+      const BANNED_PREFIXES = ['Spread:'];
+      const BANNED_PATTERNS = [/^spread:/i];
+      const isBannedType = BANNED_PREFIXES.some(p => leaderTrade.marketQuestion.startsWith(p))
+        || BANNED_PATTERNS.some(r => r.test(leaderTrade.marketQuestion));
+      if (isBannedType) {
+        this.blockedCount++;
+        logger.info(`CopyExecutor: BANNED market type — spread bet skipped: "${leaderTrade.marketQuestion.slice(0, 60)}"`);
+        return { success: false, reason: `Banned market type: spread bet` };
+      }
+
       // Filter 1: near-certainty bets have near-zero alpha — skip them
       const price = leaderTrade.entryPrice;
       if (price > MAX_WATCHER_PRICE || price < MIN_WATCHER_PRICE) {
@@ -191,15 +229,35 @@ export class CopyExecutor {
         return { success: false, reason: `Dead zone price $${price.toFixed(3)} — within ${EDGE_FLOOR_DISTANCE * 100}% of 0.5, no measurable edge` };
       }
 
-      // Filter 3: reserve slots for rank-1 leader
-      // watcherPositions tracks open positions opened by rank 2-5 trades
-      const maxPos = parseInt(process.env.MAX_OPEN_POSITIONS ?? '10');
-      const watcherLimit = Math.max(1, maxPos - RANK1_RESERVED_SLOTS);
-      if (this.watcherPositions.size >= watcherLimit) {
+      // Filter 3: capital deployment cap — never exceed 65% deployed at once
+      const CAPITAL_CAP_PCT = parseFloat(process.env.CAPITAL_CAP_PCT ?? '0.65');
+      const totalDeployed = Array.from(this.openCopyTrades.values())
+        .reduce((sum, t) => sum + (t.ourSize ?? 0), 0);
+      const deployedPct = this.ourPortfolio > 0 ? totalDeployed / this.ourPortfolio : 0;
+      if (deployedPct >= CAPITAL_CAP_PCT) {
         this.blockedCount++;
-        logger.debug(`CopyExecutor: Watcher slot limit reached (${this.watcherPositions.size}/${watcherLimit}) — reserving ${RANK1_RESERVED_SLOTS} for rank-1`);
-        return { success: false, reason: `Watcher slot limit ${watcherLimit} reached — slots reserved for rank-1` };
+        logger.debug(`CopyExecutor: Capital cap reached — ${(deployedPct * 100).toFixed(1)}% deployed (max ${(CAPITAL_CAP_PCT * 100).toFixed(0)}%)`);
+        return { success: false, reason: `Capital cap: ${(deployedPct * 100).toFixed(1)}% deployed (max ${(CAPITAL_CAP_PCT * 100).toFixed(0)}%)` };
       }
+
+      // Filter 4: position count cap (no rank reservation — first confirmed, first served)
+      const maxPos = parseInt(process.env.MAX_OPEN_POSITIONS ?? '10');
+      if (this.openCopyTrades.size >= maxPos) {
+        this.blockedCount++;
+        logger.debug(`CopyExecutor: Position cap reached (${this.openCopyTrades.size}/${maxPos})`);
+        return { success: false, reason: `Position cap ${maxPos} reached` };
+      }
+    }
+
+    // Capital cap for all ranks (rank-1 included)
+    const CAPITAL_CAP_ALL = parseFloat(process.env.CAPITAL_CAP_PCT ?? '0.65');
+    const totalDeployedAll = Array.from(this.openCopyTrades.values())
+      .reduce((sum, t) => sum + (t.ourSize ?? 0), 0);
+    const deployedPctAll = this.ourPortfolio > 0 ? totalDeployedAll / this.ourPortfolio : 0;
+    if (deployedPctAll >= CAPITAL_CAP_ALL) {
+      this.blockedCount++;
+      logger.debug(`CopyExecutor: Capital cap reached (rank-${isRank1 ? 1 : leaderTrade.rank}) — ${(deployedPctAll * 100).toFixed(1)}% deployed`);
+      return { success: false, reason: `Capital cap: ${(deployedPctAll * 100).toFixed(1)}% deployed (max ${(CAPITAL_CAP_ALL * 100).toFixed(0)}%)` };
     }
 
     // Reject trades with no market identifier — can't track or close them reliably
@@ -222,6 +280,13 @@ export class CopyExecutor {
     if (rank > 1) {
       ourSize = Math.round(ourSize * multiplier * 100) / 100;
       logger.info(`CopyExecutor: Rank-scaled: rank=${rank} multiplier=${multiplier} → $${ourSize.toFixed(2)}`);
+    }
+
+    // Performance-based sizing boost for consistently hot wallets (>= 60% rolling WR)
+    if (rollingStats.sampleSize >= this.ROLLING_MIN_SAMPLE && rollingStats.winRate >= this.ROLLING_BOOST_RATE) {
+      const beforeBoost = ourSize;
+      ourSize = Math.round(ourSize * 1.3 * 100) / 100;
+      logger.info(`CopyExecutor: Perf boost — ${leaderTrade.leaderWallet.slice(0,10)} ${(rollingStats.winRate*100).toFixed(0)}% WR → 1.3x → $${beforeBoost.toFixed(2)} → $${ourSize.toFixed(2)}`);
     }
 
     // Apply MiroFish confidence-based sizing (1.5x for high confidence, 0.7x for contradicts)
@@ -368,6 +433,15 @@ export class CopyExecutor {
           this.openCopyTrades.delete(marketId);
         }
         this.watcherPositions.delete(marketId);
+        // Update rolling wallet performance window
+        if (copyTrade && copyTrade.leaderWallet) {
+          this.updateWalletPerformance(copyTrade.leaderWallet, (copyTrade.pnl ?? 0) > 0);
+        }
+        // Cooldown: if this was a stop-loss close, block re-entry for 60 minutes
+        if (reason === 'stop_loss' || reason === 'stop-loss') {
+          this.stopLossCooldown.set(marketId, Date.now());
+          logger.debug(`CopyExecutor: Stop-loss cooldown set for ${marketId.slice(0, 20)} — re-entry blocked for 60 min`);
+        }
         return copyTrade ?? null;
       }
     } else {
@@ -411,6 +485,40 @@ export class CopyExecutor {
     }
 
     return Math.round(capped * 100) / 100;
+  }
+
+  /**
+   * Hydrate rolling wallet performance from Supabase closed trades on startup.
+   * Rows should be sorted most-recent-first; we reverse to process oldest→newest
+   * so the window correctly reflects the last N trades in chronological order.
+   */
+  hydrateWalletPerformance(rows: Array<Record<string, unknown>>): void {
+    const reversed = [...rows].reverse(); // oldest first
+    for (const row of reversed) {
+      const wallet = row.leader_wallet as string;
+      const pnl    = parseFloat((row.pnl as string | number | null) as string ?? '0');
+      if (wallet) this.updateWalletPerformance(wallet, pnl > 0);
+    }
+    logger.info(`CopyExecutor: Hydrated rolling window for ${this.walletRollingWindow.size} wallet(s)`);
+    for (const [w, window] of this.walletRollingWindow.entries()) {
+      const wr = window.length > 0 ? window.filter(Boolean).length / window.length : 0;
+      const status = wr < this.ROLLING_MIN_WIN_RATE && window.length >= this.ROLLING_MIN_SAMPLE ? ' ⚠ COLD' :
+                     wr >= this.ROLLING_BOOST_RATE  && window.length >= this.ROLLING_MIN_SAMPLE ? ' ★ HOT' : '';
+      logger.info(`  ${w.slice(0,10)}: ${(wr*100).toFixed(0)}% WR (${window.length}/${this.ROLLING_WINDOW_SIZE} trades)${status}`);
+    }
+  }
+
+  private updateWalletPerformance(wallet: string, won: boolean): void {
+    if (!this.walletRollingWindow.has(wallet)) this.walletRollingWindow.set(wallet, []);
+    const win = this.walletRollingWindow.get(wallet)!;
+    win.push(won);
+    if (win.length > this.ROLLING_WINDOW_SIZE) win.shift();
+  }
+
+  private getWalletRollingStats(wallet: string): { winRate: number; sampleSize: number } {
+    const win = this.walletRollingWindow.get(wallet) ?? [];
+    if (win.length === 0) return { winRate: 0.5, sampleSize: 0 }; // no data → benefit of the doubt
+    return { winRate: win.filter(Boolean).length / win.length, sampleSize: win.length };
   }
 
   getOpenTrades(): CopyTrade[] { return Array.from(this.openCopyTrades.values()); }

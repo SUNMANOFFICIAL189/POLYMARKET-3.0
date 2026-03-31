@@ -93,7 +93,7 @@ export default async function DashboardPage() {
     ;[leaders, currentLeader, trades, performance, leaderHistory, mirofishScans] = await Promise.all([
       getLeaders(),
       getCurrentLeader(),
-      getCopyTrades(200),
+      getCopyTrades(2000),
       getDailyPerformance(30),
       getLeaderHistory(),
       getMirofishScans(),

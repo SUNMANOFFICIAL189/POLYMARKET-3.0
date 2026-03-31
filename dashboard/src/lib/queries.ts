@@ -31,7 +31,7 @@ export async function getLeaderHistory(): Promise<LeaderHistory[]> {
   return data ?? []
 }
 
-export async function getCopyTrades(limit = 100): Promise<CopyTrade[]> {
+export async function getCopyTrades(limit = 2000): Promise<CopyTrade[]> {
   const { data, error } = await supabase
     .from('copy_trades')
     .select('*')
