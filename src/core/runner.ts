@@ -10,8 +10,6 @@ import { LeaderSelector } from '../leaderboard/selector.js';
 import { WalletMonitor } from '../monitor/wallet-monitor.js';
 import { ConfirmationLayer } from '../confirmation/confirmation-layer.js';
 import { CopyExecutor } from '../execution/copy-executor.js';
-import { GlintScraper } from '../signals/glint-scraper.js';
-import { GlintAdapter } from '../signals/glint-adapter.js';
 import { NewsScanner } from '../signals/news-scanner.js';
 import * as db from '../data/supabase.js';
 import { PositionLifecycleManager } from './position-lifecycle.js';
@@ -38,8 +36,6 @@ export class Runner {
   private walletMonitor: WalletMonitor;
 
   // Signals
-  private glintScraper: GlintScraper | null = null;
-  private glintAdapter: GlintAdapter;
   private newsScanner: NewsScanner;
 
   // Execution
@@ -87,12 +83,9 @@ export class Runner {
       pollIntervalMs: cfg.walletMonitor.pollIntervalMs,
     });
 
-    this.glintAdapter = new GlintAdapter();
     this.newsScanner = new NewsScanner();
 
-    this.confirmationLayer = new ConfirmationLayer(
-      this.glintAdapter,
-    );
+    this.confirmationLayer = new ConfirmationLayer();
 
     this.copyExecutor = new CopyExecutor({
       paperEngine: this.paperEngine,
@@ -149,6 +142,15 @@ export class Runner {
         .select('*')
         .in('status', ['open', 'pending']);
       if (openRows) this.copyExecutor.hydrateOpenTrades(openRows);
+
+      // Hydrate rolling wallet performance window from recent closed trades
+      const { data: perfRows } = await db.getClient()
+        .from('copy_trades')
+        .select('leader_wallet, pnl')
+        .in('status', ['closed', 'stopped'])
+        .order('entry_time', { ascending: false })
+        .limit(200);
+      if (perfRows) this.copyExecutor.hydrateWalletPerformance(perfRows);
     } else {
       logger.warn('Supabase not configured — running without persistence');
     }
@@ -189,68 +191,14 @@ export class Runner {
     this.scraper.stop();
     this.walletMonitor.stop();
     this.newsScanner.stop();
-    if (this.glintScraper) await this.glintScraper.stop();
 
     logger.info('PATS-Copy stopped');
   }
 
   private setupSignals(): void {
     // News scanner
-    this.newsScanner.on('news', (item) => {
-      // Feed news headlines into glint adapter for confirmation layer queries
-      this.glintAdapter.onSignal({
-        headline: item.headline,
-        impact: 'medium',
-        category: 'news',
-        matchedMarkets: [],
-        source: item.metadata?.feedSource as string || 'rss',
-        sourceTier: 3,
-        timestamp: Date.now(),
-      });
-    });
     this.newsScanner.start();
 
-    // Glint scraper (optional)
-    if (this.config.glint.enabled) {
-      this.glintScraper = new GlintScraper({
-        headless: this.config.glint.headless,
-      });
-
-      this.glintScraper.on('signal', (event) => {
-        this.glintAdapter.onSignal(event);
-      });
-
-      this.glintScraper.on('whale', (event) => {
-        // Check if this whale is any tracked watcher (rank 1-5)
-        const watcherMap = this.walletMonitor.getWatchers();
-        const watcherAddresses = Array.from(watcherMap.keys());
-        if (watcherAddresses.length > 0) {
-          const match = this.glintAdapter.checkForLeaderWhale(event, watcherAddresses);
-          if (match) {
-            const rank = watcherMap.get(match.walletAddress) ?? 1;
-            logger.info(`INSTANT RANK-${rank} WHALE DETECTED via Glint: ${match.marketQuestion.slice(0, 50)}`);
-            const leaderTrade: LeaderTrade = {
-              leaderWallet: match.walletAddress,
-              marketId: match.marketSlug,
-              marketQuestion: match.marketQuestion,
-              tokenId: '',
-              outcome: match.side === 'buy' ? 'Yes' : 'No',
-              side: match.side,
-              entryPrice: 0.5,
-              size: match.size,
-              timestamp: new Date(match.timestamp).toISOString(),
-              rank,
-            };
-            this.handleLeaderTrade(leaderTrade);
-          }
-        }
-      });
-
-      this.glintScraper.on('connected', () => logger.info('Glint: Connected'));
-      this.glintScraper.on('disconnected', (data) => logger.warn(`Glint: Disconnected (${data.reason})`));
-
-      this.glintScraper.start().catch(err => logger.error(`Glint start failed: ${err}`));
-    }
   }
 
   private setupWalletMonitor(): void {
@@ -486,7 +434,6 @@ export class Runner {
     const copyStats = this.copyExecutor.getStats();
     const walletStats = this.walletMonitor.getStats();
     const selectorStats = this.selector.getStats();
-    const glintStats = this.glintScraper?.getStats();
 
     logger.info('=== PATS-Copy STATUS ===', {
       leader: `${selectorStats.currentLeader?.slice(0, 10) ?? 'none'} (score: ${selectorStats.currentScore?.toFixed(1) ?? '-'})`,
@@ -502,7 +449,6 @@ export class Runner {
       consecutiveVetoes: this.consecutiveVetoes,
       aiCost: `$${confirmStats.aiStats.estimatedCost.toFixed(3)}`,
       walletPolls: walletStats.pollCount,
-      glint: glintStats ? `${glintStats.connected ? 'OK' : 'DOWN'} ${glintStats.signalCount}sig/${glintStats.whaleCount}whale` : 'disabled',
     });
   }
 }

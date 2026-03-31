@@ -102,6 +102,28 @@ export class MirofishClient {
     score: MirofishScore | null;
     reason: string;
   }> {
+    // Sports markets: AI swarm has no real-world edge over sports outcomes.
+    // Skip the bridge entirely and return unavailable immediately to save API calls.
+    const _mq = marketQuestion.toLowerCase();
+    const isSportsMarket = (
+      // Team vs team pattern
+      /\bvs\.?\s/.test(_mq) ||
+      // Club/team abbreviations
+      /\b(fc|sc|ac|cd|cf|afc|asc|bfc)\b/.test(_mq) ||
+      // League/competition keywords
+      /\b(league|division|segunda|primera|bundesliga|serie|ligue|premier|championship|playoffs?|semifinal|final)\b/.test(_mq) ||
+      // Score/betting patterns
+      /\bo\/u\s*\d|\bover\/under\b|\bspread\b|\bmoneyline\b|\bml\b/.test(_mq) ||
+      // Date-based win pattern (sports results)
+      /win on \d{4}-\d{2}-\d{2}/.test(_mq) ||
+      // Sport-specific keywords
+      ['basketball','baseball','tennis','esport','cricket','rugby','nfl','nba','nhl','mlb','ncaa','uefa','fifa','volleyball','hockey','golf'].some(s => _mq.includes(s))
+    );
+    if (isSportsMarket) {
+      logger.debug(`MiroFish: Skipping sports market — "${marketQuestion.slice(0, 50)}"`);
+      return { verdict: 'unavailable', score: null, reason: 'sports market — swarm skip' };
+    }
+
     const score = await this.getSwarmScore(marketQuestion, conditionId);
 
     if (!score) {

@@ -3,7 +3,6 @@ import { AIClassifier } from '../signals/ai-classifier.js';
 import { OrderbookChecker } from '../signals/orderbook-checker.js';
 import { MirofishClient } from '../signals/mirofish-client.js';
 import { categoriseMarket } from '../signals/market-categoriser.js';
-import type { GlintAdapter } from '../signals/glint-adapter.js';
 import type { LeaderTrade, ConfirmationDecision } from '../types/index.js';
 
 /**
@@ -34,26 +33,21 @@ const VETO_CONFIDENCE_THRESHOLD = 0.70;  // AI must be this confident to veto (r
 const WATCHER_AI_MIN_CONFIDENCE = 0.65;       // AI confidence needed to count as corroboration (rank 2-5)
 const WATCHER_OUT_OF_SPECIALTY_CONFIDENCE = 0.85; // Higher threshold when watcher trades outside their specialty
 const WATCHER_ORDERBOOK_THRESHOLD = 0.55; // bid pressure ratio needed to count as corroboration
-const WATCHER_MIN_CORROBORATIONS = 2;    // out of 3 checks must pass for rank 2-5 trades
 
 export class ConfirmationLayer {
   private classifier: AIClassifier;
   private orderbookChecker: OrderbookChecker;
   private mirofishClient: MirofishClient;
-  private glintAdapter: GlintAdapter | null;
   private approvedCount = 0;
   private vetoedCount = 0;
   private skippedCount = 0;
   private totalLatencyMs = 0;
   private callCount = 0;
 
-  constructor(
-    glintAdapter: GlintAdapter | null = null,
-  ) {
+  constructor() {
     this.classifier = new AIClassifier();
     this.orderbookChecker = new OrderbookChecker();
     this.mirofishClient = new MirofishClient();
-    this.glintAdapter = glintAdapter;
   }
 
   async confirm(trade: LeaderTrade): Promise<ConfirmationResult> {
@@ -84,20 +78,8 @@ export class ConfirmationLayer {
       return this.confirmWatcher(trade, start);
     }
 
-    // Gather recent news signals for this market
-    const recentSignals = this.glintAdapter
-      ? this.glintAdapter.getSignalsForMarket(trade.marketQuestion)
-      : [];
-
-    const newsContext = recentSignals.map(s => ({
-      headline: s.headline,
-      source: s.source,
-      timestamp: s.timestamp,
-    }));
-
-    logger.info(`ConfirmationLayer: Checking trade "${trade.marketQuestion.slice(0, 50)}" side=${trade.side} outcome=${trade.outcome}`, {
-      glintSignals: recentSignals.length,
-    });
+    const newsContext: Array<{headline: string; source: string; timestamp: number}> = [];
+    logger.info(`ConfirmationLayer: Checking trade "${trade.marketQuestion.slice(0, 50)}" side=${trade.side} outcome=${trade.outcome}`);
 
     // Run AI confirmation
     let aiResult;
@@ -224,22 +206,12 @@ export class ConfirmationLayer {
 
     logger.info(`ConfirmationLayer: Watcher corroboration check for rank-${trade.rank} "${trade.marketQuestion.slice(0, 50)}"`);
 
-    // Check 1: Glint — any recent signal for this market within 2hr window
-    const glintSignals = this.glintAdapter
-      ? this.glintAdapter.getSignalsForMarket(trade.marketQuestion)
-      : [];
-    const glintPass = glintSignals.length > 0;
-
-    // Check 2: AI confidence ≥ 0.75 AND not a veto recommendation
+    // PRIMARY: AI confidence >= threshold AND not veto (required — gate fails without this)
     let aiPass = false;
     let aiConfidence = 0;
     let aiReasoning = '';
     try {
-      const newsContext = glintSignals.map(s => ({
-        headline: s.headline,
-        source: s.source,
-        timestamp: s.timestamp,
-      }));
+      const newsContext: Array<{headline: string; source: string; timestamp: number}> = [];
       const aiResult = await this.classifier.classifyTrade(
         trade.marketQuestion,
         trade.side,
@@ -254,11 +226,15 @@ export class ConfirmationLayer {
       aiPass = false;
     }
 
-    // Check 3: Orderbook bid pressure > 55%
+    // BONUS 1: Orderbook bid pressure
+    // Dynamic threshold: 0.55 normally, drops to 0.50 when AI >= 0.85 (high-confidence signal)
+    // Rationale: 0.52 vs 0.55 is noise in thin sports prediction markets; AI at 0.90+ is the
+    // stronger signal. A static 0.55 was blocking 154 AI-approved trades per day unnecessarily.
     const bidPressure = await this.orderbookChecker.getBidPressure(trade.tokenId);
-    const orderbookPass = bidPressure !== null && bidPressure > WATCHER_ORDERBOOK_THRESHOLD;
+    const obThreshold = aiConfidence >= 0.85 ? 0.50 : WATCHER_ORDERBOOK_THRESHOLD;
+    const orderbookPass = bidPressure !== null && bidPressure > obThreshold;
 
-    // Check 4: MiroFish swarm consensus (bonus check, doesn't penalize if unavailable)
+    // BONUS 2: MiroFish swarm consensus (optional — helps when available, no penalty when not)
     let mirofishPass = false;
     let mirofishStr = 'unavail';
     try {
@@ -266,7 +242,7 @@ export class ConfirmationLayer {
         trade.marketQuestion,
         trade.side as 'buy' | 'sell',
         trade.outcome,
-        undefined, // conditionId not on LeaderTrade
+        undefined,
       );
       if (mfResult.verdict === 'supports') {
         mirofishPass = true;
@@ -275,36 +251,31 @@ export class ConfirmationLayer {
         mirofishPass = false;
         mirofishStr = `N(${mfResult.score?.swarmProbability.toFixed(0)}%,contradicts)`;
       } else {
-        mirofishStr = `neutral`;
-        mirofishPass = false; // neutral doesn't count as a pass
+        mirofishStr = mfResult.verdict === 'unavailable' ? 'skip' : 'neutral';
+        mirofishPass = false;
       }
     } catch {
       mirofishStr = 'unavail';
     }
 
-    // Corroboration: count passes from available checks
-    // MiroFish is additive — it can help reach threshold but its absence doesn't hurt
-    const basePasses = [glintPass, aiPass, orderbookPass].filter(Boolean).length;
-    const passes = basePasses + (mirofishPass ? 1 : 0);
-    // If orderbook data is unavailable (tokenId missing or market not on CLOB), only 2 checks
-    // are possible. In that case require 1/2 instead of 2/3 to avoid permanently blocking all
-    // watcher trades from markets that don't have CLOB coverage (e.g. sports prediction markets).
-    const checksAvailable = bidPressure !== null ? 3 : 2;
-    const threshold = checksAvailable === 2 ? 1 : WATCHER_MIN_CORROBORATIONS;
+    // GATE: AI confidence alone is sufficient for approval.
+    // Orderbook and MiroFish are informational — logged and affect sizing but do NOT gate.
+    // Rationale: sports prediction markets have natural ~0.50 orderbook pressure
+    // (cheap underdog tokens attract speculative buyers) — using it as a hard gate
+    // blocks 1,400+ valid trades per day without adding signal quality.
 
-    const glintStr = glintPass ? `Y(${glintSignals.length}sig)` : 'N';
-    const aiStr = aiPass ? `Y(${aiConfidence.toFixed(2)})` : `N(${aiConfidence.toFixed(2)},need≥${aiThreshold})`;
+    const aiStr = aiPass ? `Y(${aiConfidence.toFixed(2)})` : `N(${aiConfidence.toFixed(2)},need>=${aiThreshold})`;
     const obStr = bidPressure !== null
-      ? (orderbookPass ? `Y(${bidPressure.toFixed(2)})` : `N(${bidPressure.toFixed(2)})`)
+      ? (orderbookPass ? `Y(${bidPressure.toFixed(2)})` : `info(${bidPressure.toFixed(2)})`)
       : 'unavail';
 
     const latencyMs = Date.now() - start;
     this.totalLatencyMs += latencyMs;
     this.callCount++;
 
-    const corrobLog = `Corroboration rank=${trade.rank}: glint=${glintStr} ai=${aiStr} orderbook=${obStr} mirofish=${mirofishStr} → ${passes}/${threshold} needed`;
+    const corrobLog = `Corroboration rank=${trade.rank}: ai=${aiStr} orderbook=${obStr} mirofish=${mirofishStr}`;
 
-    if (passes >= threshold) {
+    if (aiPass) {
       this.approvedCount++;
       const reason = `${corrobLog} — APPROVED`;
       logger.info(`Confirmation APPROVED (watcher): ${reason}`);
@@ -313,20 +284,20 @@ export class ConfirmationLayer {
         reason,
         confidence: aiConfidence,
         hasOpposingSignals: false,
-        hasSupportingSignals: glintPass,
+        hasSupportingSignals: orderbookPass,
         latencyMs,
         sizeMultiplier: mirofishPass ? 1.5 : 1.0,
       };
     } else {
       this.vetoedCount++;
-      const reason = `${corrobLog} — insufficient corroboration (${passes}/${threshold})`;
+      const reason = `${corrobLog} — VETOED: AI confidence ${(aiConfidence * 100).toFixed(0)}% below ${(aiThreshold * 100).toFixed(0)}% threshold`;
       logger.info(`Confirmation VETOED (watcher): ${reason}`);
       return {
         decision: 'vetoed',
         reason,
         confidence: aiConfidence,
         hasOpposingSignals: true,
-        hasSupportingSignals: glintPass,
+        hasSupportingSignals: false,
         latencyMs,
         sizeMultiplier: 1.0,
       };
