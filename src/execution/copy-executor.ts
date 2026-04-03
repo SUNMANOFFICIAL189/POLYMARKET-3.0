@@ -32,7 +32,7 @@ const RANK_MULTIPLIERS: Record<number, number> = {
 
 // Skip near-certainty bets: price > this threshold or < (1 - threshold) have
 // near-zero alpha — the edge is already fully priced in.
-const MAX_WATCHER_PRICE = 0.92;
+const MAX_WATCHER_PRICE = 0.85;
 const MIN_WATCHER_PRICE = 0.08;
 
 // Edge floor: prices within 6% of 0.5 (0.44–0.56) represent genuine uncertainty —
@@ -58,6 +58,12 @@ export class CopyExecutor {
   private readonly ROLLING_MIN_WIN_RATE  = parseFloat(process.env.ROLLING_MIN_WIN_RATE  ?? '0.40');
   private readonly ROLLING_BOOST_RATE    = parseFloat(process.env.ROLLING_BOOST_THRESHOLD ?? '0.60');
   private readonly ROLLING_MIN_SAMPLE    = 5; // minimum trades before filter activates
+  // Cold streak recovery: after PROBE_COOLDOWN_MS of blocking, allow 1 probe trade at min size
+  private walletColdSince: Map<string, number> = new Map(); // wallet → timestamp when cold streak started
+  private readonly PROBE_COOLDOWN_MS = 12 * 60 * 60 * 1000; // 12 hours before probe allowed
+  private readonly PROBE_SIZE = 5; // $5 min probe trade
+  // Track trade count per wallet for new-wallet probation
+  private walletTradeCount: Map<string, number> = new Map();
   private executedCount = 0;
   private blockedCount = 0;
 
@@ -194,9 +200,43 @@ export class CopyExecutor {
     // Soft-mutes wallets confirmed to be in a cold streak (< 40% WR over last 10 trades)
     const rollingStats = this.getWalletRollingStats(leaderTrade.leaderWallet);
     if (rollingStats.sampleSize >= this.ROLLING_MIN_SAMPLE && rollingStats.winRate < this.ROLLING_MIN_WIN_RATE) {
+      // Track when cold streak started
+      if (!this.walletColdSince.has(leaderTrade.leaderWallet)) {
+        this.walletColdSince.set(leaderTrade.leaderWallet, Date.now());
+      }
+      const coldDuration = Date.now() - (this.walletColdSince.get(leaderTrade.leaderWallet) ?? Date.now());
+      if (coldDuration < this.PROBE_COOLDOWN_MS) {
+        this.blockedCount++;
+        const hoursLeft = ((this.PROBE_COOLDOWN_MS - coldDuration) / 3600000).toFixed(1);
+        logger.info(`CopyExecutor: COLD STREAK — ${leaderTrade.leaderWallet.slice(0,10)} rolling ${rollingStats.sampleSize}-trade WR ${(rollingStats.winRate * 100).toFixed(0)}% — blocked (probe in ${hoursLeft}h)`);
+        return { success: false, reason: `Cold streak: rolling WR ${(rollingStats.winRate * 100).toFixed(0)}% (probe in ${hoursLeft}h)` };
+      } else {
+        // Recovery probe: allow 1 trade at minimum size, reset cold timer
+        logger.info(`CopyExecutor: COLD PROBE — ${leaderTrade.leaderWallet.slice(0,10)} cold for ${(coldDuration / 3600000).toFixed(1)}h — allowing $${this.PROBE_SIZE} probe trade`);
+        this.walletColdSince.set(leaderTrade.leaderWallet, Date.now()); // reset timer for next probe
+        // Force size to probe size below (handled by override flag)
+        (leaderTrade as any)._probeOverride = true;
+      }
+    } else {
+      // Wallet recovered — clear cold tracking
+      this.walletColdSince.delete(leaderTrade.leaderWallet);
+    }
+
+    // P2: Heavy favourite filter — applies to ALL ranks
+    // Prices > 0.85 risk a lot to win very little. Historical data: 77 trades at 0.75-0.99, net -$305
+    const entryPrice = leaderTrade.entryPrice;
+    if (entryPrice > MAX_WATCHER_PRICE) {
       this.blockedCount++;
-      logger.info(`CopyExecutor: COLD STREAK — ${leaderTrade.leaderWallet.slice(0,10)} rolling ${rollingStats.sampleSize}-trade WR ${(rollingStats.winRate * 100).toFixed(0)}% < ${(this.ROLLING_MIN_WIN_RATE * 100).toFixed(0)}% threshold — skipping`);
-      return { success: false, reason: `Cold streak: rolling WR ${(rollingStats.winRate * 100).toFixed(0)}% (${rollingStats.sampleSize} trades)` };
+      logger.info(`CopyExecutor: HEAVY FAV SKIP — price ${entryPrice.toFixed(3)} > ${MAX_WATCHER_PRICE} threshold — risk/reward inverted`);
+      return { success: false, reason: `Heavy favourite: price ${entryPrice.toFixed(3)} > ${MAX_WATCHER_PRICE} max` };
+    }
+
+    // P4: Coin-flip filter — applies to ALL ranks
+    // Prices within 6% of 0.50 have no directional edge. Historical: 38 trades at 0.40-0.55, net -$220
+    if (Math.abs(entryPrice - 0.5) < EDGE_FLOOR_DISTANCE) {
+      this.blockedCount++;
+      logger.info(`CopyExecutor: COIN-FLIP SKIP — price ${entryPrice.toFixed(3)} too close to 0.50 (within ${EDGE_FLOOR_DISTANCE})`);
+      return { success: false, reason: `Coin-flip zone: price ${entryPrice.toFixed(3)} within ${(EDGE_FLOOR_DISTANCE*100).toFixed(0)}% of 0.50` };
     }
 
     // For rank 2-5 watcher trades: apply extra filters before using a position slot
@@ -294,6 +334,27 @@ export class CopyExecutor {
       const beforeSize = ourSize;
       ourSize = Math.round(ourSize * sizeMultiplier * 100) / 100;
       logger.info(`CopyExecutor: MiroFish sizing: ${sizeMultiplier}x → $${beforeSize.toFixed(2)} → $${ourSize.toFixed(2)}`);
+    }
+
+    // P3: Hard cap position size at $75 — historical data: $100+ positions had 34% WR and lost $631
+    const MAX_POSITION_SIZE = parseFloat(process.env.MAX_POSITION_DOLLARS ?? '75');
+    if (ourSize > MAX_POSITION_SIZE) {
+      logger.info(`CopyExecutor: Size capped $${ourSize.toFixed(2)} → $${MAX_POSITION_SIZE.toFixed(2)} (hard cap)`);
+      ourSize = MAX_POSITION_SIZE;
+    }
+
+    // P1: If this is a cold streak probe, override size to probe minimum
+    if ((leaderTrade as any)._probeOverride) {
+      logger.info(`CopyExecutor: Probe override — size $${ourSize.toFixed(2)} → $${this.PROBE_SIZE} (cold streak probe)`);
+      ourSize = this.PROBE_SIZE;
+    }
+
+    // P5: New wallet probation — 50% size until 5 trades completed
+    const walletTrades = this.walletTradeCount.get(leaderTrade.leaderWallet) ?? 0;
+    if (walletTrades < 5) {
+      const beforeProbation = ourSize;
+      ourSize = Math.round(ourSize * 0.5 * 100) / 100;
+      logger.info(`CopyExecutor: NEW WALLET probation — ${leaderTrade.leaderWallet.slice(0,10)} has ${walletTrades} trades — 50% size $${beforeProbation.toFixed(2)} → $${ourSize.toFixed(2)}`);
     }
 
     if (ourSize < 1) {
@@ -436,6 +497,9 @@ export class CopyExecutor {
         // Update rolling wallet performance window
         if (copyTrade && copyTrade.leaderWallet) {
           this.updateWalletPerformance(copyTrade.leaderWallet, (copyTrade.pnl ?? 0) > 0);
+          // P5: Increment wallet trade count for probation tracking
+          const count = this.walletTradeCount.get(copyTrade.leaderWallet) ?? 0;
+          this.walletTradeCount.set(copyTrade.leaderWallet, count + 1);
         }
         // Cooldown: if this was a stop-loss close, block re-entry for 60 minutes
         if (reason === 'stop_loss' || reason === 'stop-loss') {
@@ -497,7 +561,12 @@ export class CopyExecutor {
     for (const row of reversed) {
       const wallet = row.leader_wallet as string;
       const pnl    = parseFloat((row.pnl as string | number | null) as string ?? '0');
-      if (wallet) this.updateWalletPerformance(wallet, pnl > 0);
+      if (wallet) {
+        this.updateWalletPerformance(wallet, pnl > 0);
+        // P5: Count trades per wallet for probation
+        const count = this.walletTradeCount.get(wallet) ?? 0;
+        this.walletTradeCount.set(wallet, count + 1);
+      }
     }
     logger.info(`CopyExecutor: Hydrated rolling window for ${this.walletRollingWindow.size} wallet(s)`);
     for (const [w, window] of this.walletRollingWindow.entries()) {
@@ -513,6 +582,14 @@ export class CopyExecutor {
     const win = this.walletRollingWindow.get(wallet)!;
     win.push(won);
     if (win.length > this.ROLLING_WINDOW_SIZE) win.shift();
+  }
+
+  /** Returns true if wallet has a hot rolling WR (>= ROLLING_BOOST_RATE with enough sample).
+   *  Used by runner.ts to elevate high-performing wallets to rank-1 treatment regardless
+   *  of their current leaderboard position. */
+  isHotWallet(wallet: string): boolean {
+    const stats = this.getWalletRollingStats(wallet);
+    return stats.sampleSize >= this.ROLLING_MIN_SAMPLE && stats.winRate >= this.ROLLING_BOOST_RATE;
   }
 
   private getWalletRollingStats(wallet: string): { winRate: number; sampleSize: number } {
