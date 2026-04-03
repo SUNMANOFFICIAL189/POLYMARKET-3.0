@@ -1,8 +1,10 @@
 import { logger } from '../utils/logger.js';
 import { PaperTradingEngine } from '../core/paper-trading.js';
 import { RiskManager } from '../core/risk-manager.js';
+import { OrderbookChecker } from '../signals/orderbook-checker.js';
 import * as cliWrapper from './cli-wrapper.js';
 import type { LeaderTrade, CopyTrade, ConfirmationDecision, RiskLevel } from '../types/index.js';
+import type { PositionConfig, LiquidityConfig, HoldToResolutionConfig } from '../core/config.js';
 
 /**
  * CopyExecutor — mirrors a leader's trade with proportional position sizing.
@@ -29,26 +31,25 @@ const RANK_MULTIPLIERS: Record<number, number> = {
   5: 0.30,
 };
 
-// Watcher trades will not fill beyond (maxPositions - RANK1_RESERVED) slots.
-// Ensures the rank-1 leader always has capacity to copy when they trade.
-const RANK1_RESERVED_SLOTS = 2;
-
 // Skip near-certainty bets: price > this threshold or < (1 - threshold) have
 // near-zero alpha — the edge is already fully priced in.
 const MAX_WATCHER_PRICE = 0.92;
 const MIN_WATCHER_PRICE = 0.08;
 
 // Edge floor: prices within 6% of 0.5 (0.44–0.56) represent genuine uncertainty —
-// no measurable directional edge. Top performers enter at ≥6% deviation from consensus
-// (PANews 112K wallet study; min edge = 6-11% from midpoint).
+// no measurable directional edge.
 const EDGE_FLOOR_DISTANCE = 0.06;
 
 export class CopyExecutor {
   private paperEngine: PaperTradingEngine;
   private riskManager: RiskManager;
+  private orderbookChecker: OrderbookChecker;
   private paperMode: boolean;
   private ourPortfolio: number;
   private riskLevel: RiskLevel;
+  private positionConfig: PositionConfig;
+  private liquidityConfig: LiquidityConfig;
+  private holdConfig: HoldToResolutionConfig;
   private openCopyTrades: Map<string, CopyTrade> = new Map(); // marketId → CopyTrade
   // marketId → rank of the watcher who opened the position (for collision detection)
   private watcherPositions: Map<string, number> = new Map();
@@ -58,15 +59,37 @@ export class CopyExecutor {
   constructor(opts: {
     paperEngine: PaperTradingEngine;
     riskManager: RiskManager;
+    orderbookChecker?: OrderbookChecker;
     paperMode: boolean;
     ourPortfolio: number;
     riskLevel: RiskLevel;
+    positionConfig?: PositionConfig;
+    liquidityConfig?: LiquidityConfig;
+    holdConfig?: HoldToResolutionConfig;
   }) {
     this.paperEngine = opts.paperEngine;
     this.riskManager = opts.riskManager;
+    this.orderbookChecker = opts.orderbookChecker ?? new OrderbookChecker();
     this.paperMode = opts.paperMode;
     this.ourPortfolio = opts.ourPortfolio;
     this.riskLevel = opts.riskLevel;
+    this.positionConfig = opts.positionConfig ?? {
+      maxOpenPositions: 8,
+      rank1ReservedSlots: 2,
+      enableEdgeFloor: false,
+      stalePositionDays: 7,
+    };
+    this.liquidityConfig = opts.liquidityConfig ?? {
+      enabled: true,
+      maxSlippagePct: 0.02,
+    };
+    this.holdConfig = opts.holdConfig ?? {
+      enabled: false,
+      holdEntryThreshold: 0.35,
+      holdCurrentThreshold: 0.60,
+      cutLossEntryThreshold: 0.70,
+      cutLossCurrentThreshold: 0.50,
+    };
   }
 
   updatePortfolio(balance: number): void {
@@ -106,6 +129,10 @@ export class CopyExecutor {
 
   hasOpenPositionForMarket(marketId: string): boolean {
     return this.openCopyTrades.has(marketId) || this.paperEngine.hasOpenPositionForMarket(marketId);
+  }
+
+  getOpenTradeForMarket(marketId: string): CopyTrade | undefined {
+    return this.openCopyTrades.get(marketId);
   }
 
   /**
@@ -159,20 +186,38 @@ export class CopyExecutor {
         return { success: false, reason: `Near-certainty price $${price.toFixed(3)} — no alpha to copy` };
       }
 
-      // Filter 2: edge floor — dead zone within 6% of 0.5 has no measurable directional edge
-      if (Math.abs(price - 0.5) < EDGE_FLOOR_DISTANCE) {
+      // Filter 2: edge floor — dead zone (opt-in, disabled by default)
+      if (this.positionConfig.enableEdgeFloor && Math.abs(price - 0.5) < EDGE_FLOOR_DISTANCE) {
         this.blockedCount++;
         logger.info(`CopyExecutor: Watcher trade skipped — dead zone price $${price.toFixed(3)} (within ${EDGE_FLOOR_DISTANCE} of 0.5, no measurable edge)`);
         return { success: false, reason: `Dead zone price $${price.toFixed(3)} — within ${EDGE_FLOOR_DISTANCE * 100}% of 0.5, no measurable edge` };
       }
 
       // Filter 3: reserve slots for rank-1 leader
-      // watcherPositions tracks open positions opened by rank 2-5 trades
-      const watcherLimit = Math.max(1, 5 - RANK1_RESERVED_SLOTS); // 5 = paper maxOpenPositions
+      const maxPositions = this.positionConfig.maxOpenPositions;
+      const watcherLimit = Math.max(1, maxPositions - this.positionConfig.rank1ReservedSlots);
       if (this.watcherPositions.size >= watcherLimit) {
         this.blockedCount++;
-        logger.debug(`CopyExecutor: Watcher slot limit reached (${this.watcherPositions.size}/${watcherLimit}) — reserving ${RANK1_RESERVED_SLOTS} for rank-1`);
+        logger.debug(`CopyExecutor: Watcher slot limit reached (${this.watcherPositions.size}/${watcherLimit}) — reserving ${this.positionConfig.rank1ReservedSlots} for rank-1`);
         return { success: false, reason: `Watcher slot limit ${watcherLimit} reached — slots reserved for rank-1` };
+      }
+    }
+
+    // Priority replacement for rank-1 when all slots are full
+    if (isRank1 && this.openCopyTrades.size >= this.positionConfig.maxOpenPositions) {
+      let evictTarget: { marketId: string; rank: number } | null = null;
+      for (const [mId, rank] of this.watcherPositions) {
+        if (!evictTarget || rank > evictTarget.rank) {
+          evictTarget = { marketId: mId, rank };
+        }
+      }
+      if (evictTarget) {
+        logger.info(`CopyExecutor: Priority replacement — evicting rank-${evictTarget.rank} position for rank-1 trade`);
+        await this.closePosition(evictTarget.marketId, 0.5, 'priority_eviction');
+        this.watcherPositions.delete(evictTarget.marketId);
+      } else {
+        this.blockedCount++;
+        return { success: false, reason: 'All slots full, no watcher positions to evict for rank-1' };
       }
     }
 
@@ -201,6 +246,18 @@ export class CopyExecutor {
     if (ourSize < 1) {
       this.blockedCount++;
       return { success: false, reason: `Computed size $${ourSize.toFixed(2)} too small (min $1)` };
+    }
+
+    // Pre-trade liquidity check
+    if (this.liquidityConfig.enabled && leaderTrade.tokenId) {
+      const slippage = await this.orderbookChecker.estimateSlippage(
+        leaderTrade.tokenId, leaderTrade.side, ourSize,
+      );
+      if (slippage && slippage.slippagePct > this.liquidityConfig.maxSlippagePct) {
+        this.blockedCount++;
+        logger.info(`CopyExecutor: Trade skipped — estimated slippage ${(slippage.slippagePct * 100).toFixed(2)}% exceeds max ${this.liquidityConfig.maxSlippagePct * 100}%`);
+        return { success: false, reason: `Slippage ${(slippage.slippagePct * 100).toFixed(1)}% > ${this.liquidityConfig.maxSlippagePct * 100}% max` };
+      }
     }
 
     logger.info(`CopyExecutor: ${this.paperMode ? '[PAPER]' : '[LIVE]'} Copying trade`, {
@@ -319,6 +376,36 @@ export class CopyExecutor {
   }
 
   /**
+   * Evaluate whether to follow the leader's exit or hold to resolution.
+   */
+  shouldFollowLeaderExit(copyTrade: CopyTrade, currentPrice: number): { follow: boolean; reason: string } {
+    if (!this.holdConfig.enabled) {
+      return { follow: true, reason: 'hold-to-resolution disabled' };
+    }
+
+    const entry = copyTrade.ourEntryPrice ?? copyTrade.leaderEntryPrice;
+
+    // Strong conviction, let it ride to resolution
+    if (entry < this.holdConfig.holdEntryThreshold && currentPrice > this.holdConfig.holdCurrentThreshold) {
+      return {
+        follow: false,
+        reason: `Hold to resolution: entry $${entry.toFixed(3)} < $${this.holdConfig.holdEntryThreshold}, current $${currentPrice.toFixed(3)} > $${this.holdConfig.holdCurrentThreshold}`,
+      };
+    }
+
+    // Market moved against us, cut losses
+    if (entry > this.holdConfig.cutLossEntryThreshold && currentPrice < this.holdConfig.cutLossCurrentThreshold) {
+      return {
+        follow: true,
+        reason: `Cut loss: entry $${entry.toFixed(3)} > $${this.holdConfig.cutLossEntryThreshold}, current $${currentPrice.toFixed(3)} < $${this.holdConfig.cutLossCurrentThreshold}`,
+      };
+    }
+
+    // Default: follow leader
+    return { follow: true, reason: 'default: follow leader exit' };
+  }
+
+  /**
    * Close our copy position when the leader closes theirs.
    * Returns the closed CopyTrade (with pnl filled in) on success, null if no position found.
    */
@@ -356,6 +443,16 @@ export class CopyExecutor {
   }
 
   /**
+   * Get positions that have been open longer than the stale threshold.
+   */
+  getStalePositions(): CopyTrade[] {
+    const cutoff = Date.now() - this.positionConfig.stalePositionDays * 24 * 60 * 60 * 1000;
+    return this.getOpenTrades().filter(t =>
+      new Date(t.entryTime).getTime() < cutoff
+    );
+  }
+
+  /**
    * Proportional sizing: (leader_size / leader_portfolio) * our_portfolio
    * Capped at risk manager's max position size.
    */
@@ -387,6 +484,8 @@ export class CopyExecutor {
       executed: this.executedCount,
       blocked: this.blockedCount,
       openPositions: this.openCopyTrades.size,
+      watcherPositions: this.watcherPositions.size,
+      stalePositions: this.getStalePositions().length,
       paperMode: this.paperMode,
     };
   }

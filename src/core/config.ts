@@ -2,6 +2,46 @@ import 'dotenv/config';
 import { RISK_PRESETS, type RiskConfig, type RiskLevel } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
+export interface ConfirmationConfig {
+  vetoConfidenceThreshold: number;
+  watcherAiMinConfidence: number;
+  watcherOutOfSpecialtyConfidence: number;
+  watcherOrderbookThreshold: number;
+  watcherMinCorroborations: number;
+  maxTradeAgeMs: number;
+  watcherMaxTradeAgeMs: number;
+}
+
+export interface PositionConfig {
+  maxOpenPositions: number;
+  rank1ReservedSlots: number;
+  enableEdgeFloor: boolean;
+  stalePositionDays: number;
+}
+
+export interface LiquidityConfig {
+  enabled: boolean;
+  maxSlippagePct: number;
+}
+
+export interface HoldToResolutionConfig {
+  enabled: boolean;
+  holdEntryThreshold: number;
+  holdCurrentThreshold: number;
+  cutLossEntryThreshold: number;
+  cutLossCurrentThreshold: number;
+}
+
+export interface AIConfig {
+  provider: 'groq' | 'ollama' | 'cerebras';
+  groqApiKey?: string;
+  groqModel?: string;
+  cerebrasApiKey?: string;
+  cerebrasModel?: string;
+  ollamaBaseUrl?: string;
+  ollamaModel?: string;
+}
+
 export interface AppConfig {
   paperMode: boolean;
   risk: RiskConfig;
@@ -23,11 +63,17 @@ export interface AppConfig {
   };
   walletMonitor: {
     pollIntervalMs: number;
+    enableWebSocket: boolean;
   };
   rotation: {
     hysteresisMarginPct: number;
     hysteresisMinDurationMs: number;
   };
+  confirmation: ConfirmationConfig;
+  positions: PositionConfig;
+  liquidity: LiquidityConfig;
+  holdToResolution: HoldToResolutionConfig;
+  ai: AIConfig;
 }
 
 function envOpt(key: string, fallback: string): string {
@@ -52,6 +98,12 @@ export function loadConfig(): AppConfig {
   const risk = RISK_PRESETS[riskLevel];
   if (!risk) throw new Error(`Invalid RISK_LEVEL: ${riskLevel}`);
 
+  // Override maxOpenPositions from env if provided
+  const maxOpenOverride = process.env.MAX_OPEN_POSITIONS;
+  if (maxOpenOverride) {
+    risk.maxOpenPositions = parseInt(maxOpenOverride);
+  }
+
   const config: AppConfig = {
     paperMode,
     risk,
@@ -73,10 +125,46 @@ export function loadConfig(): AppConfig {
     },
     walletMonitor: {
       pollIntervalMs: parseInt(envOpt('WALLET_POLL_MS', '30000')), // 30 seconds
+      enableWebSocket: envOpt('ENABLE_WS_MONITOR', 'false') === 'true',
     },
     rotation: {
       hysteresisMarginPct: parseFloat(envOpt('ROTATION_MARGIN_PCT', '5')), // 5%
       hysteresisMinDurationMs: parseInt(envOpt('ROTATION_MIN_DURATION_MS', '3600000')), // 1 hour
+    },
+    confirmation: {
+      vetoConfidenceThreshold: parseFloat(envOpt('VETO_CONFIDENCE_THRESHOLD', '0.85')),
+      watcherAiMinConfidence: parseFloat(envOpt('WATCHER_AI_MIN_CONFIDENCE', '0.65')),
+      watcherOutOfSpecialtyConfidence: parseFloat(envOpt('WATCHER_OUT_OF_SPECIALTY_CONFIDENCE', '0.75')),
+      watcherOrderbookThreshold: parseFloat(envOpt('WATCHER_ORDERBOOK_THRESHOLD', '0.55')),
+      watcherMinCorroborations: parseInt(envOpt('WATCHER_MIN_CORROBORATIONS', '1')),
+      maxTradeAgeMs: parseInt(envOpt('MAX_TRADE_AGE_MS', '300000')),
+      watcherMaxTradeAgeMs: parseInt(envOpt('WATCHER_MAX_TRADE_AGE_MS', '900000')),
+    },
+    positions: {
+      maxOpenPositions: risk.maxOpenPositions,
+      rank1ReservedSlots: parseInt(envOpt('RANK1_RESERVED_SLOTS', '2')),
+      enableEdgeFloor: envOpt('ENABLE_EDGE_FLOOR', 'false') === 'true',
+      stalePositionDays: parseInt(envOpt('STALE_POSITION_DAYS', '7')),
+    },
+    liquidity: {
+      enabled: envOpt('ENABLE_LIQUIDITY_CHECK', 'true') === 'true',
+      maxSlippagePct: parseFloat(envOpt('MAX_SLIPPAGE_PCT', '0.02')),
+    },
+    holdToResolution: {
+      enabled: envOpt('ENABLE_HOLD_TO_RESOLUTION', 'false') === 'true',
+      holdEntryThreshold: parseFloat(envOpt('HOLD_ENTRY_THRESHOLD', '0.35')),
+      holdCurrentThreshold: parseFloat(envOpt('HOLD_CURRENT_THRESHOLD', '0.60')),
+      cutLossEntryThreshold: parseFloat(envOpt('CUT_LOSS_ENTRY_THRESHOLD', '0.70')),
+      cutLossCurrentThreshold: parseFloat(envOpt('CUT_LOSS_CURRENT_THRESHOLD', '0.50')),
+    },
+    ai: {
+      provider: (envOpt('AI_PROVIDER', 'cerebras') as 'groq' | 'ollama' | 'cerebras'),
+      groqApiKey: process.env.GROQ_API_KEY,
+      groqModel: envOpt('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+      cerebrasApiKey: process.env.CEREBRAS_API_KEY,
+      cerebrasModel: envOpt('CEREBRAS_MODEL', 'llama-3.3-70b'),
+      ollamaBaseUrl: envOpt('OLLAMA_BASE_URL', 'http://localhost:11434'),
+      ollamaModel: envOpt('OLLAMA_MODEL', 'llama3.2'),
     },
   };
 
@@ -84,10 +172,15 @@ export function loadConfig(): AppConfig {
     paperMode: config.paperMode,
     riskLevel: config.risk.level,
     capital: config.totalCapitalUsdc,
-    hasAnthropicKey: !!config.apiKeys.anthropic,
     hasSupabase: !!config.supabase.url,
     glintEnabled: config.glint.enabled,
     leaderboardPollMs: config.leaderboard.pollIntervalMs,
+    vetoThreshold: config.confirmation.vetoConfidenceThreshold,
+    watcherCorroborations: config.confirmation.watcherMinCorroborations,
+    maxOpenPositions: config.positions.maxOpenPositions,
+    edgeFloor: config.positions.enableEdgeFloor,
+    liquidityCheck: config.liquidity.enabled,
+    holdToResolution: config.holdToResolution.enabled,
   });
 
   return config;

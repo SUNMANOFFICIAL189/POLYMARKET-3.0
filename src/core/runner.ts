@@ -1,14 +1,17 @@
+import http from 'http';
 import { logger } from '../utils/logger.js';
 import { loadConfig } from './config.js';
 import { RiskDial } from './config.js';
 import { RiskManager } from './risk-manager.js';
 import { PaperTradingEngine } from './paper-trading.js';
+import { SelfTuner } from './self-tuner.js';
 import { LeaderboardScraper } from '../leaderboard/scraper.js';
 import { TraderScorer } from '../leaderboard/scorer.js';
 import { LeaderSelector } from '../leaderboard/selector.js';
 import { WalletMonitor } from '../monitor/wallet-monitor.js';
 import { ConfirmationLayer } from '../confirmation/confirmation-layer.js';
 import { CopyExecutor } from '../execution/copy-executor.js';
+import { OrderbookChecker } from '../signals/orderbook-checker.js';
 import { GlintScraper } from '../signals/glint-scraper.js';
 import { GlintAdapter } from '../signals/glint-adapter.js';
 import { NewsScanner } from '../signals/news-scanner.js';
@@ -18,8 +21,11 @@ import type { Leader, LeaderTrade } from '../types/index.js';
 export class Runner {
   private config = loadConfig();
   private running = false;
+  private startTime = Date.now();
   private statusTimer: ReturnType<typeof setInterval> | null = null;
   private dayRolloverTimer: ReturnType<typeof setInterval> | null = null;
+  private selfTuneTimer: ReturnType<typeof setInterval> | null = null;
+  private healthServer: http.Server | null = null;
 
   // Core modules
   private riskDial: RiskDial;
@@ -69,8 +75,6 @@ export class Runner {
       onRotation: async (event) => {
         logger.info(`LEADER ROTATION: ${event.previousLeader?.walletAddress?.slice(0, 10) ?? 'none'} → ${event.newLeader.walletAddress.slice(0, 10)} (${event.reason})`);
         this.currentLeader = event.newLeader;
-        // setWatchers is now called in onLeaderboardUpdate — no need to call setLeader here.
-        // Keep rotation event for logging and Supabase history only.
 
         if (cfg.supabase.url) {
           await db.setCurrentLeader(event.newLeader.walletAddress);
@@ -87,16 +91,21 @@ export class Runner {
     this.newsScanner = new NewsScanner();
 
     this.confirmationLayer = new ConfirmationLayer(
-      cfg.apiKeys.anthropic,
       this.glintAdapter,
+      cfg.confirmation,
+      cfg.ai,
     );
 
     this.copyExecutor = new CopyExecutor({
       paperEngine: this.paperEngine,
       riskManager: this.riskManager,
+      orderbookChecker: new OrderbookChecker(),
       paperMode: cfg.paperMode,
       ourPortfolio: cfg.totalCapitalUsdc,
       riskLevel: cfg.risk.level,
+      positionConfig: cfg.positions,
+      liquidityConfig: cfg.liquidity,
+      holdConfig: cfg.holdToResolution,
     });
   }
 
@@ -109,6 +118,10 @@ export class Runner {
     logger.info(`Mode: ${this.config.paperMode ? 'PAPER' : 'LIVE'}`);
     logger.info(`Risk: ${this.config.risk.level}`);
     logger.info(`Capital: $${this.config.totalCapitalUsdc}`);
+    logger.info(`Max positions: ${this.config.positions.maxOpenPositions} (${this.config.positions.rank1ReservedSlots} reserved for rank-1)`);
+    logger.info(`Veto threshold: ${this.config.confirmation.vetoConfidenceThreshold} | Corroborations: ${this.config.confirmation.watcherMinCorroborations}-of-3`);
+    logger.info(`Liquidity check: ${this.config.liquidity.enabled ? `ON (max ${this.config.liquidity.maxSlippagePct * 100}% slippage)` : 'OFF'}`);
+    logger.info(`Hold to resolution: ${this.config.holdToResolution.enabled ? 'ON' : 'OFF'}`);
     logger.info('='.repeat(60));
 
     // Init Supabase
@@ -142,6 +155,12 @@ export class Runner {
     // Day rollover check every hour
     this.dayRolloverTimer = setInterval(() => this.handleDayRollover(), 60 * 60 * 1000);
 
+    // Self-tuner: adjust thresholds daily based on performance
+    this.selfTuneTimer = setInterval(() => this.runSelfTuner(), 24 * 60 * 60 * 1000);
+
+    // Health endpoint for monitoring
+    this.startHealthServer();
+
     logger.info('PATS-Copy fully started. Waiting for leaderboard data...');
   }
 
@@ -149,6 +168,8 @@ export class Runner {
     this.running = false;
     if (this.statusTimer) { clearInterval(this.statusTimer); this.statusTimer = null; }
     if (this.dayRolloverTimer) { clearInterval(this.dayRolloverTimer); this.dayRolloverTimer = null; }
+    if (this.selfTuneTimer) { clearInterval(this.selfTuneTimer); this.selfTuneTimer = null; }
+    if (this.healthServer) { this.healthServer.close(); this.healthServer = null; }
 
     this.scraper.stop();
     this.walletMonitor.stop();
@@ -224,7 +245,20 @@ export class Runner {
 
     this.walletMonitor.on('leader-closed', (data: { marketId: string; marketQuestion: string; leaderWallet: string }) => {
       logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}"`);
-      // Close our copy if we have one, then persist PNL to Supabase
+
+      // Check hold-to-resolution before closing
+      const copyTrade = this.copyExecutor.getOpenTradeForMarket(data.marketId);
+      if (copyTrade) {
+        const currentPrice = 0.5; // Default; real price comes from position data
+        const exitDecision = this.copyExecutor.shouldFollowLeaderExit(copyTrade, currentPrice);
+
+        if (!exitDecision.follow) {
+          logger.info(`HOLD TO RESOLUTION: Not following leader exit for "${data.marketQuestion.slice(0, 50)}" — ${exitDecision.reason}`);
+          return;
+        }
+      }
+
+      // Close our copy, then persist PNL to Supabase
       this.copyExecutor.closePosition(data.marketId, 0.5, 'leader_closed').then(closedTrade => {
         if (!closedTrade) return;
         const pnlStr = closedTrade.pnl !== undefined ? `$${closedTrade.pnl.toFixed(2)}` : 'n/a';
@@ -243,19 +277,18 @@ export class Runner {
   private async onLeaderboardUpdate(rawLeaders: Leader[]): Promise<void> {
     const scored = this.scorer.scoreAndRank(rawLeaders);
 
-    // Enrich leaders that are actively monitored with real trade stats
+    // Enrich leaders with real trade stats and specialist category
     const enriched = scored.map(leader => {
       const stats = this.walletMonitor.getWalletStats(leader.walletAddress);
+      const specialistCategory = this.walletMonitor.getSpecialistCategory(leader.walletAddress);
+      const updates: Partial<Leader> = { specialistCategory };
       if (stats.tradeCount > 0) {
-        return {
-          ...leader,
-          tradeCount30d: Math.max(leader.tradeCount30d, stats.tradeCount),
-          lastTradeTime: stats.lastTradeTime || leader.lastTradeTime,
-        };
+        updates.tradeCount30d = Math.max(leader.tradeCount30d, stats.tradeCount);
+        updates.lastTradeTime = stats.lastTradeTime || leader.lastTradeTime;
       }
-      return leader;
+      return { ...leader, ...updates };
     });
-    // Re-score with enriched data so active wallets score higher
+    // Re-score with enriched data (specialist bonus + active wallet boost)
     const rescored = this.scorer.scoreAndRank(enriched);
 
     // Await upsert before selector.update() so setCurrentLeader finds rows in DB
@@ -276,7 +309,7 @@ export class Runner {
       );
     }
 
-    const watcherSummary = top5.map((l, i) => `${l.walletAddress.slice(0, 8)}(r${i + 1})`).join(', ');
+    const watcherSummary = top5.map((l, i) => `${l.walletAddress.slice(0, 8)}(r${i + 1}${l.specialistCategory ? `:${l.specialistCategory}` : ''})`).join(', ');
     logger.info(`Leaderboard update: ${rescored.length} traders scored. Watching top ${top5.length}: ${watcherSummary}`);
   }
 
@@ -377,16 +410,74 @@ export class Runner {
       rotations: selectorStats.totalRotations,
       balance: `$${paperStats.balance.toFixed(2)}`,
       totalReturn: `${paperStats.totalReturn.toFixed(2)}%`,
-      openPositions: paperStats.openTrades,
+      openPositions: `${paperStats.openTrades}/${this.config.positions.maxOpenPositions}`,
+      stalePositions: copyStats.stalePositions,
       closedTrades: paperStats.totalTrades,
       winRate: paperStats.totalTrades > 0 ? `${paperStats.winRate.toFixed(1)}%` : 'n/a',
       pnl: `$${paperStats.totalPnl.toFixed(2)}`,
       executions: copyStats.executed,
       vetoes: confirmStats.vetoed,
+      vetoRate24h: `${(confirmStats.vetoRate24h * 100).toFixed(1)}%`,
       consecutiveVetoes: this.consecutiveVetoes,
       aiCost: `$${confirmStats.aiStats.estimatedCost.toFixed(3)}`,
       walletPolls: walletStats.pollCount,
       glint: glintStats ? `${glintStats.connected ? 'OK' : 'DOWN'} ${glintStats.signalCount}sig/${glintStats.whaleCount}whale` : 'disabled',
     });
+  }
+
+  private startHealthServer(): void {
+    const port = parseInt(process.env.HEALTH_PORT ?? '8080');
+    this.healthServer = http.createServer((req, res) => {
+      if (req.url === '/health' || req.url === '/') {
+        const paperStats = this.paperEngine.getStats();
+        const confirmStats = this.confirmationLayer.getStats();
+        const copyStats = this.copyExecutor.getStats();
+        const selectorStats = this.selector.getStats();
+
+        const body = JSON.stringify({
+          status: 'healthy',
+          uptime: Math.round((Date.now() - this.startTime) / 1000),
+          paperMode: this.config.paperMode,
+          leader: selectorStats.currentLeader?.slice(0, 10) ?? 'none',
+          balance: paperStats.balance,
+          totalReturn: `${paperStats.totalReturn.toFixed(2)}%`,
+          openPositions: paperStats.openTrades,
+          closedTrades: paperStats.totalTrades,
+          winRate: paperStats.totalTrades > 0 ? `${paperStats.winRate.toFixed(1)}%` : 'n/a',
+          vetoRate24h: `${(confirmStats.vetoRate24h * 100).toFixed(1)}%`,
+          executions: copyStats.executed,
+          stalePositions: copyStats.stalePositions,
+          aiProvider: confirmStats.aiStats.provider ?? 'unknown',
+          timestamp: new Date().toISOString(),
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(body);
+      } else {
+        res.writeHead(404);
+        res.end('Not found');
+      }
+    });
+
+    this.healthServer.listen(port, () => {
+      logger.info(`Health endpoint listening on port ${port}`);
+    });
+
+    this.healthServer.on('error', (err) => {
+      logger.warn(`Health server failed to start: ${err} — monitoring via logs only`);
+    });
+  }
+
+  private async runSelfTuner(): Promise<void> {
+    if (!this.config.supabase.url) return;
+    try {
+      const tuner = new SelfTuner();
+      const adjustment = await tuner.analyze();
+      if (adjustment) {
+        logger.info(`SelfTuner: ${adjustment.action} — ${adjustment.reason}`);
+      }
+    } catch (err) {
+      logger.warn(`SelfTuner failed: ${err}`);
+    }
   }
 }
