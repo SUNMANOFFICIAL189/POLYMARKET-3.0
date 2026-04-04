@@ -32,7 +32,7 @@ const RANK_MULTIPLIERS: Record<number, number> = {
 
 // Skip near-certainty bets: price > this threshold or < (1 - threshold) have
 // near-zero alpha — the edge is already fully priced in.
-const MAX_WATCHER_PRICE = 0.85;
+const MAX_WATCHER_PRICE = 0.75;
 const MIN_WATCHER_PRICE = 0.08;
 
 // Edge floor: prices within 6% of 0.5 (0.44–0.56) represent genuine uncertainty —
@@ -336,8 +336,8 @@ export class CopyExecutor {
       logger.info(`CopyExecutor: MiroFish sizing: ${sizeMultiplier}x → $${beforeSize.toFixed(2)} → $${ourSize.toFixed(2)}`);
     }
 
-    // P3: Hard cap position size at $75 — historical data: $100+ positions had 34% WR and lost $631
-    const MAX_POSITION_SIZE = parseFloat(process.env.MAX_POSITION_DOLLARS ?? '75');
+    // P3: Hard cap position size at $100 (backtested optimal) — historical data: $100+ positions had 34% WR and lost $631
+    const MAX_POSITION_SIZE = parseFloat(process.env.MAX_POSITION_DOLLARS ?? '100');
     if (ourSize > MAX_POSITION_SIZE) {
       logger.info(`CopyExecutor: Size capped $${ourSize.toFixed(2)} → $${MAX_POSITION_SIZE.toFixed(2)} (hard cap)`);
       ourSize = MAX_POSITION_SIZE;
