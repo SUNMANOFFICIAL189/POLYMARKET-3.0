@@ -3,12 +3,12 @@ import { logger } from '../utils/logger.js';
 /**
  * AIClassifier — PATS-Copy version.
  *
- * Uses Ollama (local, free, no rate limits) via its OpenAI-compatible endpoint.
- * Model: llama3.2 (default) — fast, capable enough for simple trade confirmation.
+ * Uses Mistral (free tier, 1B tokens/month) via its OpenAI-compatible endpoint.
  *
- * Two modes:
- *  1. classifyNews(): general news classification (legacy, used by confirmation layer)
- *  2. classifyTrade(): specific trade confirmation — should we copy this trade?
+ * KEY FIX: Static single-lane queue serialises ALL Mistral calls with a 700ms
+ * minimum gap between requests. Mistral free tier allows ~1 req/s — without
+ * this queue, a burst of 11 simultaneous trades fires 11 concurrent HTTP requests
+ * and all get 429 rate-limited, causing a 99% veto rate.
  */
 
 export interface ClassificationResult {
@@ -26,6 +26,13 @@ export interface TradeConfirmationResult {
   reasoning: string;
   hasOpposingSignals: boolean;
   hasSupportingSignals: boolean;
+  aiUnavailable?: boolean; // true when API was unreachable — confirmation layer uses orderbook fallback
+}
+
+
+export interface ChallengeResult {
+  proceed: boolean;
+  reason: string;
 }
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
@@ -33,19 +40,19 @@ const OLLAMA_MODEL    = process.env.OLLAMA_MODEL    ?? 'llama3.2';
 const OLLAMA_API_KEY  = process.env.CEREBRAS_API_KEY ?? '';
 
 export class AIClassifier {
+  // Static queue shared across ALL instances — ensures at most 1 Mistral call at a time.
+  // Each call holds the lock for its duration + MIN_GAP_MS after completion.
+  private static _queueTail: Promise<void> = Promise.resolve();
+  private static readonly MIN_GAP_MS = 700; // 700ms gap = safely under Mistral free tier 1 req/s limit
+
   private callCount = 0;
   private errorCount = 0;
   private retryCount = 0;
-  private readonly COST_PER_CALL = 0; // free — local inference
-  private readonly MAX_RETRIES = 3;
-  private readonly BASE_RETRY_DELAY_MS = 1000;
+  private readonly MAX_RETRIES = 2; // Reduced from 3 — queue prevents burst, fewer retries needed
+  private readonly BASE_RETRY_DELAY_MS = 1500;
 
-  // apiKey kept for interface compatibility — unused with Ollama
   constructor(_apiKey?: string) {}
 
-  /**
-   * Classify a news headline for general market relevance.
-   */
   async classifyNews(headline: string, body?: string): Promise<ClassificationResult> {
     const prompt = `Rate this news headline's impact on prediction markets. Respond with ONLY a JSON object, no markdown.
 
@@ -66,14 +73,6 @@ JSON format:
     });
   }
 
-  /**
-   * Confirm whether to copy a leader's trade given recent news context.
-   *
-   * Returns:
-   *   copy   — no opposing signals found, safe to proceed
-   *   skip   — insufficient data to confirm (neutral, no strong signals either way)
-   *   veto   — strong opposing signals found, do NOT copy
-   */
   async classifyTrade(
     marketQuestion: string,
     leaderSide: 'buy' | 'sell',
@@ -109,13 +108,35 @@ Respond with ONLY a JSON object, no markdown:
     }, {
       recommendation: 'copy',
       confidence: 0.5,
-      reasoning: 'Classification failed — defaulting to copy (trust leader)',
+      reasoning: 'AI unavailable (rate limited) — using orderbook fallback',
       hasOpposingSignals: false,
       hasSupportingSignals: false,
+      aiUnavailable: true,
     });
   }
 
+  /**
+   * Acquires a slot in the single-lane queue, executes the API call,
+   * then holds the slot for MIN_GAP_MS before releasing to the next caller.
+   */
   private async callAPI<T>(prompt: string, parser: (content: string) => T, fallback: T): Promise<T> {
+    let releaseSlot!: () => void;
+
+    // Chain onto the existing queue tail — our call starts when the previous finishes
+    const prevTail = AIClassifier._queueTail;
+    AIClassifier._queueTail = new Promise<void>(resolve => { releaseSlot = resolve; });
+
+    await prevTail; // wait for our turn
+
+    try {
+      return await this._executeCall(prompt, parser, fallback);
+    } finally {
+      // Hold the slot for MIN_GAP_MS after completion before allowing the next call
+      setTimeout(releaseSlot, AIClassifier.MIN_GAP_MS);
+    }
+  }
+
+  private async _executeCall<T>(prompt: string, parser: (content: string) => T, fallback: T): Promise<T> {
     for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         this.callCount++;
@@ -144,7 +165,6 @@ Respond with ONLY a JSON object, no markdown:
         const content = data.choices[0]?.message?.content ?? '';
         const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-        // Extract JSON from response (model may add surrounding text)
         const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('No JSON object found in response');
 
@@ -180,10 +200,52 @@ Respond with ONLY a JSON object, no markdown:
     return fallback;
   }
 
+
+  /**
+   * Devil's advocate — challenges a trade decision with wallet context.
+   * Inspired by Dexter's self-validation pattern.
+   * Returns PROCEED (no concrete objection) or CHALLENGE (specific risk identified).
+   */
+  async challengeTrade(
+    marketQuestion: string,
+    side: 'buy' | 'sell',
+    outcome: string,
+    entryPrice: number,
+    walletWR: number,
+    walletTradeCount: number,
+  ): Promise<ChallengeResult> {
+    const prompt = `You are a risk assessor for a prediction market copy-trading bot. Your job is to find a SPECIFIC, CONCRETE reason NOT to take this trade. Generic warnings don't count.
+
+TRADE:
+- Market: "${marketQuestion}"
+- Side: ${side.toUpperCase()} on ${outcome}
+- Entry price: ${entryPrice.toFixed(3)} (${(entryPrice * 100).toFixed(1)}% implied probability)
+
+WALLET CONTEXT:
+- This trader has won ${(walletWR * 100).toFixed(0)}% of their last ${walletTradeCount} trades
+
+RULES:
+- If entry price < 0.25 (longshot): these are HIGH-RISK HIGH-REWARD. Only challenge if the event has ALREADY been decided or is physically impossible.
+- If the wallet WR is below 30%: flag this as a concern but still PROCEED unless there's a factual reason not to.
+- Do NOT give generic risk warnings like "markets are uncertain" or "past performance doesn't guarantee future results".
+- ONLY output CHALLENGE if you can name a specific factual reason (e.g., "this event already happened", "this team has been eliminated", "this market has already resolved").
+
+Respond with ONLY a JSON object:
+{"proceed": true, "reason": "no concrete objection"} OR {"proceed": false, "reason": "specific factual reason"}`;
+
+    return this.callAPI<ChallengeResult>(prompt, (content) => {
+      const parsed = JSON.parse(content) as ChallengeResult;
+      return { proceed: parsed.proceed !== false, reason: parsed.reason || '' };
+    }, {
+      proceed: true,
+      reason: 'Challenge unavailable — defaulting to proceed',
+    });
+  }
+
   getStats() {
     return {
       callCount: this.callCount,
-      estimatedCost: 0, // free — local Ollama inference
+      estimatedCost: 0,
       errorCount: this.errorCount,
       retryCount: this.retryCount,
     };
