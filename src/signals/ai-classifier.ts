@@ -35,9 +35,15 @@ export interface ChallengeResult {
   reason: string;
 }
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
-const OLLAMA_MODEL    = process.env.OLLAMA_MODEL    ?? 'llama3.2';
-const OLLAMA_API_KEY  = process.env.CEREBRAS_API_KEY ?? '';
+// Primary: Mistral (free tier, 1B tokens/month)
+const PRIMARY_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+const PRIMARY_MODEL = process.env.OLLAMA_MODEL ?? 'llama3.2';
+const PRIMARY_KEY = process.env.CEREBRAS_API_KEY ?? '';
+
+// Fallback: OpenRouter Gemma 4 (~$0.40/month at our volume)
+const FALLBACK_URL = process.env.FALLBACK_AI_URL ?? 'https://openrouter.ai/api';
+const FALLBACK_MODEL = process.env.FALLBACK_AI_MODEL ?? 'google/gemma-4-27b-it';
+const FALLBACK_KEY = process.env.OPENROUTER_API_KEY ?? '';
 
 export class AIClassifier {
   // Static queue shared across ALL instances — ensures at most 1 Mistral call at a time.
@@ -48,7 +54,8 @@ export class AIClassifier {
   private callCount = 0;
   private errorCount = 0;
   private retryCount = 0;
-  private readonly MAX_RETRIES = 2; // Reduced from 3 — queue prevents burst, fewer retries needed
+  private fallbackCount = 0;
+  private readonly MAX_RETRIES = 1; // Quick fail on primary — fallback handles overflow
   private readonly BASE_RETRY_DELAY_MS = 1500;
 
   constructor(_apiKey?: string) {}
@@ -137,67 +144,73 @@ Respond with ONLY a JSON object, no markdown:
   }
 
   private async _executeCall<T>(prompt: string, parser: (content: string) => T, fallback: T): Promise<T> {
-    for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
-      try {
-        this.callCount++;
+    // Try primary (Mistral) first
+    try {
+      this.callCount++;
+      const result = await this._callProvider(PRIMARY_URL, PRIMARY_MODEL, PRIMARY_KEY, prompt);
+      return this._parseResponse(result, parser, fallback);
+    } catch (error: any) {
+      this.errorCount++;
+      const is429 = error?.message?.includes('429');
+      const isTransient = is429 ||
+        error?.cause?.code === 'ECONNRESET' ||
+        error?.cause?.code === 'ETIMEDOUT' ||
+        error?.message?.includes('fetch failed');
 
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (OLLAMA_API_KEY) headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
-
-        const response = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            model: OLLAMA_MODEL,
-            messages: [{ role: 'user', content: prompt }],
-            stream: false,
-          }),
-        });
-
-        if (!response.ok) {
-          const errBody = await response.text().catch(() => '');
-          throw new Error(`Ollama error: ${response.status} ${response.statusText} — ${errBody.slice(0, 200)}`);
-        }
-
-        const data = await response.json() as {
-          choices: Array<{ message: { content: string } }>;
-        };
-        const content = data.choices[0]?.message?.content ?? '';
-        const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON object found in response');
-
+      // On 429 or transient error → immediate failover to OpenRouter (no retry delay)
+      if (isTransient && FALLBACK_KEY) {
+        this.fallbackCount++;
+        logger.info(`AI: Primary ${is429 ? 'rate-limited' : 'failed'} — failover to OpenRouter Gemma 4`);
         try {
-          return parser(jsonMatch[0]);
-        } catch {
-          logger.warn('AI: JSON parse failed, using fallback');
+          const result = await this._callProvider(FALLBACK_URL, FALLBACK_MODEL, FALLBACK_KEY, prompt);
+          return this._parseResponse(result, parser, fallback);
+        } catch (fbError: any) {
+          logger.error(`AI: Fallback also failed: ${fbError?.message?.slice(0, 80)}`);
           return fallback;
         }
-
-      } catch (error: any) {
-        this.errorCount++;
-        const isRetryable = error?.cause?.code === 'ECONNRESET' ||
-          error?.cause?.code === 'ETIMEDOUT' ||
-          error?.cause?.code === 'ENOTFOUND' ||
-          error?.message?.includes('fetch failed') ||
-          error?.message?.includes('ECONNREFUSED') ||
-          error?.message?.includes('429');
-
-        if (isRetryable && attempt < this.MAX_RETRIES) {
-          this.retryCount++;
-          const delay = this.BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
-          logger.warn(`AI classifier retry ${attempt + 1}/${this.MAX_RETRIES} in ${delay}ms (${error?.cause?.code || error?.message?.slice(0, 30)})`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-
-        logger.error(`AI classification failed after ${attempt + 1} attempts: ${error?.message?.slice(0, 80)}`);
-        return fallback;
       }
+
+      // Non-transient error or no fallback configured
+      logger.error(`AI classification failed: ${error?.message?.slice(0, 80)}`);
+      return fallback;
+    }
+  }
+
+  private async _callProvider(baseUrl: string, model: string, apiKey: string, prompt: string): Promise<string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      throw new Error(`AI error: ${response.status} ${response.statusText} — ${errBody.slice(0, 200)}`);
     }
 
-    return fallback;
+    const data = await response.json() as {
+      choices: Array<{ message: { content: string } }>;
+    };
+    return data.choices[0]?.message?.content ?? '';
+  }
+
+  private _parseResponse<T>(raw: string, parser: (content: string) => T, fallback: T): T {
+    const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON object found in response');
+    try {
+      return parser(jsonMatch[0]);
+    } catch {
+      logger.warn('AI: JSON parse failed, using fallback');
+      return fallback;
+    }
   }
 
 
@@ -248,6 +261,7 @@ Respond with ONLY a JSON object:
       estimatedCost: 0,
       errorCount: this.errorCount,
       retryCount: this.retryCount,
+      fallbackCount: this.fallbackCount,
     };
   }
 }
