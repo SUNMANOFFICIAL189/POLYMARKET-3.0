@@ -92,13 +92,16 @@ export class ConfirmationLayer {
         newsContext,
       );
     } catch (err) {
-      logger.warn(`ConfirmationLayer: AI classifier failed: ${err} — defaulting to approve`);
-      aiResult = {
-        recommendation: 'copy' as const,
-        confidence: 0.5,
-        reasoning: 'AI failed — defaulting to copy (trust leader)',
+      logger.warn(`ConfirmationLayer: AI classifier failed: ${err} — BLOCKING trade (no AI = no trade)`);
+      this.vetoedCount++;
+      return {
+        decision: 'vetoed' as ConfirmationDecision,
+        reason: `AI unavailable — trade blocked (no unvalidated trades allowed)`,
+        confidence: 0,
         hasOpposingSignals: false,
         hasSupportingSignals: false,
+        latencyMs: Date.now() - start,
+        sizeMultiplier: 1.0,
       };
     }
 
@@ -250,7 +253,20 @@ export class ConfirmationLayer {
       if (!aiUnavailable) {
         aiPass = aiResult.recommendation !== 'veto' && aiResult.confidence >= aiThreshold;
       } else {
-        logger.warn(`ConfirmationLayer: AI unavailable (rate limited) — using orderbook fallback for rank-${trade.rank}`);
+        logger.warn(`ConfirmationLayer: AI unavailable (rate limited) — BLOCKING trade (no AI = no trade)`);
+        this.vetoedCount++;
+        const latencyMs = Date.now() - start;
+        this.totalLatencyMs += latencyMs;
+        this.callCount++;
+        return {
+          decision: 'vetoed',
+          reason: `AI unavailable — trade blocked (no unvalidated trades allowed)`,
+          confidence: 0,
+          hasOpposingSignals: false,
+          hasSupportingSignals: false,
+          latencyMs,
+          sizeMultiplier: 1.0,
+        };
       }
     } catch (err) {
       logger.warn(`ConfirmationLayer: AI check failed for watcher trade: ${err}`);
