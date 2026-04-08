@@ -192,16 +192,66 @@ export class CopyExecutor {
     }
 
     // Rolling wallet performance — pass-through with logging (feeds devil's advocate)
+    // Graduated cold streak filter — smarter than binary block/allow
+    // Hard data: 0% WR wallet (0x2005d16a) lost $723 in 24h when unblocked
     const rollingStats = this.getWalletRollingStats(leaderTrade.leaderWallet);
-    if (rollingStats.sampleSize >= this.ROLLING_MIN_SAMPLE && rollingStats.winRate < this.ROLLING_MIN_WIN_RATE) {
-      logger.info(`CopyExecutor: COLD WALLET — ${leaderTrade.leaderWallet.slice(0,10)} rolling ${rollingStats.sampleSize}-trade WR ${(rollingStats.winRate * 100).toFixed(0)}% — proceeding (devil's advocate will assess)`);
-    }
-    // Attach rolling stats to trade for devil's advocate consumption
     (leaderTrade as any).walletRollingWR = rollingStats.winRate;
     (leaderTrade as any).walletRollingCount = rollingStats.sampleSize;
 
+    if (rollingStats.sampleSize >= this.ROLLING_MIN_SAMPLE) {
+      if (rollingStats.winRate < 0.20) {
+        // HARD BLOCK: below 20% WR = proven destructive. No exceptions.
+        this.blockedCount++;
+        logger.info(`CopyExecutor: HARD BLOCK — ${leaderTrade.leaderWallet.slice(0,10)} rolling ${rollingStats.sampleSize}-trade WR ${(rollingStats.winRate * 100).toFixed(0)}% < 20% — trade rejected`);
+        return { success: false, reason: `Hard block: wallet WR ${(rollingStats.winRate * 100).toFixed(0)}% (below 20% threshold)` };
+      } else if (rollingStats.winRate < this.ROLLING_MIN_WIN_RATE) {
+        // REDUCED SIZE: 20-40% WR = underperforming. Trade at 25% size, devil's advocate decides.
+        logger.info(`CopyExecutor: COLD WALLET — ${leaderTrade.leaderWallet.slice(0,10)} rolling WR ${(rollingStats.winRate * 100).toFixed(0)}% — 25% size (devil's advocate will assess)`);
+        (leaderTrade as any)._coldSizeMultiplier = 0.25;
+      }
+    }
+
+    // Expired market detection — if market question contains a date that has passed, auto-reject
+    const marketQ = leaderTrade.marketQuestion;
+    const datePatterns = marketQ.match(/\b(20\d{2}-\d{2}-\d{2})\b/g) ??
+      marketQ.match(/\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}\b/gi) ??
+      marketQ.match(/\bby\s+(April|March|May|June|July)\s+(\d{1,2})\b/i) ? [marketQ] : null;
+    if (datePatterns) {
+      // Check for explicit YYYY-MM-DD dates
+      const isoMatch = marketQ.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+      if (isoMatch) {
+        const marketDate = new Date(isoMatch[1] + 'T23:59:59Z');
+        if (marketDate < new Date()) {
+          this.blockedCount++;
+          logger.info(`CopyExecutor: EXPIRED MARKET — date ${isoMatch[1]} has passed — "${marketQ.slice(0,50)}"`);
+          return { success: false, reason: `Expired market: date ${isoMatch[1]} has passed` };
+        }
+      }
+      // Check for "by April 7" style dates
+      const byMatch = marketQ.match(/\bby\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})\b/i);
+      if (byMatch) {
+        const monthNames = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+        const monthIdx = monthNames.indexOf(byMatch[1].toLowerCase());
+        if (monthIdx >= 0) {
+          const year = new Date().getFullYear();
+          const deadlineDate = new Date(year, monthIdx, parseInt(byMatch[2]), 23, 59, 59);
+          if (deadlineDate < new Date()) {
+            this.blockedCount++;
+            logger.info(`CopyExecutor: EXPIRED MARKET — "by ${byMatch[1]} ${byMatch[2]}" has passed — "${marketQ.slice(0,50)}"`);
+            return { success: false, reason: `Expired market: "by ${byMatch[1]} ${byMatch[2]}" deadline passed` };
+          }
+        }
+      }
+    }
+
+    // Near-worthless token detection (price < 0.01 = likely expired/dead market)
+    if (leaderTrade.entryPrice < 0.01) {
+      this.blockedCount++;
+      logger.info(`CopyExecutor: DEAD MARKET — price ${leaderTrade.entryPrice.toFixed(4)} < 0.01 — likely expired`);
+      return { success: false, reason: `Dead market: price ${leaderTrade.entryPrice.toFixed(4)} near zero` };
+    }
+
     // P2: Heavy favourite filter — applies to ALL ranks
-    // Prices > 0.85 risk a lot to win very little. Historical data: 77 trades at 0.75-0.99, net -$305
     const entryPrice = leaderTrade.entryPrice;
     if (entryPrice > MAX_WATCHER_PRICE) {
       this.blockedCount++;
@@ -312,6 +362,14 @@ export class CopyExecutor {
       const beforeSize = ourSize;
       ourSize = Math.round(ourSize * sizeMultiplier * 100) / 100;
       logger.info(`CopyExecutor: MiroFish sizing: ${sizeMultiplier}x → $${beforeSize.toFixed(2)} → $${ourSize.toFixed(2)}`);
+    }
+
+    // Apply cold wallet size reduction (25% for 20-40% WR wallets)
+    const coldMultiplier = (leaderTrade as any)?._coldSizeMultiplier;
+    if (coldMultiplier && coldMultiplier < 1.0) {
+      const beforeCold = ourSize;
+      ourSize = Math.round(ourSize * coldMultiplier * 100) / 100;
+      logger.info(`CopyExecutor: Cold wallet reduction — ${coldMultiplier}x → $${beforeCold.toFixed(2)} → $${ourSize.toFixed(2)}`);
     }
 
     // P3: Hard cap position size at $150 — but exempt longshots (< 0.25 entry)

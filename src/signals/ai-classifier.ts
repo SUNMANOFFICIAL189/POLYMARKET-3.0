@@ -227,31 +227,40 @@ Respond with ONLY a JSON object, no markdown:
     walletWR: number,
     walletTradeCount: number,
   ): Promise<ChallengeResult> {
-    const prompt = `You are a risk assessor for a prediction market copy-trading bot. Your job is to find a SPECIFIC, CONCRETE reason NOT to take this trade. Generic warnings don't count.
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const prompt = `You are a strict risk assessor for a prediction market copy-trading bot. You MUST challenge trades that have poor risk profiles. You are the last line of defence before real money is deployed.
+
+TODAY'S DATE: ${today}
 
 TRADE:
 - Market: "${marketQuestion}"
 - Side: ${side.toUpperCase()} on ${outcome}
 - Entry price: ${entryPrice.toFixed(3)} (${(entryPrice * 100).toFixed(1)}% implied probability)
 
-WALLET CONTEXT:
+WALLET PERFORMANCE:
 - This trader has won ${(walletWR * 100).toFixed(0)}% of their last ${walletTradeCount} trades
+${walletWR < 0.20 ? '- ⚠️ CRITICAL: This wallet has BELOW 20% win rate — they are losing 4 out of 5 trades' : walletWR < 0.35 ? '- ⚠️ WARNING: This wallet has a poor win rate — losing more than they win' : ''}
 
-RULES:
-- If entry price < 0.25 (longshot): these are HIGH-RISK HIGH-REWARD. Only challenge if the event has ALREADY been decided or is physically impossible.
-- If the wallet WR is below 30%: flag this as a concern but still PROCEED unless there's a factual reason not to.
-- Do NOT give generic risk warnings like "markets are uncertain" or "past performance doesn't guarantee future results".
-- ONLY output CHALLENGE if you can name a specific factual reason (e.g., "this event already happened", "this team has been eliminated", "this market has already resolved").
+YOU MUST CHALLENGE (output proceed=false) if ANY of these apply:
+1. The market question contains a date that has ALREADY PASSED (today is ${today}). Example: "Will X happen by April 7?" and today is April 8 → CHALLENGE.
+2. The wallet win rate is below 20% over 5+ trades — this is a proven losing trader. CHALLENGE.
+3. The wallet win rate is below 30% over 8+ trades — consistent underperformance. CHALLENGE.
+4. The event has already been decided, resolved, or is physically impossible.
+5. The entry price is below 0.01 (near-worthless token, likely expired market).
 
-Respond with ONLY a JSON object:
-{"proceed": true, "reason": "no concrete objection"} OR {"proceed": false, "reason": "specific factual reason"}`;
+You SHOULD PROCEED (output proceed=true) if:
+- The wallet has above 35% WR, the market date hasn't passed, and no factual contradictions exist.
+- The trade is a longshot (< 0.25 entry) from a wallet with decent WR — high risk but valid strategy.
+
+Respond with ONLY a JSON object, no markdown:
+{"proceed": true, "reason": "brief reason"} OR {"proceed": false, "reason": "brief reason"}`;
 
     return this.callAPI<ChallengeResult>(prompt, (content) => {
       const parsed = JSON.parse(content) as ChallengeResult;
       return { proceed: parsed.proceed !== false, reason: parsed.reason || '' };
     }, {
-      proceed: true,
-      reason: 'Challenge unavailable — defaulting to proceed',
+      proceed: false,
+      reason: 'Challenge unavailable — blocking trade (safety default)',
     });
   }
 
