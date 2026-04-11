@@ -206,10 +206,20 @@ export class Runner {
       this.handleLeaderTrade(trade);
     });
 
-    this.walletMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string }) => {
-      logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}"`);
+    this.walletMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string; rank?: number; exitPrice?: number }) => {
+      // F5: Use the leader's actual observed exit price when available; fall back
+      // to 0.5 only if wallet-monitor couldn't correlate a closing trade. This
+      // stops the ~2-5% slippage leak per close that the 0.5 midpoint fallback
+      // was producing on thin prediction markets.
+      const exitPrice = typeof data.exitPrice === 'number' && data.exitPrice > 0
+        ? data.exitPrice
+        : 0.5;
+      const priceNote = exitPrice === 0.5 && data.exitPrice == null
+        ? ' (no observed trade — fallback midpoint)'
+        : '';
+      logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}" @ ${exitPrice.toFixed(3)}${priceNote}`);
       // Close our copy if we have one, then persist PNL to Supabase
-      const closedTrade = await this.copyExecutor.closePosition(data.marketId, 0.5, 'leader_closed');
+      const closedTrade = await this.copyExecutor.closePosition(data.marketId, exitPrice, 'leader_closed');
       if (!closedTrade) return;
       const pnlStr = closedTrade.pnl !== undefined ? `$${closedTrade.pnl.toFixed(2)}` : 'n/a';
       logger.info(`Closed our copy position for ${data.marketId.slice(0, 12)}... pnl=${pnlStr}`);

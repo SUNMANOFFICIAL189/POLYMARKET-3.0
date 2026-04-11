@@ -238,14 +238,49 @@ export class WalletMonitor extends EventEmitter {
       const posMap = new Map(positions.map(p => [p.condition_id || p.asset, p]));
       const oldPosMap = this.walletPositions.get(addr) ?? new Map();
 
+      // F5: build a quick lookup of newly-seen trades keyed by market so that
+      // when we detect a closed position we can use the leader's ACTUAL exit
+      // price instead of a hardcoded 0.5 midpoint. A closing trade is almost
+      // always visible in newTrades for the same poll cycle since
+      // fetchPositions and fetchTrades query the same underlying wallet state.
+      // If we see multiple candidates for a market, we take the most recent.
+      const tradesByMarket = new Map<string, DataAPITrade>();
+      for (const t of newTrades) {
+        const marketKey = (t.market || t.condition_id || t.asset_id || t.slug || '') as string;
+        if (!marketKey) continue;
+        const existing = tradesByMarket.get(marketKey);
+        const tTime = this.toISOTimestamp(t.timestamp || t.created_at);
+        if (!existing || tTime > this.toISOTimestamp(existing.timestamp || existing.created_at)) {
+          tradesByMarket.set(marketKey, t);
+        }
+      }
+
       for (const [key, oldPos] of oldPosMap) {
         if (!posMap.has(key) && oldPos.quantity_owned > 0) {
-          logger.info(`WalletMonitor: Rank-${rank} ${addr.slice(0, 10)}... closed position on ${oldPos.title?.slice(0, 50) || key}`);
+          // Try to find the actual closing trade for this market.
+          // Keys in posMap/oldPosMap are condition_id || asset, so we match
+          // against tradesByMarket using those same fields first.
+          let closeTrade = tradesByMarket.get(key as string);
+          if (!closeTrade) {
+            // Fallback search: scan newTrades directly for any matching field.
+            closeTrade = newTrades.find(t =>
+              t.market === key || t.condition_id === key || t.asset_id === key || t.slug === key
+            );
+          }
+
+          const exitPrice = closeTrade ? Number(closeTrade.price ?? 0) : undefined;
+          const priceSource = closeTrade ? 'observed_trade' : 'unknown';
+
+          logger.info(
+            `WalletMonitor: Rank-${rank} ${addr.slice(0, 10)}... closed position on ${oldPos.title?.slice(0, 50) || key}` +
+            (exitPrice !== undefined ? ` @ ${exitPrice.toFixed(3)} (${priceSource})` : ' @ unknown price')
+          );
           this.emit('leader-closed', {
             marketId: key,
             marketQuestion: oldPos.title || '',
             leaderWallet: addr,
             rank,
+            exitPrice, // F5: undefined means "couldn't observe" — runner will fall back
           });
         }
       }
