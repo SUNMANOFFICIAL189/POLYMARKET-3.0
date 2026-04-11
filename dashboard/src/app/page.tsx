@@ -59,25 +59,102 @@ function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoi
   return points
 }
 
-function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[], depositAmount: number) {
+function deriveMetrics(trades: CopyTrade[], _performance: DailyPerformance[], depositAmount: number) {
+  // Balance: deposit − capital reserved in open positions + realized PnL on closed trades.
   const reservedCapital = trades
     .filter(t => t.status === 'open' || t.status === 'pending')
     .reduce((s, t) => s + (t.our_size ?? 0), 0)
-  const realizedPnl = trades
-    .filter(t => t.status === 'closed' || t.status === 'stopped')
-    .reduce((s, t) => s + (t.pnl ?? 0), 0)
+
+  // Decided trades = closed + stopped with a non-null PnL. These are the only ones that
+  // contribute to WR / avg return / drawdown / Sharpe. Sorted chronologically by exit time
+  // so drawdown walks balance correctly.
+  const decidedTrades = trades
+    .filter(t => (t.status === 'closed' || t.status === 'stopped') && t.pnl != null && t.exit_time != null)
+    .sort((a, b) => (a.exit_time ?? '').localeCompare(b.exit_time ?? ''))
+
+  const realizedPnl = decidedTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
   const balance = depositAmount - reservedCapital + realizedPnl
   const totalReturnUsd = balance - depositAmount
   const totalReturnPct = ((balance - depositAmount) / depositAmount) * 100
 
-  const totalWins = performance.reduce((s, d) => s + d.win_count, 0)
-  const totalDecided = performance.reduce((s, d) => s + d.win_count + d.loss_count, 0)
-  const winRate = totalDecided > 0 ? totalWins / totalDecided : null
+  // Win rate: wins / (wins + losses). Zero-PnL trades (rare) neither win nor lose.
+  const wins = decidedTrades.filter(t => (t.pnl ?? 0) > 0).length
+  const losses = decidedTrades.filter(t => (t.pnl ?? 0) < 0).length
+  const decidedCount = wins + losses
+  const winRate = decidedCount > 0 ? wins / decidedCount : null
+
+  // Average return per decided trade (USD).
+  const avgReturn = decidedTrades.length > 0
+    ? realizedPnl / decidedTrades.length
+    : null
+
+  // Max drawdown: walk running balance, track peak, record max (peak − running) / peak.
+  // Returned as a percentage.
+  let runningBalance = depositAmount
+  let peakBalance = depositAmount
+  let maxDrawdownPct = 0
+  for (const t of decidedTrades) {
+    runningBalance += t.pnl ?? 0
+    if (runningBalance > peakBalance) peakBalance = runningBalance
+    const dd = peakBalance > 0 ? (peakBalance - runningBalance) / peakBalance : 0
+    if (dd > maxDrawdownPct) maxDrawdownPct = dd
+  }
+  const maxDrawdown = decidedTrades.length > 0 ? maxDrawdownPct * 100 : null
+
+  // Simple (non-annualized) Sharpe: mean(per-trade return %) / stdev(per-trade return %).
+  // Per-trade return % = pnl / our_size. Requires ≥2 trades and non-zero stdev.
+  const perTradeReturns = decidedTrades
+    .filter(t => (t.our_size ?? 0) > 0)
+    .map(t => (t.pnl ?? 0) / (t.our_size ?? 1))
+  let sharpe: number | null = null
+  if (perTradeReturns.length >= 2) {
+    const mean = perTradeReturns.reduce((s, r) => s + r, 0) / perTradeReturns.length
+    const variance = perTradeReturns.reduce((s, r) => s + (r - mean) ** 2, 0) / (perTradeReturns.length - 1)
+    const stdev = Math.sqrt(variance)
+    if (stdev > 0) sharpe = mean / stdev
+  }
+
+  // MiroFish override count: trades where the confirmation reasoning logs
+  // "MiroFish contradicts" but the decision was to proceed anyway. Breakdown by outcome
+  // so you can see how often the override is costly.
+  const mirofishOverrides = trades.filter(t =>
+    (t.confirmation_reason ?? '').includes('MiroFish contradicts') &&
+    (t.confirmation_reason ?? '').includes('proceeding with leader')
+  )
+  const mirofishOverrideCount = mirofishOverrides.length
+  const mirofishOverrideLosses = mirofishOverrides
+    .filter(t => (t.status === 'closed' || t.status === 'stopped') && (t.pnl ?? 0) < 0).length
+  const mirofishOverrideWins = mirofishOverrides
+    .filter(t => (t.status === 'closed' || t.status === 'stopped') && (t.pnl ?? 0) > 0).length
 
   const openPositions = trades.filter(t => t.status === 'open').length
   const paperMode = process.env.PAPER_MODE !== 'false'
 
-  return { balance, totalReturnPct, totalReturnUsd, winRate, openPositions, paperMode }
+  // Expose the configured max open positions so the UI can render a real utilisation ratio
+  // instead of the previous tautological (open / max(open, 1)) formula. Falls back to a
+  // sensible default when the env var isn't set.
+  const maxOpenPositionsConfig = Number(process.env.MAX_OPEN_POSITIONS ?? '5') || 5
+  const riskPreset = process.env.RISK ?? 'moderate'
+
+  return {
+    balance,
+    totalReturnPct,
+    totalReturnUsd,
+    winRate,
+    avgReturn,
+    sharpe,
+    maxDrawdown,
+    openPositions,
+    maxOpenPositionsConfig,
+    riskPreset,
+    paperMode,
+    decidedCount,
+    wins,
+    losses,
+    mirofishOverrideCount,
+    mirofishOverrideLosses,
+    mirofishOverrideWins,
+  }
 }
 
 export default async function DashboardPage() {
@@ -102,8 +179,22 @@ export default async function DashboardPage() {
     // Supabase unavailable — render with empty states
   }
 
-  const { balance, totalReturnPct, totalReturnUsd, winRate, openPositions, paperMode } =
-    deriveMetrics(trades, performance, 6300)
+  const {
+    balance,
+    totalReturnPct,
+    totalReturnUsd,
+    winRate,
+    avgReturn,
+    sharpe,
+    maxDrawdown,
+    openPositions,
+    maxOpenPositionsConfig,
+    riskPreset,
+    paperMode,
+    mirofishOverrideCount,
+    mirofishOverrideLosses,
+    mirofishOverrideWins,
+  } = deriveMetrics(trades, performance, 6300)
 
   const chartPoints = deriveChartPoints(trades, 6300)
 
@@ -144,13 +235,18 @@ export default async function DashboardPage() {
           totalReturnUsd={totalReturnUsd}
           winRate={winRate !== null ? winRate * 100 : null}
           trades={trades.length}
-          avgReturn={null}
-          sharpe={null}
+          avgReturn={avgReturn}
+          sharpe={sharpe}
           roi={totalReturnPct}
-          maxDrawdown={null}
+          maxDrawdown={maxDrawdown}
           currentLeaderWallet={currentLeader?.wallet_address ?? null}
           currentLeaderScore={currentLeader?.composite_score ?? null}
           openPositions={openPositions}
+          maxOpenPositionsConfig={maxOpenPositionsConfig}
+          riskPreset={riskPreset}
+          mirofishOverrideCount={mirofishOverrideCount}
+          mirofishOverrideLosses={mirofishOverrideLosses}
+          mirofishOverrideWins={mirofishOverrideWins}
           paperMode={paperMode}
         />
 

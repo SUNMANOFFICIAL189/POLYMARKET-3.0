@@ -14,6 +14,11 @@ interface LeftPanelProps {
   currentLeaderWallet: string | null
   currentLeaderScore: number | null
   openPositions: number
+  maxOpenPositionsConfig: number
+  riskPreset: string
+  mirofishOverrideCount: number
+  mirofishOverrideLosses: number
+  mirofishOverrideWins: number
   paperMode: boolean
 }
 
@@ -175,6 +180,11 @@ export default function LeftPanel({
   currentLeaderWallet,
   currentLeaderScore,
   openPositions,
+  maxOpenPositionsConfig,
+  riskPreset,
+  mirofishOverrideCount,
+  mirofishOverrideLosses,
+  mirofishOverrideWins,
   paperMode,
 }: LeftPanelProps) {
   const returnPositive = totalReturnUsd >= 0
@@ -266,10 +276,33 @@ export default function LeftPanel({
           <div style={S.statCell}>
             <span style={S.label}>Max DD</span>
             <span style={S.statValue('var(--red)')}>
-              {maxDrawdown !== null ? maxDrawdown.toFixed(2) : '—'}
+              {maxDrawdown !== null ? formatPct(maxDrawdown) : '—'}
             </span>
           </div>
         </div>
+
+        {/* MiroFish Override tile — tracks how often the bot proceeded with a trade
+            despite MiroFish flagging a contradiction. High counts signal devil's-advocate
+            toothlessness; high loss ratio signals the override is costly. */}
+        {mirofishOverrideCount > 0 && (
+          <div style={{
+            marginTop: '12px',
+            padding: '8px',
+            border: '1px solid var(--border)',
+            borderRadius: '2px',
+            background: '#0a0500',
+          }}>
+            <div style={S.label}>MiroFish Overrides</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '2px' }}>
+              <span style={S.statValue('var(--yellow)')}>
+                {mirofishOverrideCount}
+              </span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                {mirofishOverrideWins}W · {mirofishOverrideLosses}L
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Strategy / Mode Info ── */}
@@ -297,26 +330,35 @@ export default function LeftPanel({
 
         <div style={S.kvRow}>
           <span style={S.kvKey}>Risk</span>
-          <span style={S.kvValue}>Moderate</span>
-        </div>
-
-        <div style={{ ...S.kvRow, marginBottom: 0 }}>
-          <span style={S.kvKey}>Net Pos</span>
-          <span style={S.kvValue}>{openPositions}</span>
-        </div>
-
-        <div style={{ ...S.kvRow, marginTop: '6px', marginBottom: '6px' }}>
-          <span style={S.kvKey}>Utilization</span>
           <span style={S.kvValue}>
-            {balance > 0
-              ? formatPct((openPositions / Math.max(openPositions, 1)) * 100)
-              : '0.0%'}
+            {riskPreset.charAt(0).toUpperCase() + riskPreset.slice(1)}
           </span>
         </div>
 
         <div style={{ ...S.kvRow, marginBottom: 0 }}>
-          <span style={S.kvKey}>Positions</span>
-          <span style={S.kvValue}>{openPositions}</span>
+          <span style={S.kvKey}>Slots</span>
+          <span
+            style={{
+              ...S.kvValue,
+              color: openPositions >= maxOpenPositionsConfig ? 'var(--red)' : '#fff',
+            }}
+          >
+            {openPositions} / {maxOpenPositionsConfig}
+          </span>
+        </div>
+
+        <div style={{ ...S.kvRow, marginTop: '6px', marginBottom: 0 }}>
+          <span style={S.kvKey}>Slot Util</span>
+          <span
+            style={{
+              ...S.kvValue,
+              color: openPositions >= maxOpenPositionsConfig ? 'var(--red)' : '#fff',
+            }}
+          >
+            {maxOpenPositionsConfig > 0
+              ? formatPct((openPositions / maxOpenPositionsConfig) * 100)
+              : '—'}
+          </span>
         </div>
       </div>
 
