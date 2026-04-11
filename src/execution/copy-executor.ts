@@ -619,6 +619,21 @@ export class CopyExecutor {
     return this.getWalletRollingStats(wallet);
   }
 
+  /** F6: saturation indicator for position-lifecycle.
+   *  Returns true when at least 80% of MAX_OPEN_POSITIONS is occupied, so the
+   *  lifecycle TTL check can tighten its window and roll old positions faster
+   *  to let new high-priority signals through. */
+  isSaturated(): boolean {
+    const maxPos = parseInt(process.env.MAX_OPEN_POSITIONS ?? '10');
+    return this.openCopyTrades.size >= Math.max(1, Math.floor(maxPos * 0.8));
+  }
+
+  /** F6: expose the configured slot cap so the dashboard/lifecycle can render
+   *  real utilisation ratios instead of guessing. */
+  getMaxOpenPositions(): number {
+    return parseInt(process.env.MAX_OPEN_POSITIONS ?? '10');
+  }
+
   private getWalletRollingStats(wallet: string): { winRate: number; sampleSize: number } {
     const win = this.walletRollingWindow.get(wallet) ?? [];
     if (win.length === 0) return { winRate: 0.5, sampleSize: 0 }; // no data → benefit of the doubt

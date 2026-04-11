@@ -100,6 +100,9 @@ export class Runner {
       closePosition: (marketId, exitPrice, reason) =>
         this.copyExecutor.closePosition(marketId, exitPrice, reason),
       getOpenTrades: () => this.copyExecutor.getOpenTrades(),
+      // F6: saturation-aware TTL — when slots are 80%+ occupied, lifecycle
+      // manager uses a tightened max age to prevent chokepoint lockup.
+      isSaturated: () => this.copyExecutor.isSaturated(),
       persistClose: async (trade) => {
         if (trade.id && cfg.supabase.url) {
           try {

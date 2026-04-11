@@ -44,11 +44,13 @@ export class PositionLifecycleManager {
   private readonly TTL_CHECK_MS: number;
   private readonly STOP_LOSS_CHECK_MS: number;
   private readonly MAX_POSITION_AGE_MS: number;
+  private readonly SATURATED_MAX_POSITION_AGE_MS: number;
   private readonly STOP_LOSS_PCT: number;
 
   private closePosition: ClosePositionFn;
   private getOpenTrades: GetOpenTradesFn;
   private persistClose: PersistCloseFn;
+  private isSaturatedFn?: () => boolean;
 
   // Cache to avoid hammering Gamma API for same market
   private marketStatusCache: Map<string, { status: MarketStatus; fetchedAt: number }> = new Map();
@@ -62,16 +64,25 @@ export class PositionLifecycleManager {
     ttlCheckMs?: number;
     stopLossCheckMs?: number;
     maxPositionAgeMs?: number;
+    saturatedMaxPositionAgeMs?: number;
     stopLossPct?: number;
+    isSaturated?: () => boolean;
   }) {
     this.closePosition = opts.closePosition;
     this.getOpenTrades = opts.getOpenTrades;
     this.persistClose = opts.persistClose;
+    this.isSaturatedFn = opts.isSaturated;
 
     this.RESOLUTION_CHECK_MS = opts.resolutionCheckMs ?? 5 * 60 * 1000;   // 5 min
+    // F6: when saturated, tighten the TTL sweep interval so stale positions
+    // roll faster. Default 10 min when saturated vs the normal 30 min.
     this.TTL_CHECK_MS = opts.ttlCheckMs ?? 30 * 60 * 1000;                // 30 min
     this.STOP_LOSS_CHECK_MS = opts.stopLossCheckMs ?? 60 * 1000;           // 60 sec
     this.MAX_POSITION_AGE_MS = opts.maxPositionAgeMs ?? 48 * 60 * 60 * 1000; // 48 hours
+    // F6: saturated TTL — default 6 hours. Overridable via
+    // SATURATED_MAX_POSITION_AGE_HOURS env var.
+    this.SATURATED_MAX_POSITION_AGE_MS = opts.saturatedMaxPositionAgeMs
+      ?? Number(process.env.SATURATED_MAX_POSITION_AGE_HOURS ?? '6') * 60 * 60 * 1000;
     this.STOP_LOSS_PCT = opts.stopLossPct ?? 0.30; // 30% loss = close
   }
 
@@ -145,14 +156,26 @@ export class PositionLifecycleManager {
     const now = Date.now();
     let closedCount = 0;
 
+    // F6: when the slot budget is saturated, use a shorter TTL so old positions
+    // roll out and make room for incoming high-priority signals. The log
+    // analysis showed maxOpenPositions=5 was hit on day 1 and never cleared
+    // because the normal 48h TTL kept slots locked for two full days.
+    const saturated = this.isSaturatedFn?.() ?? false;
+    const effectiveMaxAge = saturated
+      ? this.SATURATED_MAX_POSITION_AGE_MS
+      : this.MAX_POSITION_AGE_MS;
+    if (saturated) {
+      logger.info(`PositionLifecycle: slots saturated — using tightened TTL ${(effectiveMaxAge / 3600000).toFixed(1)}h (normal ${(this.MAX_POSITION_AGE_MS / 3600000).toFixed(0)}h)`);
+    }
+
     for (const trade of openTrades) {
       const marketId = trade.marketId ?? '';
       const entryTime = new Date(trade.entryTime ?? '').getTime();
       if (isNaN(entryTime)) continue;
 
       const ageMs = now - entryTime;
-      if (ageMs > this.MAX_POSITION_AGE_MS) {
-        logger.info(`PositionLifecycle: Position "${marketId}" is ${(ageMs / 3600000).toFixed(1)}h old (max: ${this.MAX_POSITION_AGE_MS / 3600000}h) — auto-closing`);
+      if (ageMs > effectiveMaxAge) {
+        logger.info(`PositionLifecycle: Position "${marketId}" is ${(ageMs / 3600000).toFixed(1)}h old (max: ${effectiveMaxAge / 3600000}h, saturated=${saturated}) — auto-closing`);
 
         // Try to get current price from market status
         let exitPrice = 0.5; // default fallback
