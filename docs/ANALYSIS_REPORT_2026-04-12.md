@@ -234,4 +234,71 @@ All four agents ran read-only in parallel. Findings converged on the same four H
 
 ---
 
-**END OF REPORT.** No code changes have been made. Awaiting decision on scope (quick-wins vs. full program) before any implementation agent is dispatched.
+## 9. Live State Addendum (added 2026-04-12, post-dashboard inspection)
+
+After the initial report, the live dashboard at `http://204.168.204.247/` was inspected directly. This adds new findings and one critical correction to the fix plan.
+
+### 9.1 Actual metrics (server-rendered payload)
+
+| Metric | Value |
+|---|---|
+| Mode | PAPER (confirmed) |
+| Balance | $6,328.28 |
+| Deposit | $6,300.00 |
+| Absolute PnL | +$28.28 |
+| ROI | 0.4% total |
+| Trades (total) | 378 |
+| Open positions | **6** (analysis assumed 5 — you're on `moderate` preset or have `MAX_OPEN_POSITIONS` overridden) |
+| Capital utilisation | 100.0% — **chokepoint #3.5 confirmed live** |
+| Win Rate | **null** |
+| Avg Return | **null** |
+| Sharpe | **null** |
+| Max Drawdown | **null** |
+| Current Leader | *"No leader selected"* |
+
+**PnL per trade (directional):** $28.28 / 378 ≈ **+$0.075/trade**. This means the strategy is essentially break-even, not losing. That's actually *better* than the report's forecast baseline assumed.
+
+### 9.2 Devil's-advocate toothlessness, observed live
+
+Three trades visible in the dashboard's recent-activity feed show MiroFish producing "very_strong contradiction" verdicts and the confirmation reasoning explicitly says **"proceeding with leader"**:
+
+- `US x Iran meeting by April 11, 2026` — Swarm moderate contradiction (15% vs 20%, edge −4.4%) — proceeding → closed at −$8.31
+- `Hormuz Strait closure by April 30` — Swarm very_strong contradiction (43% vs 62%, edge −18.7%) — proceeding → closed at loss
+- Undisclosed market — Swarm very_strong contradiction (26% vs 77%, edge −50.5%) — proceeding → stopped at loss
+
+These are **exactly** the trades finding 3.3 predicted would happen, and they are being executed in real time despite MiroFish's explicit veto. The devil's-advocate layer has no real veto power; this is now observationally confirmed, not just theoretically identified.
+
+### 9.3 The showstopping finding: your dashboard can't measure WR
+
+Root cause traced to `dashboard/src/app/page.tsx`:
+
+- **Lines 147, 148, 150:** `avgReturn={null}`, `sharpe={null}`, `maxDrawdown={null}` — **literally hardcoded `null`**. Never computed. This is a TODO that was never done. The dashboard has the UI cards for all three but no computation wired in.
+- **Lines 73–75:** `winRate` is derived from `daily_performance` table via `win_count / (win_count + loss_count)`. The log analysis identified `upsertDailyPerformance failed: 4` errors in the March window. If the table is stale or has zero-count days, `totalDecided > 0` evaluates false and `winRate` falls through to `null`.
+
+The irony: lines 66–68 already compute realised PnL by iterating `copy_trades` in memory with `status IN ('closed', 'stopped')`. The data needed for all four metrics is *right there in the same function*. It was just never used.
+
+**Impact:** you have been tuning strategy parameters to improve a number your dashboard never computed. Every strategy change has been judged by gut feel on the trade feed rather than against a real baseline. This is the #1 blocker for any forward optimisation work.
+
+### 9.4 Correction to the fix plan — add Tier 0 BEFORE Tier 1
+
+The original plan jumped to Tier 1 (F3/F5/F6/F8). That was wrong. Without a baseline, we cannot measure whether Tier 1 worked. The revised plan:
+
+**Tier 0 — Measurement Unblock (~2h, do first):**
+- **T0.1:** Rewrite `deriveMetrics()` in `dashboard/src/app/page.tsx` to compute WR, avg return, max drawdown, and Sharpe directly from the in-memory `trades` array (closed+stopped with non-null `pnl`). Bypass `daily_performance` entirely. ~15 line change.
+- **T0.2:** Audit the `copy_trades` table — for any row where `status IN ('closed','stopped')` but `pnl IS NULL`, backfill via a one-shot script. There are 378 rows; expected runtime <1 min.
+- **T0.3:** Snapshot the baseline (WR, avg PnL/trade, drawdown, category breakdown, MiroFish-contradicted-but-proceeded count) into `docs/BASELINE_2026-04-12.md`. This becomes the control condition against which all Tier 1+ fixes are measured.
+
+Tier 1/2/3 continue as originally planned, but now with a real baseline.
+
+### 9.5 Revised forecast (unchanged in direction, better in starting point)
+
+The original forecast anchored on an assumed baseline of 45–55% WR. The real baseline appears to be *slightly better*: a break-even strategy (+$0.075/trade over 378 trades) which typically implies ~50–55% WR with modest positive expectancy. The forecast numbers in Section 5 remain directionally valid:
+
+- Quick wins (F3/F5/F6/F8): WR → 53–60%, monthly return +4–7%, DD 11–15%
+- Full program (F1–F10): WR → 62–68%, monthly +7–11%, DD 10–14%
+
+The "hits all three targets" conclusion still holds for the full program.
+
+---
+
+**END OF REPORT.** No bot code changes have been made. Dashboard measurement fix (Tier 0) and all strategy fixes (Tier 1–3) are scoped on branch `optimization/2026-04-12-strategy-fixes`. Awaiting go-ahead on Tier 0 first.
