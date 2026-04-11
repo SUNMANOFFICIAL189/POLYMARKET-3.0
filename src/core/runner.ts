@@ -297,6 +297,14 @@ export class Runner {
     try {
       logger.info(`Processing leader trade: ${trade.side.toUpperCase()} ${trade.outcome} on "${trade.marketQuestion.slice(0, 50)}" @ $${trade.entryPrice.toFixed(3)}`);
 
+      // F9: Attach rolling wallet stats BEFORE confirmation so the devil's
+      // advocate gate actually has data to operate on. Previously these fields
+      // were set inside copyExecutor.execute() which runs AFTER confirmation,
+      // leaving the devil's-advocate path permanently dormant.
+      const rollingStats = this.copyExecutor.getLeaderRollingStats(trade.leaderWallet);
+      (trade as any).walletRollingWR = rollingStats.winRate;
+      (trade as any).walletRollingCount = rollingStats.sampleSize;
+
       // Step 1: Run confirmation layer
       const confirmation = await this.confirmationLayer.confirm(trade);
 

@@ -611,6 +611,14 @@ export class CopyExecutor {
     return stats.sampleSize >= this.ROLLING_MIN_SAMPLE && stats.winRate >= this.ROLLING_BOOST_RATE;
   }
 
+  /** F9: Public accessor so runner.ts can attach walletRollingWR/Count to a
+   *  LeaderTrade BEFORE handing it to the confirmation layer. Previously the
+   *  confirmation layer's devil's-advocate gate required these fields but they
+   *  were only set afterwards in execute(), leaving devil's advocate dormant. */
+  getLeaderRollingStats(wallet: string): { winRate: number; sampleSize: number } {
+    return this.getWalletRollingStats(wallet);
+  }
+
   private getWalletRollingStats(wallet: string): { winRate: number; sampleSize: number } {
     const win = this.walletRollingWindow.get(wallet) ?? [];
     if (win.length === 0) return { winRate: 0.5, sampleSize: 0 }; // no data → benefit of the doubt

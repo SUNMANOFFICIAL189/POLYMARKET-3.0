@@ -150,14 +150,26 @@ export class ConfirmationLayer {
         }
         this.approvedCount++;
       }
+    } else if (mirofishVerdict === 'contradicts') {
+      // F9: MiroFish contradicts an AI-approved trade. Baseline data
+      // (2026-04-12, 378 trades) shows 3/3 = 100% loss rate on every override
+      // ever executed. Previous behaviour "proceeded with leader" and flagged
+      // in the log; new behaviour vetoes. Legacy warn-only path available via
+      // MIROFISH_OVERRIDE_WARN_ONLY=true.
+      if (process.env.MIROFISH_OVERRIDE_WARN_ONLY === 'true') {
+        decision = 'approved';
+        reason = `${aiResult.reasoning} | ⚠️ MiroFish contradicts: ${mirofishReason} (warn-only mode)`;
+        this.approvedCount++;
+      } else {
+        decision = 'vetoed';
+        reason = `AI approved but MiroFish contradicts — vetoed (F9 safety). AI: ${aiResult.reasoning} | Swarm: ${mirofishReason}`;
+        this.vetoedCount++;
+      }
     } else {
       decision = 'approved';
       reason = aiResult.reasoning;
       if (mirofishVerdict === 'supports') {
         reason += ` | MiroFish confirms: ${mirofishReason}`;
-      } else if (mirofishVerdict === 'contradicts') {
-        // AI says copy but swarm disagrees — still approve but flag it
-        reason += ` | ⚠️ MiroFish contradicts: ${mirofishReason} (proceeding with leader)`;
       }
       this.approvedCount++;
     }
@@ -171,22 +183,39 @@ export class ConfirmationLayer {
       latencyMs,
     });
 
-    // R5: Devil's advocate challenge — uses wallet context to validate trade
+    // R5/F9: Devil's advocate challenge.
+    // F9 gives this layer real veto power on hard-fail conditions:
+    //   - Wallet rolling WR < 20% (proven losing trader)
+    //   - Challenge reason indicates an expired / already-decided market
+    // Soft fails (e.g. 20-35% WR) continue to use the 0.5x size-halving path.
     let devilsAdvocateReduction = 1.0;
-    if (decision === 'approved' && (trade as any).walletRollingWR !== undefined) {
+    const walletWR = (trade as any).walletRollingWR as number | undefined;
+    const walletCount = (trade as any).walletRollingCount as number | undefined;
+    if (decision === 'approved' && walletWR !== undefined) {
       try {
         const challenge = await this.classifier.challengeTrade(
           trade.marketQuestion,
           trade.side,
           trade.outcome,
           trade.entryPrice,
-          (trade as any).walletRollingWR ?? 0.5,
-          (trade as any).walletRollingCount ?? 0,
+          walletWR ?? 0.5,
+          walletCount ?? 0,
         );
         if (!challenge.proceed) {
-          devilsAdvocateReduction = 0.5;
-          reason += ` | ⚠️ Devil's advocate: ${challenge.reason} (size halved)`;
-          logger.info(`Devil's advocate CHALLENGED: ${challenge.reason}`);
+          const isHardFail =
+            (walletCount !== undefined && walletCount >= 5 && (walletWR ?? 0.5) < 0.20) ||
+            /already passed|expired|resolved|decided|physically impossible/i.test(challenge.reason);
+          if (isHardFail) {
+            decision = 'vetoed';
+            reason += ` | 🛑 Devil's advocate HARD VETO: ${challenge.reason}`;
+            logger.info(`Devil's advocate HARD VETO: ${challenge.reason}`);
+            this.approvedCount--;
+            this.vetoedCount++;
+          } else {
+            devilsAdvocateReduction = 0.5;
+            reason += ` | ⚠️ Devil's advocate: ${challenge.reason} (size halved)`;
+            logger.info(`Devil's advocate CHALLENGED (soft): ${challenge.reason}`);
+          }
         } else {
           logger.debug(`Devil's advocate: PROCEED — ${challenge.reason}`);
         }
