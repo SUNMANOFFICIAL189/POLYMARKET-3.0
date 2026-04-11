@@ -113,10 +113,15 @@ Respond with ONLY a JSON object, no markdown:
     return this.callAPI<TradeConfirmationResult>(prompt, (content) => {
       return JSON.parse(content) as TradeConfirmationResult;
     }, {
-      recommendation: 'copy',
-      confidence: 0.5,
-      reasoning: 'AI unavailable (rate limited) — using orderbook fallback',
-      hasOpposingSignals: false,
+      // F3: safe-fail default. Was {recommendation:'copy', confidence:0.5} which
+      // meant a malformed AI response silently approved the trade at high enough
+      // confidence to bypass devil's-advocate gating. Now defaults to VETO at
+      // maximum confidence so the downstream VETO_CONFIDENCE_THRESHOLD (0.70)
+      // always honors the block.
+      recommendation: 'veto',
+      confidence: 1.0,
+      reasoning: 'AI unavailable or malformed response — safe-fail veto (F3)',
+      hasOpposingSignals: true,
       hasSupportingSignals: false,
       aiUnavailable: true,
     });
