@@ -61,9 +61,16 @@ export class RiskManager {
     if (this.dailyPnl <= -maxDailyLoss) {
       return { allowed: false, reason: `Daily loss limit reached` };
     }
+    // F8: Drawdown circuit breaker at 14% (1 pt buffer below the 15% user target).
+    // Was 20%, which allowed breaches past the stated limit before firing.
+    // Override via env DRAWDOWN_LIMIT_PCT if needed.
+    const DRAWDOWN_LIMIT = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
     const currentDrawdown = (this.peakBalance - this.balance) / this.peakBalance;
-    if (currentDrawdown > 0.20) {
-      return { allowed: false, reason: `Drawdown circuit breaker (${(currentDrawdown * 100).toFixed(1)}%)` };
+    if (currentDrawdown > DRAWDOWN_LIMIT) {
+      return {
+        allowed: false,
+        reason: `Drawdown circuit breaker ${(currentDrawdown * 100).toFixed(1)}% > ${(DRAWDOWN_LIMIT * 100).toFixed(0)}% limit`,
+      };
     }
     return { allowed: true };
   }
