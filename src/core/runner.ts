@@ -43,6 +43,7 @@ export class Runner {
 
   // Signals
   private newsScanner: NewsScanner;
+  private _newsBuffer: Array<{headline: string; source: string; timestamp: number}> = [];
 
   // Execution
   private confirmationLayer: ConfirmationLayer;
@@ -218,9 +219,17 @@ export class Runner {
   }
 
   private setupSignals(): void {
-    // News scanner
     this.newsScanner.start();
-
+    this.newsScanner.on('news', (item: { headline: string; source?: string; timestamp?: string; metadata?: { feedSource?: string } }) => {
+      const newsEntry = {
+        headline: item.headline,
+        source: item.metadata?.feedSource ?? item.source ?? 'unknown',
+        timestamp: item.timestamp ? new Date(item.timestamp).getTime() : Date.now(),
+      };
+      this._newsBuffer.push(newsEntry);
+      if (this._newsBuffer.length > 100) this._newsBuffer.splice(0, this._newsBuffer.length - 80);
+      this.confirmationLayer.updateNews(this._newsBuffer);
+    });
   }
 
   private setupWalletMonitor(): void {
@@ -274,6 +283,30 @@ export class Runner {
     });
     // Re-score with enriched data so active wallets score higher
     const rescored = this.scorer.scoreAndRank(enriched);
+
+    // F11: Apply rolling-WR penalty. The composite scorer uses 30-day metrics from
+    // the Polymarket API, but a wallet can look great over 30 days while crashing in
+    // the last 10 trades. The HARD BLOCK filter catches these at execution time (97.6%
+    // rejection rate in the 2026-04-12 log window), but the scorer still ranks them
+    // highly, wasting watcher slots. This penalty multiplies the composite score by
+    // 0.3 for any wallet with <30% rolling WR over ≥5 recent copy-outcomes, so they
+    // drop in rank BEFORE reaching the watcher pool.
+    const ROLLING_PENALTY_WR = Number(process.env.ROLLING_PENALTY_WR ?? '0.30') || 0.30;
+    const ROLLING_PENALTY_MULTIPLIER = Number(process.env.ROLLING_PENALTY_MULTIPLIER ?? '0.30') || 0.30;
+    const ROLLING_PENALTY_MIN_SAMPLE = 5;
+    for (const leader of rescored) {
+      const stats = this.copyExecutor.getLeaderRollingStats(leader.walletAddress);
+      if (stats.sampleSize >= ROLLING_PENALTY_MIN_SAMPLE && stats.winRate < ROLLING_PENALTY_WR) {
+        const before = leader.compositeScore;
+        leader.compositeScore = Math.round(leader.compositeScore * ROLLING_PENALTY_MULTIPLIER * 100) / 100;
+        logger.info(
+          `F11: Rolling penalty on ${leader.walletAddress.slice(0, 10)}... — ` +
+          `${(stats.winRate * 100).toFixed(0)}% WR (${stats.sampleSize} trades) < ${(ROLLING_PENALTY_WR * 100).toFixed(0)}% threshold → ` +
+          `score ${before.toFixed(1)} × ${ROLLING_PENALTY_MULTIPLIER} = ${leader.compositeScore.toFixed(1)}`
+        );
+      }
+    }
+    rescored.sort((a, b) => b.compositeScore - a.compositeScore);
 
     // Await upsert before selector.update() so setCurrentLeader finds rows in DB
     if (this.config.supabase.url) {
