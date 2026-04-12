@@ -113,10 +113,10 @@ Respond with ONLY a JSON object, no markdown:
     return this.callAPI<TradeConfirmationResult>(prompt, (content) => {
       return JSON.parse(content) as TradeConfirmationResult;
     }, {
-      recommendation: 'copy',
-      confidence: 0.5,
-      reasoning: 'AI unavailable (rate limited) — using orderbook fallback',
-      hasOpposingSignals: false,
+      recommendation: 'veto',
+      confidence: 1.0,
+      reasoning: 'AI unavailable or malformed response — safe-fail veto',
+      hasOpposingSignals: true,
       hasSupportingSignals: false,
       aiUnavailable: true,
     });
