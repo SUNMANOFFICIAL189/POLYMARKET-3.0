@@ -59,25 +59,72 @@ function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoi
   return points
 }
 
-function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[], depositAmount: number) {
+function deriveMetrics(trades: CopyTrade[], _performance: DailyPerformance[], depositAmount: number) {
   const reservedCapital = trades
     .filter(t => t.status === 'open' || t.status === 'pending')
     .reduce((s, t) => s + (t.our_size ?? 0), 0)
-  const realizedPnl = trades
-    .filter(t => t.status === 'closed' || t.status === 'stopped')
-    .reduce((s, t) => s + (t.pnl ?? 0), 0)
+
+  const decidedTrades = trades
+    .filter(t => (t.status === 'closed' || t.status === 'stopped') && t.pnl != null && t.exit_time != null)
+    .sort((a, b) => (a.exit_time ?? '').localeCompare(b.exit_time ?? ''))
+
+  const realizedPnl = decidedTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
   const balance = depositAmount - reservedCapital + realizedPnl
   const totalReturnUsd = balance - depositAmount
   const totalReturnPct = ((balance - depositAmount) / depositAmount) * 100
 
-  const totalWins = performance.reduce((s, d) => s + d.win_count, 0)
-  const totalDecided = performance.reduce((s, d) => s + d.win_count + d.loss_count, 0)
-  const winRate = totalDecided > 0 ? totalWins / totalDecided : null
+  const wins = decidedTrades.filter(t => (t.pnl ?? 0) > 0).length
+  const losses = decidedTrades.filter(t => (t.pnl ?? 0) < 0).length
+  const decidedCount = wins + losses
+  const winRate = decidedCount > 0 ? wins / decidedCount : null
+
+  const avgReturn = decidedTrades.length > 0
+    ? realizedPnl / decidedTrades.length
+    : null
+
+  let runningBalance = depositAmount
+  let peakBalance = depositAmount
+  let maxDrawdownPct = 0
+  for (const t of decidedTrades) {
+    runningBalance += t.pnl ?? 0
+    if (runningBalance > peakBalance) peakBalance = runningBalance
+    const dd = peakBalance > 0 ? (peakBalance - runningBalance) / peakBalance : 0
+    if (dd > maxDrawdownPct) maxDrawdownPct = dd
+  }
+  const maxDrawdown = decidedTrades.length > 0 ? maxDrawdownPct * 100 : null
+
+  const perTradeReturns = decidedTrades
+    .filter(t => (t.our_size ?? 0) > 0)
+    .map(t => (t.pnl ?? 0) / (t.our_size ?? 1))
+  let sharpe: number | null = null
+  if (perTradeReturns.length >= 2) {
+    const mean = perTradeReturns.reduce((s, r) => s + r, 0) / perTradeReturns.length
+    const variance = perTradeReturns.reduce((s, r) => s + (r - mean) ** 2, 0) / (perTradeReturns.length - 1)
+    const stdev = Math.sqrt(variance)
+    if (stdev > 0) sharpe = mean / stdev
+  }
+
+  const mirofishOverrides = trades.filter(t =>
+    (t.confirmation_reason ?? '').includes('MiroFish contradicts') &&
+    (t.confirmation_reason ?? '').includes('proceeding with leader')
+  )
+  const mirofishOverrideCount = mirofishOverrides.length
+  const mirofishOverrideLosses = mirofishOverrides
+    .filter(t => (t.status === 'closed' || t.status === 'stopped') && (t.pnl ?? 0) < 0).length
+  const mirofishOverrideWins = mirofishOverrides
+    .filter(t => (t.status === 'closed' || t.status === 'stopped') && (t.pnl ?? 0) > 0).length
 
   const openPositions = trades.filter(t => t.status === 'open').length
   const paperMode = process.env.PAPER_MODE !== 'false'
+  const maxOpenPositionsConfig = Number(process.env.MAX_OPEN_POSITIONS ?? '10') || 10
+  const riskPreset = process.env.RISK ?? 'paper'
 
-  return { balance, totalReturnPct, totalReturnUsd, winRate, openPositions, paperMode }
+  return {
+    balance, totalReturnPct, totalReturnUsd, winRate, avgReturn, sharpe,
+    maxDrawdown, openPositions, maxOpenPositionsConfig, riskPreset, paperMode,
+    decidedCount, wins, losses,
+    mirofishOverrideCount, mirofishOverrideLosses, mirofishOverrideWins,
+  }
 }
 
 export default async function DashboardPage() {
@@ -102,8 +149,11 @@ export default async function DashboardPage() {
     // Supabase unavailable — render with empty states
   }
 
-  const { balance, totalReturnPct, totalReturnUsd, winRate, openPositions, paperMode } =
-    deriveMetrics(trades, performance, 6300)
+  const {
+    balance, totalReturnPct, totalReturnUsd, winRate, avgReturn, sharpe,
+    maxDrawdown, openPositions, maxOpenPositionsConfig, riskPreset, paperMode,
+    mirofishOverrideCount, mirofishOverrideLosses, mirofishOverrideWins,
+  } = deriveMetrics(trades, performance, 6300)
 
   const chartPoints = deriveChartPoints(trades, 6300)
 
@@ -144,13 +194,18 @@ export default async function DashboardPage() {
           totalReturnUsd={totalReturnUsd}
           winRate={winRate !== null ? winRate * 100 : null}
           trades={trades.length}
-          avgReturn={null}
-          sharpe={null}
+          avgReturn={avgReturn}
+          sharpe={sharpe}
           roi={totalReturnPct}
-          maxDrawdown={null}
+          maxDrawdown={maxDrawdown}
           currentLeaderWallet={currentLeader?.wallet_address ?? null}
           currentLeaderScore={currentLeader?.composite_score ?? null}
           openPositions={openPositions}
+          maxOpenPositionsConfig={maxOpenPositionsConfig}
+          riskPreset={riskPreset}
+          mirofishOverrideCount={mirofishOverrideCount}
+          mirofishOverrideLosses={mirofishOverrideLosses}
+          mirofishOverrideWins={mirofishOverrideWins}
           paperMode={paperMode}
         />
 
