@@ -298,7 +298,15 @@ export class Runner {
       logger.info(`Processing leader trade: ${trade.side.toUpperCase()} ${trade.outcome} on "${trade.marketQuestion.slice(0, 50)}" @ $${trade.entryPrice.toFixed(3)}`);
 
       // Step 1: Run confirmation layer
-      const confirmation = await this.confirmationLayer.confirm(trade);
+      // Fix 3: If a watcher wallet has a hot rolling WR (>= 60%), elevate it to rank-1
+      // treatment so it bypasses the strict corroboration gate. Leaderboard rank drifts
+      // but rolling WR is a more reliable quality signal.
+      let tradeForConfirmation = trade;
+      if (trade.rank && trade.rank >= 2 && this.copyExecutor.isHotWallet(trade.leaderWallet)) {
+        logger.info(`Runner: Hot wallet ${trade.leaderWallet.slice(0, 10)} at rank-${trade.rank} → elevated to rank-1 confirmation treatment`);
+        tradeForConfirmation = { ...trade, rank: 1 };
+      }
+      const confirmation = await this.confirmationLayer.confirm(tradeForConfirmation);
 
       // Step 2: Execute (or log veto)
       const leaderPortfolio = this.currentLeader?.totalPnl30d

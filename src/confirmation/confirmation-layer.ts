@@ -4,6 +4,7 @@ import { OrderbookChecker } from '../signals/orderbook-checker.js';
 import { MirofishClient } from '../signals/mirofish-client.js';
 import { categoriseMarket } from '../signals/market-categoriser.js';
 import type { LeaderTrade, ConfirmationDecision } from '../types/index.js';
+import type { ChallengeResult } from '../signals/ai-classifier.js';
 
 /**
  * ConfirmationLayer — validates a leader's trade before we copy it.
@@ -27,7 +28,7 @@ export interface ConfirmationResult {
   sizeMultiplier: number; // 0.7 (low confidence) / 1.0 (normal) / 1.5 (high MiroFish confidence)
 }
 
-const MAX_TRADE_AGE_MS = 5 * 60 * 1000;         // Skip rank-1 trades older than 5 minutes
+const MAX_TRADE_AGE_MS = 10 * 60 * 1000;        // Skip rank-1 trades older than 10 minutes
 const WATCHER_MAX_TRADE_AGE_MS = 15 * 60 * 1000; // Rank 2-5: corroboration gate is the filter, 15min ok
 const VETO_CONFIDENCE_THRESHOLD = 0.70;  // AI must be this confident to veto (rank 1)
 const WATCHER_AI_MIN_CONFIDENCE = 0.65;       // AI confidence needed to count as corroboration (rank 2-5)
@@ -91,13 +92,16 @@ export class ConfirmationLayer {
         newsContext,
       );
     } catch (err) {
-      logger.warn(`ConfirmationLayer: AI classifier failed: ${err} — defaulting to approve`);
-      aiResult = {
-        recommendation: 'copy' as const,
-        confidence: 0.5,
-        reasoning: 'AI failed — defaulting to copy (trust leader)',
+      logger.warn(`ConfirmationLayer: AI classifier failed: ${err} — BLOCKING trade (no AI = no trade)`);
+      this.vetoedCount++;
+      return {
+        decision: 'vetoed' as ConfirmationDecision,
+        reason: `AI unavailable — trade blocked (no unvalidated trades allowed)`,
+        confidence: 0,
         hasOpposingSignals: false,
         hasSupportingSignals: false,
+        latencyMs: Date.now() - start,
+        sizeMultiplier: 1.0,
       };
     }
 
@@ -167,6 +171,30 @@ export class ConfirmationLayer {
       latencyMs,
     });
 
+    // R5: Devil's advocate challenge — uses wallet context to validate trade
+    let devilsAdvocateReduction = 1.0;
+    if (decision === 'approved' && (trade as any).walletRollingWR !== undefined) {
+      try {
+        const challenge = await this.classifier.challengeTrade(
+          trade.marketQuestion,
+          trade.side,
+          trade.outcome,
+          trade.entryPrice,
+          (trade as any).walletRollingWR ?? 0.5,
+          (trade as any).walletRollingCount ?? 0,
+        );
+        if (!challenge.proceed) {
+          devilsAdvocateReduction = 0.5;
+          reason += ` | ⚠️ Devil's advocate: ${challenge.reason} (size halved)`;
+          logger.info(`Devil's advocate CHALLENGED: ${challenge.reason}`);
+        } else {
+          logger.debug(`Devil's advocate: PROCEED — ${challenge.reason}`);
+        }
+      } catch (err) {
+        logger.debug(`Devil's advocate skipped: ${err}`);
+      }
+    }
+
     // Confidence-based position sizing:
     // MiroFish supports + strong/very_strong signal → size up (1.5x)
     // MiroFish contradicts or neutral → size down (0.7x)
@@ -185,7 +213,7 @@ export class ConfirmationLayer {
       hasOpposingSignals: aiResult.hasOpposingSignals,
       hasSupportingSignals: aiResult.hasSupportingSignals,
       latencyMs,
-      sizeMultiplier,
+      sizeMultiplier: sizeMultiplier * devilsAdvocateReduction,
     };
   }
 
@@ -210,6 +238,7 @@ export class ConfirmationLayer {
     let aiPass = false;
     let aiConfidence = 0;
     let aiReasoning = '';
+    let aiUnavailable = false;
     try {
       const newsContext: Array<{headline: string; source: string; timestamp: number}> = [];
       const aiResult = await this.classifier.classifyTrade(
@@ -220,10 +249,29 @@ export class ConfirmationLayer {
       );
       aiConfidence = aiResult.confidence;
       aiReasoning = aiResult.reasoning;
-      aiPass = aiResult.recommendation !== 'veto' && aiResult.confidence >= aiThreshold;
+      aiUnavailable = aiResult.aiUnavailable ?? false;
+      if (!aiUnavailable) {
+        aiPass = aiResult.recommendation !== 'veto' && aiResult.confidence >= aiThreshold;
+      } else {
+        logger.warn(`ConfirmationLayer: AI unavailable (rate limited) — BLOCKING trade (no AI = no trade)`);
+        this.vetoedCount++;
+        const latencyMs = Date.now() - start;
+        this.totalLatencyMs += latencyMs;
+        this.callCount++;
+        return {
+          decision: 'vetoed',
+          reason: `AI unavailable — trade blocked (no unvalidated trades allowed)`,
+          confidence: 0,
+          hasOpposingSignals: false,
+          hasSupportingSignals: false,
+          latencyMs,
+          sizeMultiplier: 1.0,
+        };
+      }
     } catch (err) {
       logger.warn(`ConfirmationLayer: AI check failed for watcher trade: ${err}`);
       aiPass = false;
+      aiUnavailable = true;
     }
 
     // BONUS 1: Orderbook bid pressure
@@ -264,7 +312,14 @@ export class ConfirmationLayer {
     // (cheap underdog tokens attract speculative buyers) — using it as a hard gate
     // blocks 1,400+ valid trades per day without adding signal quality.
 
-    const aiStr = aiPass ? `Y(${aiConfidence.toFixed(2)})` : `N(${aiConfidence.toFixed(2)},need>=${aiThreshold})`;
+    // When AI is rate-limited, fall back to orderbook as primary gate
+    const obFallback = aiUnavailable && orderbookPass;
+    const effectivePass = aiPass || obFallback;
+    const aiStr = aiPass
+      ? `Y(${aiConfidence.toFixed(2)})`
+      : aiUnavailable
+        ? `unavail(ob=${obFallback ? 'PASS' : 'FAIL'})`
+        : `N(${aiConfidence.toFixed(2)},need>=${aiThreshold})`;
     const obStr = bidPressure !== null
       ? (orderbookPass ? `Y(${bidPressure.toFixed(2)})` : `info(${bidPressure.toFixed(2)})`)
       : 'unavail';
@@ -275,7 +330,7 @@ export class ConfirmationLayer {
 
     const corrobLog = `Corroboration rank=${trade.rank}: ai=${aiStr} orderbook=${obStr} mirofish=${mirofishStr}`;
 
-    if (aiPass) {
+    if (effectivePass) {
       this.approvedCount++;
       const reason = `${corrobLog} — APPROVED`;
       logger.info(`Confirmation APPROVED (watcher): ${reason}`);
@@ -290,7 +345,9 @@ export class ConfirmationLayer {
       };
     } else {
       this.vetoedCount++;
-      const reason = `${corrobLog} — VETOED: AI confidence ${(aiConfidence * 100).toFixed(0)}% below ${(aiThreshold * 100).toFixed(0)}% threshold`;
+      const reason = aiUnavailable
+        ? `${corrobLog} — VETOED: AI unavailable + orderbook insufficient`
+        : `${corrobLog} — VETOED: AI confidence ${(aiConfidence * 100).toFixed(0)}% below ${(aiThreshold * 100).toFixed(0)}% threshold`;
       logger.info(`Confirmation VETOED (watcher): ${reason}`);
       return {
         decision: 'vetoed',

@@ -32,13 +32,13 @@ const RANK_MULTIPLIERS: Record<number, number> = {
 
 // Skip near-certainty bets: price > this threshold or < (1 - threshold) have
 // near-zero alpha — the edge is already fully priced in.
-const MAX_WATCHER_PRICE = 0.92;
+const MAX_WATCHER_PRICE = 0.75;
 const MIN_WATCHER_PRICE = 0.08;
 
 // Edge floor: prices within 6% of 0.5 (0.44–0.56) represent genuine uncertainty —
 // no measurable directional edge. Top performers enter at ≥6% deviation from consensus
 // (PANews 112K wallet study; min edge = 6-11% from midpoint).
-const EDGE_FLOOR_DISTANCE = 0.06;
+const EDGE_FLOOR_DISTANCE = 0.10;
 
 export class CopyExecutor {
   private paperEngine: PaperTradingEngine;
@@ -58,6 +58,7 @@ export class CopyExecutor {
   private readonly ROLLING_MIN_WIN_RATE  = parseFloat(process.env.ROLLING_MIN_WIN_RATE  ?? '0.40');
   private readonly ROLLING_BOOST_RATE    = parseFloat(process.env.ROLLING_BOOST_THRESHOLD ?? '0.60');
   private readonly ROLLING_MIN_SAMPLE    = 5; // minimum trades before filter activates
+
   private executedCount = 0;
   private blockedCount = 0;
 
@@ -190,13 +191,80 @@ export class CopyExecutor {
       this.watcherPositions.delete(leaderTrade.marketId);
     }
 
-    // Rolling wallet performance filter — applies to ALL ranks including rank-1
-    // Soft-mutes wallets confirmed to be in a cold streak (< 40% WR over last 10 trades)
+    // Rolling wallet performance — pass-through with logging (feeds devil's advocate)
+    // Graduated cold streak filter — smarter than binary block/allow
+    // Hard data: 0% WR wallet (0x2005d16a) lost $723 in 24h when unblocked
     const rollingStats = this.getWalletRollingStats(leaderTrade.leaderWallet);
-    if (rollingStats.sampleSize >= this.ROLLING_MIN_SAMPLE && rollingStats.winRate < this.ROLLING_MIN_WIN_RATE) {
+    (leaderTrade as any).walletRollingWR = rollingStats.winRate;
+    (leaderTrade as any).walletRollingCount = rollingStats.sampleSize;
+
+    if (rollingStats.sampleSize >= this.ROLLING_MIN_SAMPLE) {
+      if (rollingStats.winRate < 0.20) {
+        // HARD BLOCK: below 20% WR = proven destructive. No exceptions.
+        this.blockedCount++;
+        logger.info(`CopyExecutor: HARD BLOCK — ${leaderTrade.leaderWallet.slice(0,10)} rolling ${rollingStats.sampleSize}-trade WR ${(rollingStats.winRate * 100).toFixed(0)}% < 20% — trade rejected`);
+        return { success: false, reason: `Hard block: wallet WR ${(rollingStats.winRate * 100).toFixed(0)}% (below 20% threshold)` };
+      } else if (rollingStats.winRate < this.ROLLING_MIN_WIN_RATE) {
+        // REDUCED SIZE: 20-40% WR = underperforming. Trade at 25% size, devil's advocate decides.
+        logger.info(`CopyExecutor: COLD WALLET — ${leaderTrade.leaderWallet.slice(0,10)} rolling WR ${(rollingStats.winRate * 100).toFixed(0)}% — 25% size (devil's advocate will assess)`);
+        (leaderTrade as any)._coldSizeMultiplier = 0.25;
+      }
+    }
+
+    // Expired market detection — if market question contains a date that has passed, auto-reject
+    const marketQ = leaderTrade.marketQuestion;
+    const datePatterns = marketQ.match(/\b(20\d{2}-\d{2}-\d{2})\b/g) ??
+      marketQ.match(/\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}\b/gi) ??
+      marketQ.match(/\bby\s+(April|March|May|June|July)\s+(\d{1,2})\b/i) ? [marketQ] : null;
+    if (datePatterns) {
+      // Check for explicit YYYY-MM-DD dates
+      const isoMatch = marketQ.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+      if (isoMatch) {
+        const marketDate = new Date(isoMatch[1] + 'T23:59:59Z');
+        if (marketDate < new Date()) {
+          this.blockedCount++;
+          logger.info(`CopyExecutor: EXPIRED MARKET — date ${isoMatch[1]} has passed — "${marketQ.slice(0,50)}"`);
+          return { success: false, reason: `Expired market: date ${isoMatch[1]} has passed` };
+        }
+      }
+      // Check for "by April 7" style dates
+      const byMatch = marketQ.match(/\bby\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})\b/i);
+      if (byMatch) {
+        const monthNames = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+        const monthIdx = monthNames.indexOf(byMatch[1].toLowerCase());
+        if (monthIdx >= 0) {
+          const year = new Date().getFullYear();
+          const deadlineDate = new Date(year, monthIdx, parseInt(byMatch[2]), 23, 59, 59);
+          if (deadlineDate < new Date()) {
+            this.blockedCount++;
+            logger.info(`CopyExecutor: EXPIRED MARKET — "by ${byMatch[1]} ${byMatch[2]}" has passed — "${marketQ.slice(0,50)}"`);
+            return { success: false, reason: `Expired market: "by ${byMatch[1]} ${byMatch[2]}" deadline passed` };
+          }
+        }
+      }
+    }
+
+    // Near-worthless token detection (price < 0.01 = likely expired/dead market)
+    if (leaderTrade.entryPrice < 0.01) {
       this.blockedCount++;
-      logger.info(`CopyExecutor: COLD STREAK — ${leaderTrade.leaderWallet.slice(0,10)} rolling ${rollingStats.sampleSize}-trade WR ${(rollingStats.winRate * 100).toFixed(0)}% < ${(this.ROLLING_MIN_WIN_RATE * 100).toFixed(0)}% threshold — skipping`);
-      return { success: false, reason: `Cold streak: rolling WR ${(rollingStats.winRate * 100).toFixed(0)}% (${rollingStats.sampleSize} trades)` };
+      logger.info(`CopyExecutor: DEAD MARKET — price ${leaderTrade.entryPrice.toFixed(4)} < 0.01 — likely expired`);
+      return { success: false, reason: `Dead market: price ${leaderTrade.entryPrice.toFixed(4)} near zero` };
+    }
+
+    // P2: Heavy favourite filter — applies to ALL ranks
+    const entryPrice = leaderTrade.entryPrice;
+    if (entryPrice > MAX_WATCHER_PRICE) {
+      this.blockedCount++;
+      logger.info(`CopyExecutor: HEAVY FAV SKIP — price ${entryPrice.toFixed(3)} > ${MAX_WATCHER_PRICE} threshold — risk/reward inverted`);
+      return { success: false, reason: `Heavy favourite: price ${entryPrice.toFixed(3)} > ${MAX_WATCHER_PRICE} max` };
+    }
+
+    // P4: Coin-flip filter — applies to ALL ranks
+    // Prices within 6% of 0.50 have no directional edge. Historical: 38 trades at 0.40-0.55, net -$220
+    if (Math.abs(entryPrice - 0.5) < EDGE_FLOOR_DISTANCE) {
+      this.blockedCount++;
+      logger.info(`CopyExecutor: COIN-FLIP SKIP — price ${entryPrice.toFixed(3)} too close to 0.50 (within ${EDGE_FLOOR_DISTANCE})`);
+      return { success: false, reason: `Coin-flip zone: price ${entryPrice.toFixed(3)} within ${(EDGE_FLOOR_DISTANCE*100).toFixed(0)}% of 0.50` };
     }
 
     // For rank 2-5 watcher trades: apply extra filters before using a position slot
@@ -294,6 +362,25 @@ export class CopyExecutor {
       const beforeSize = ourSize;
       ourSize = Math.round(ourSize * sizeMultiplier * 100) / 100;
       logger.info(`CopyExecutor: MiroFish sizing: ${sizeMultiplier}x → $${beforeSize.toFixed(2)} → $${ourSize.toFixed(2)}`);
+    }
+
+    // Apply cold wallet size reduction (25% for 20-40% WR wallets)
+    const coldMultiplier = (leaderTrade as any)?._coldSizeMultiplier;
+    if (coldMultiplier && coldMultiplier < 1.0) {
+      const beforeCold = ourSize;
+      ourSize = Math.round(ourSize * coldMultiplier * 100) / 100;
+      logger.info(`CopyExecutor: Cold wallet reduction — ${coldMultiplier}x → $${beforeCold.toFixed(2)} → $${ourSize.toFixed(2)}`);
+    }
+
+    // P3: Hard cap position size at $150 — but exempt longshots (< 0.25 entry)
+    // Longshots are our primary profit driver (+$1,429 total). Capping them kills asymmetric payoff.
+    const MAX_POSITION_SIZE = parseFloat(process.env.MAX_POSITION_DOLLARS ?? '150');
+    const entryPriceForCap = leaderTrade.entryPrice;
+    if (ourSize > MAX_POSITION_SIZE && entryPriceForCap >= 0.25) {
+      logger.info(`CopyExecutor: Size capped $${ourSize.toFixed(2)} → $${MAX_POSITION_SIZE.toFixed(2)} (hard cap, non-longshot)`);
+      ourSize = MAX_POSITION_SIZE;
+    } else if (ourSize > MAX_POSITION_SIZE && entryPriceForCap < 0.25) {
+      logger.info(`CopyExecutor: Longshot exempt from cap — $${ourSize.toFixed(2)} at ${entryPriceForCap.toFixed(3)} odds (keeping full size)`);
     }
 
     if (ourSize < 1) {
@@ -436,6 +523,7 @@ export class CopyExecutor {
         // Update rolling wallet performance window
         if (copyTrade && copyTrade.leaderWallet) {
           this.updateWalletPerformance(copyTrade.leaderWallet, (copyTrade.pnl ?? 0) > 0);
+
         }
         // Cooldown: if this was a stop-loss close, block re-entry for 60 minutes
         if (reason === 'stop_loss' || reason === 'stop-loss') {
@@ -513,6 +601,14 @@ export class CopyExecutor {
     const win = this.walletRollingWindow.get(wallet)!;
     win.push(won);
     if (win.length > this.ROLLING_WINDOW_SIZE) win.shift();
+  }
+
+  /** Returns true if wallet has a hot rolling WR (>= ROLLING_BOOST_RATE with enough sample).
+   *  Used by runner.ts to elevate high-performing wallets to rank-1 treatment regardless
+   *  of their current leaderboard position. */
+  isHotWallet(wallet: string): boolean {
+    const stats = this.getWalletRollingStats(wallet);
+    return stats.sampleSize >= this.ROLLING_MIN_SAMPLE && stats.winRate >= this.ROLLING_BOOST_RATE;
   }
 
   private getWalletRollingStats(wallet: string): { winRate: number; sampleSize: number } {
