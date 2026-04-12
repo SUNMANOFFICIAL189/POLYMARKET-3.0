@@ -611,6 +611,10 @@ export class CopyExecutor {
     return stats.sampleSize >= this.ROLLING_MIN_SAMPLE && stats.winRate >= this.ROLLING_BOOST_RATE;
   }
 
+  getLeaderRollingStats(wallet: string): { winRate: number; sampleSize: number } {
+    return this.getWalletRollingStats(wallet);
+  }
+
   private getWalletRollingStats(wallet: string): { winRate: number; sampleSize: number } {
     const win = this.walletRollingWindow.get(wallet) ?? [];
     if (win.length === 0) return { winRate: 0.5, sampleSize: 0 }; // no data → benefit of the doubt

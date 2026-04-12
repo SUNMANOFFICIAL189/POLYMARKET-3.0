@@ -206,10 +206,15 @@ export class Runner {
       this.handleLeaderTrade(trade);
     });
 
-    this.walletMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string }) => {
-      logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}"`);
-      // Close our copy if we have one, then persist PNL to Supabase
-      const closedTrade = await this.copyExecutor.closePosition(data.marketId, 0.5, 'leader_closed');
+    this.walletMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string; rank?: number; exitPrice?: number }) => {
+      const exitPrice = typeof data.exitPrice === 'number' && data.exitPrice > 0
+        ? data.exitPrice
+        : 0.5;
+      const priceNote = exitPrice === 0.5 && data.exitPrice == null
+        ? ' (fallback midpoint)'
+        : '';
+      logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}" @ ${exitPrice.toFixed(3)}${priceNote}`);
+      const closedTrade = await this.copyExecutor.closePosition(data.marketId, exitPrice, 'leader_closed');
       if (!closedTrade) return;
       const pnlStr = closedTrade.pnl !== undefined ? `$${closedTrade.pnl.toFixed(2)}` : 'n/a';
       logger.info(`Closed our copy position for ${data.marketId.slice(0, 12)}... pnl=${pnlStr}`);
@@ -301,6 +306,13 @@ export class Runner {
       // Fix 3: If a watcher wallet has a hot rolling WR (>= 60%), elevate it to rank-1
       // treatment so it bypasses the strict corroboration gate. Leaderboard rank drifts
       // but rolling WR is a more reliable quality signal.
+      // F9a: Attach rolling wallet stats BEFORE confirmation so devil's advocate
+      // has data to operate on. Previously set inside copyExecutor.execute() which
+      // runs after confirmation, leaving devil's advocate permanently dormant.
+      const rollingStats = this.copyExecutor.getLeaderRollingStats(trade.leaderWallet);
+      (trade as any).walletRollingWR = rollingStats.winRate;
+      (trade as any).walletRollingCount = rollingStats.sampleSize;
+
       let tradeForConfirmation = trade;
       if (trade.rank && trade.rank >= 2 && this.copyExecutor.isHotWallet(trade.leaderWallet)) {
         logger.info(`Runner: Hot wallet ${trade.leaderWallet.slice(0, 10)} at rank-${trade.rank} → elevated to rank-1 confirmation treatment`);
