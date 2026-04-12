@@ -1,5 +1,17 @@
 # PATS-Copy — Project Context for Claude Code
 
+## Auto-Activate HQ
+
+On session start in this project, automatically load the Commander system:
+
+1. Read `~/claude-hq/commander/COMMANDER.md` (orchestration brain)
+2. Read `~/claude-hq/commander/LESSONS.md` (past mistakes)
+3. Read `~/claude-hq/registry.json` (tool inventory — 25 tools, 11 stacks)
+4. Classify the user's task against the registry
+5. This project is classified as: **Full Project Build Stack** (autonomous trading bot)
+
+Then proceed with the Quick Resume below.
+
 ## Quick Resume
 
 On session start, read this file and then check the current state:
