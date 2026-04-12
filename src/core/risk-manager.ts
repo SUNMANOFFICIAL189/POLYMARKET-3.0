@@ -25,16 +25,27 @@ export class RiskManager {
   private dailyPnl: number = 0;
   private peakBalance: number;
   private maxDrawdown: number = 0;
+  private onPeakBalanceChange?: (peak: number) => void;
 
-  constructor(riskDial: RiskDial, balance: number) {
+  constructor(riskDial: RiskDial, balance: number, opts?: {
+    restoredPeakBalance?: number;
+    onPeakBalanceChange?: (peak: number) => void;
+  }) {
     this.riskDial = riskDial;
     this.balance = balance;
-    this.peakBalance = balance;
+    this.onPeakBalanceChange = opts?.onPeakBalanceChange;
+    this.peakBalance = Math.max(balance, opts?.restoredPeakBalance ?? balance);
+    if (this.peakBalance > balance) {
+      logger.info(`RiskManager: Restored peakBalance $${this.peakBalance.toFixed(2)} from persistence (current: $${balance.toFixed(2)}, DD: ${(((this.peakBalance - balance) / this.peakBalance) * 100).toFixed(1)}%)`);
+    }
   }
 
   updateBalance(balance: number): void {
     this.balance = balance;
-    if (balance > this.peakBalance) this.peakBalance = balance;
+    if (balance > this.peakBalance) {
+      this.peakBalance = balance;
+      this.onPeakBalanceChange?.(this.peakBalance);
+    }
     const drawdown = (this.peakBalance - balance) / this.peakBalance;
     if (drawdown > this.maxDrawdown) this.maxDrawdown = drawdown;
   }

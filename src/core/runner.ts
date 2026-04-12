@@ -1,8 +1,14 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { logger } from '../utils/logger.js';
 import { sendTelegramAlert } from '../utils/telegram.js';
 import { loadConfig } from './config.js';
 import { RiskDial } from './config.js';
 import { RiskManager } from './risk-manager.js';
+
+const _runnerDir = dirname(fileURLToPath(import.meta.url));
+const PEAK_BALANCE_FILE = resolve(_runnerDir, '../../.peak-balance.json');
 import { PaperTradingEngine } from './paper-trading.js';
 import { LeaderboardScraper } from '../leaderboard/scraper.js';
 import { TraderScorer } from '../leaderboard/scorer.js';
@@ -53,7 +59,23 @@ export class Runner {
     const cfg = this.config;
 
     this.riskDial = new RiskDial(cfg.risk.level);
-    this.riskManager = new RiskManager(this.riskDial, cfg.totalCapitalUsdc);
+
+    let restoredPeak: number | undefined;
+    try {
+      const raw = readFileSync(PEAK_BALANCE_FILE, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.peakBalance === 'number' && parsed.peakBalance > 0) {
+        restoredPeak = parsed.peakBalance;
+      }
+    } catch { /* first run or missing file */ }
+
+    this.riskManager = new RiskManager(this.riskDial, cfg.totalCapitalUsdc, {
+      restoredPeakBalance: restoredPeak,
+      onPeakBalanceChange: (peak) => {
+        try { writeFileSync(PEAK_BALANCE_FILE, JSON.stringify({ peakBalance: peak, updatedAt: new Date().toISOString() })); }
+        catch { /* non-fatal */ }
+      },
+    });
     this.paperEngine = new PaperTradingEngine(cfg.totalCapitalUsdc, cfg.risk.level);
 
     this.scraper = new LeaderboardScraper({
