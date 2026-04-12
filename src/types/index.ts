@@ -187,6 +187,7 @@ export interface Orderbook {
 // ─── Performance Types ─────────────────────────────────────────
 export interface DailyPerformance {
   date: string;
+  balance?: number;
   pnl: number;
   pnlPct: number;
   tradesExecuted: number;

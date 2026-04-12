@@ -510,6 +510,10 @@ export class Runner {
     const walletStats = this.walletMonitor.getStats();
     const selectorStats = this.selector.getStats();
 
+    if (this.config.supabase.url) {
+      db.updateBotBalance(paperStats.balance).catch(() => {});
+    }
+
     logger.info('=== PATS-Copy STATUS ===', {
       leader: `${selectorStats.currentLeader?.slice(0, 10) ?? 'none'} (score: ${selectorStats.currentScore?.toFixed(1) ?? '-'})`,
       rotations: selectorStats.totalRotations,

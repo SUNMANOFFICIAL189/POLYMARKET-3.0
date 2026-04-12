@@ -59,7 +59,13 @@ function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoi
   return points
 }
 
-function deriveMetrics(trades: CopyTrade[], _performance: DailyPerformance[], depositAmount: number) {
+function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[], depositAmount: number) {
+  // Use the bot's own authoritative balance from daily_performance if available.
+  // The bot writes this via updateBotBalance() every 5 min. Falls back to the
+  // computed balance only when no bot-reported balance exists yet.
+  const latestPerf = performance.length > 0 ? performance[performance.length - 1] : null
+  const botBalance = latestPerf?.balance_usdc
+
   const reservedCapital = trades
     .filter(t => t.status === 'open' || t.status === 'pending')
     .reduce((s, t) => s + (t.our_size ?? 0), 0)
@@ -69,7 +75,8 @@ function deriveMetrics(trades: CopyTrade[], _performance: DailyPerformance[], de
     .sort((a, b) => (a.exit_time ?? '').localeCompare(b.exit_time ?? ''))
 
   const realizedPnl = decidedTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
-  const balance = depositAmount - reservedCapital + realizedPnl
+  const computedBalance = depositAmount - reservedCapital + realizedPnl
+  const balance = (botBalance && botBalance > 0) ? botBalance : computedBalance
   const totalReturnUsd = balance - depositAmount
   const totalReturnPct = ((balance - depositAmount) / depositAmount) * 100
 

@@ -151,8 +151,18 @@ export async function upsertDailyPerformance(perf: DailyPerformance): Promise<vo
     risk_level: perf.riskLevel,
     leader_wallet: perf.leaderWallet,
     leader_name: perf.leaderName,
+    balance_usdc: perf.balance,
   }, { onConflict: 'date' });
   if (error) logger.error(`upsertDailyPerformance failed: ${error.message}`);
+}
+
+export async function updateBotBalance(balance: number): Promise<void> {
+  const today = new Date().toISOString().split('T')[0];
+  const { error } = await getClient().from('daily_performance').upsert({
+    date: today,
+    balance_usdc: balance,
+  }, { onConflict: 'date' });
+  if (error) logger.error(`updateBotBalance failed: ${error.message}`);
 }
 
 // ─── Leader History Stats ──────────────────────────────────────
