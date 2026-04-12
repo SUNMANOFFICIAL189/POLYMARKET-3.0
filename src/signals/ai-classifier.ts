@@ -40,9 +40,9 @@ const PRIMARY_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
 const PRIMARY_MODEL = process.env.OLLAMA_MODEL ?? 'llama3.2';
 const PRIMARY_KEY = process.env.CEREBRAS_API_KEY ?? '';
 
-// Fallback: OpenRouter Gemma 4 (~$0.40/month at our volume)
+// Fallback: OpenRouter Gemma 4 (free tier)
 const FALLBACK_URL = process.env.FALLBACK_AI_URL ?? 'https://openrouter.ai/api';
-const FALLBACK_MODEL = process.env.FALLBACK_AI_MODEL ?? 'google/gemma-4-27b-it';
+const FALLBACK_MODEL = process.env.FALLBACK_AI_MODEL ?? 'google/gemma-4-31b-it:free';
 const FALLBACK_KEY = process.env.OPENROUTER_API_KEY ?? '';
 
 export class AIClassifier {
@@ -90,24 +90,29 @@ JSON format:
       ? recentNews.slice(0, 10).map(n => `- [${n.source}] ${n.headline}`).join('\n')
       : '(no recent news found for this market)';
 
-    const prompt = `You are a trade confirmation system for a copy-trading bot on Polymarket (prediction market).
+    const today = new Date().toISOString().slice(0, 10);
+    const prompt = `You are a trade risk assessor for a prediction market copy-trading bot on Polymarket.
 
-A top-performing trader just opened a position. Decide if we should copy it.
+A trader opened a position. Your job is to independently assess whether this trade makes sense given current information. You are a SKEPTICAL second opinion, not a rubber stamp.
 
-TRADE DETAILS:
+TODAY'S DATE: ${today}
+
+TRADE:
 - Market: "${marketQuestion}"
 - Outcome: ${leaderOutcome}
-- Side: ${leaderSide.toUpperCase()} (${leaderSide === 'buy' ? 'betting YES' : 'betting NO'} on this outcome)
+- Side: ${leaderSide.toUpperCase()} (${leaderSide === 'buy' ? 'betting YES' : 'betting NO'})
 
 RECENT NEWS (last 2 hours):
 ${newsContext}
 
-TASK: Analyze whether any recent news STRONGLY contradicts this trade direction.
-- If news clearly contradicts the trade (e.g., trader is buying YES but news says the event already failed): recommend VETO
-- If news is neutral or supports the trade: recommend COPY
-- If no relevant news at all: recommend COPY (trust the leader)
+DECISION FRAMEWORK:
+- VETO (confidence 0.7-1.0): News clearly contradicts the trade direction. The event the market asks about has already been decided, resolved, or is physically impossible. The market question contains a deadline that has already passed (today is ${today}).
+- SKIP (confidence 0.4-0.6): Insufficient information to form a view. No relevant news and no basis to assess the trade direction.
+- COPY (confidence 0.7-1.0): News actively SUPPORTS the trade direction with specific evidence. The trade aligns with recent developments.
 
-Respond with ONLY a JSON object, no markdown:
+IMPORTANT: Absence of contradicting news is NOT a reason to copy. If you have no information, recommend SKIP. Only recommend COPY when you have positive evidence supporting the trade direction.
+
+Respond with ONLY a JSON object:
 {"recommendation": "copy|skip|veto", "confidence": 0.0-1.0, "reasoning": "one sentence", "hasOpposingSignals": true|false, "hasSupportingSignals": true|false}`;
 
     return this.callAPI<TradeConfirmationResult>(prompt, (content) => {
