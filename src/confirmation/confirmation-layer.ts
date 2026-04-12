@@ -45,10 +45,16 @@ export class ConfirmationLayer {
   private totalLatencyMs = 0;
   private callCount = 0;
 
+  private _recentNews: Array<{headline: string; source: string; timestamp: number}> = [];
+
   constructor() {
     this.classifier = new AIClassifier();
     this.orderbookChecker = new OrderbookChecker();
     this.mirofishClient = new MirofishClient();
+  }
+
+  updateNews(items: Array<{headline: string; source: string; timestamp: number}>): void {
+    this._recentNews = items.slice(-30);
   }
 
   async confirm(trade: LeaderTrade): Promise<ConfirmationResult> {
@@ -79,8 +85,9 @@ export class ConfirmationLayer {
       return this.confirmWatcher(trade, start);
     }
 
-    const newsContext: Array<{headline: string; source: string; timestamp: number}> = [];
-    logger.info(`ConfirmationLayer: Checking trade "${trade.marketQuestion.slice(0, 50)}" side=${trade.side} outcome=${trade.outcome}`);
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+    const newsContext = this._recentNews.filter(n => n.timestamp >= twoHoursAgo);
+    logger.info(`ConfirmationLayer: Checking trade "${trade.marketQuestion.slice(0, 50)}" side=${trade.side} outcome=${trade.outcome} (${newsContext.length} news items)`);
 
     // Run AI confirmation
     let aiResult;
@@ -240,7 +247,8 @@ export class ConfirmationLayer {
     let aiReasoning = '';
     let aiUnavailable = false;
     try {
-      const newsContext: Array<{headline: string; source: string; timestamp: number}> = [];
+      const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+      const newsContext = this._recentNews.filter(n => n.timestamp >= twoHoursAgo);
       const aiResult = await this.classifier.classifyTrade(
         trade.marketQuestion,
         trade.side,
