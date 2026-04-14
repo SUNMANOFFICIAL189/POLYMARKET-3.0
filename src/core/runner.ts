@@ -510,9 +510,20 @@ export class Runner {
     const walletStats = this.walletMonitor.getStats();
     const selectorStats = this.selector.getStats();
 
-    if (this.config.supabase.url) {
-      db.updateBotBalance(paperStats.balance).catch(() => {});
-    }
+    // Write authoritative bot stats to a local file. The dashboard reads this
+    // as the single source of truth for balance (replaces the broken Supabase
+    // balance_usdc approach — that column doesn't exist in the schema).
+    try {
+      writeFileSync(resolve(_runnerDir, '../../.bot-status.json'), JSON.stringify({
+        balance: paperStats.balance,
+        totalReturn: paperStats.totalReturn,
+        openPositions: paperStats.openTrades,
+        closedTrades: paperStats.totalTrades,
+        winRate: paperStats.totalTrades > 0 ? paperStats.winRate : null,
+        pnl: paperStats.totalPnl,
+        updatedAt: new Date().toISOString(),
+      }));
+    } catch { /* non-fatal */ }
 
     logger.info('=== PATS-Copy STATUS ===', {
       leader: `${selectorStats.currentLeader?.slice(0, 10) ?? 'none'} (score: ${selectorStats.currentScore?.toFixed(1) ?? '-'})`,

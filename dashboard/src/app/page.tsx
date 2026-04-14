@@ -3,6 +3,8 @@
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { getLeaders, getCurrentLeader, getCopyTrades, getDailyPerformance, getLeaderHistory, getMirofishScans } from '@/lib/queries'
 import { TickerBar } from '@/components/layout/ticker-bar'
 import { NavBar } from '@/components/layout/nav-bar'
@@ -59,12 +61,22 @@ function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoi
   return points
 }
 
-function deriveMetrics(trades: CopyTrade[], performance: DailyPerformance[], depositAmount: number) {
-  // Use the bot's own authoritative balance from daily_performance if available.
-  // The bot writes this via updateBotBalance() every 5 min. Falls back to the
-  // computed balance only when no bot-reported balance exists yet.
-  const latestPerf = performance.length > 0 ? performance[performance.length - 1] : null
-  const botBalance = latestPerf?.balance_usdc
+function readBotStatus(): { balance: number; winRate: number | null; updatedAt: string } | null {
+  try {
+    const raw = readFileSync(resolve(process.cwd(), '../.bot-status.json'), 'utf8')
+    const parsed = JSON.parse(raw)
+    const age = Date.now() - new Date(parsed.updatedAt).getTime()
+    if (age > 10 * 60 * 1000) return null // stale (>10 min)
+    return parsed
+  } catch { return null }
+}
+
+function deriveMetrics(trades: CopyTrade[], _performance: DailyPerformance[], depositAmount: number) {
+  // Read the bot's authoritative balance from .bot-status.json (written every
+  // 5 min by the runner). Falls back to the computed balance when the file is
+  // missing or stale (>10 min).
+  const botStatus = readBotStatus()
+  const botBalance = botStatus?.balance
 
   const reservedCapital = trades
     .filter(t => t.status === 'open' || t.status === 'pending')
