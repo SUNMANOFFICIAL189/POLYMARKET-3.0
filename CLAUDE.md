@@ -96,7 +96,76 @@ Full v2 optimization program deployed:
 - **F13** MiroFish investigation — 99.7% skip rate, effectively absent
 - **F7** Out-of-sample validation of remaining filters (0.75 ceiling, $150 cap, 0.10 edge floor)
 - **Cleanup** Remove dead Glint files, formalize walletRollingWR in LeaderTrade type
-- **Monitor** 24-48h observation of v2 deployment, compare WR to 38.2% baseline
+
+## Autonomous Monitoring Protocol
+
+**THIS SECTION IS MANDATORY.** On every session that involves PATS-Copy, after completing any task (fix, deploy, analysis), run the health check below BEFORE reporting success. Do not wait for the user to ask. Do not skip this.
+
+### Post-Deploy Verification (run within 10 minutes of any deployment)
+
+```bash
+ssh root@204.168.204.247 'cd /opt/polymarket-bot && pm2 logs polymarket-bot --nostream --lines 100 2>&1' > /tmp/pats-postdeploy.log
+```
+
+Then verify ALL of these. If any fail, investigate root cause immediately — do NOT move to the next task:
+
+1. **Bot is running** — `pm2 ls` shows online, uptime increasing
+2. **No crash loops** — restart count hasn't jumped since deploy
+3. **Fix signature present** — every deployed fix must produce at least one log line proving it's active. If a fix has zero log evidence after 10 min, it's either dormant or broken. Investigate.
+4. **No new errors** — grep for `[error]`, `ERR`, `failed`. If new error patterns appear that weren't present before, the deploy introduced a regression. Do NOT move on.
+5. **Positions are moving** — if open positions > 0 AND closedTrades hasn't changed in >2 hours, something is blocking closes. Investigate the lifecycle manager.
+6. **Execution is happening** — if vetoes are climbing but executions haven't moved in >2 hours, investigate what's blocking execution (slot cap? drawdown breaker? HARD BLOCK on all wallets?).
+
+### Anomaly Rules (check on every status pull)
+
+These are RED FLAGS that require immediate root-cause investigation, not just observation:
+
+| Anomaly | Threshold | Required action |
+|---|---|---|
+| **Balance unchanged** for >2 hours | Same balance across 24+ STATUS lines | Investigate: is the bot frozen? Are positions stuck? Is it trading at all? |
+| **Zero lifecycle events** despite open positions | openPositions > 0 AND zero `PositionLifecycle:` log lines in 2h | Investigate: is the resolution checker working? Are market slugs matching? Check `fetchMarketStatus` results. |
+| **Execution rate < 5%** for >1 hour | vetoes climbing but executions flat | Investigate: is drawdown breaker blocking? All wallets HARD BLOCKED? Position cap full? |
+| **Open positions at cap** for >6 hours | openPositions >= MAX_OPEN_POSITIONS with no closes | Positions are gridlocked. Check market resolution + TTL. Do NOT just wait for TTL — investigate why resolution isn't working. |
+| **AI error rate > 20%** | More than 1 in 5 AI calls returning errors | Investigate: is Cerebras down? Is the fallback working? Is F3 safe-fail vetoing everything? |
+| **Devil's advocate zero activity** when trades are being confirmed | Confirmation APPROVED log lines exist but zero devil's advocate lines | F9a wiring may have regressed. Check walletRollingWR attachment in runner. |
+| **Balance divergence > $50** between TG and dashboard | Compare hourly TG alert vs dashboard | Investigate: is .bot-status.json being written? Is the dashboard reading it? |
+| **New error pattern** after deploy | Any `[error]` message not seen before | The deploy introduced a regression. Investigate immediately. Do not move to next task. |
+
+### Root-Cause Discipline
+
+**Every workaround MUST be paired with a root-cause investigation in the same session.**
+
+When you encounter an anomaly:
+1. **Workaround** — apply the immediate fix to restore operation (e.g., flush stale positions via TTL)
+2. **Root cause** — in the SAME session, investigate WHY the anomaly occurred (e.g., why did the resolution checker fail? What's the slug mismatch?)
+3. **Permanent fix** — implement the real fix, not just the workaround (e.g., multi-strategy lookup + logging)
+4. **Verify** — confirm the permanent fix works by checking for its specific log signature
+
+**Never report a workaround as "fixed."** Always distinguish between "workaround applied" and "root cause resolved." If only the workaround ships, explicitly tell the user the root cause is still open.
+
+### Post-Fix Closed Loop
+
+After deploying any fix:
+```
+Deploy → Wait 10 min → Pull logs → Check fix signature →
+  If signature present: ✓ Fix confirmed
+  If signature absent: ⚠ Fix didn't take → investigate why
+  If new errors: 🚨 Regression → rollback + investigate
+```
+
+This loop is NOT optional. Run it for every deployment. If the fix signature isn't present within 10 minutes, the fix is suspect regardless of whether `tsc` passed.
+
+### Proactive Health Check (run at session start AND before session end)
+
+```bash
+ssh root@204.168.204.247 'cd /opt/polymarket-bot && \
+  echo "=== STATUS ===" && pm2 logs polymarket-bot --nostream --lines 50 2>&1 | grep STATUS | tail -3 && \
+  echo "=== ERRORS ===" && pm2 logs polymarket-bot --nostream --lines 200 2>&1 | grep -i error | grep -v "balance_usdc" | tail -5 && \
+  echo "=== LIFECYCLE ===" && pm2 logs polymarket-bot --nostream --lines 200 2>&1 | grep PositionLifecycle | tail -5 && \
+  echo "=== OPEN POSITIONS ===" && cat .bot-status.json 2>/dev/null'
+```
+
+If any anomaly rule triggers, investigate BEFORE doing whatever the user asked for. The bot's health comes first.
 
 ## Obsidian Knowledge Base
 
