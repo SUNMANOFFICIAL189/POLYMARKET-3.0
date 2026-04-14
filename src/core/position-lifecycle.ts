@@ -71,7 +71,7 @@ export class PositionLifecycleManager {
     this.RESOLUTION_CHECK_MS = opts.resolutionCheckMs ?? 5 * 60 * 1000;   // 5 min
     this.TTL_CHECK_MS = opts.ttlCheckMs ?? 30 * 60 * 1000;                // 30 min
     this.STOP_LOSS_CHECK_MS = opts.stopLossCheckMs ?? 60 * 1000;           // 60 sec
-    this.MAX_POSITION_AGE_MS = opts.maxPositionAgeMs ?? 48 * 60 * 60 * 1000; // 48 hours
+    this.MAX_POSITION_AGE_MS = opts.maxPositionAgeMs ?? 24 * 60 * 60 * 1000; // 24 hours (was 48h — too long for sports markets that resolve in hours)
     this.STOP_LOSS_PCT = opts.stopLossPct ?? 0.30; // 30% loss = close
   }
 
@@ -108,7 +108,13 @@ export class PositionLifecycleManager {
       const marketId = trade.marketId ?? '';
       try {
         const status = await this.fetchMarketStatus(marketId);
-        if (!status) continue;
+        if (!status) {
+          const ageH = trade.entryTime
+            ? ((Date.now() - new Date(trade.entryTime).getTime()) / 3600000).toFixed(1)
+            : '?';
+          logger.debug(`PositionLifecycle: Skipping resolution check for "${marketId.slice(0, 30)}" (${ageH}h old) — market not found on Gamma`);
+          continue;
+        }
 
         if (status.closed && !status.acceptingOrders) {
           // Market resolved — determine settlement price
@@ -213,6 +219,11 @@ export class PositionLifecycleManager {
 
   /**
    * Fetch market status from Gamma API with caching.
+   *
+   * Tries multiple lookup strategies because marketId stored in copy_trades
+   * can be a slug, a condition_id (hex hash), or a short-form ID — and the
+   * Gamma API only reliably matches on slug. If slug lookup fails, falls
+   * back to condition_id lookup. Logs failures so silent-skip is visible.
    */
   private async fetchMarketStatus(marketId: string): Promise<MarketStatus | null> {
     // Check cache first
@@ -221,18 +232,44 @@ export class PositionLifecycleManager {
       return cached.status;
     }
 
+    // Strategy 1: lookup by slug (works when marketId is a human-readable slug)
+    const status = await this._gammaLookup(`slug=${encodeURIComponent(marketId)}`);
+    if (status) {
+      this.marketStatusCache.set(marketId, { status, fetchedAt: Date.now() });
+      return status;
+    }
+
+    // Strategy 2: lookup by condition_id (works when marketId is a hex hash
+    // or contains the condition_id format)
+    if (marketId.startsWith('0x') || marketId.length > 40) {
+      const status2 = await this._gammaLookup(`condition_id=${encodeURIComponent(marketId)}`);
+      if (status2) {
+        this.marketStatusCache.set(marketId, { status: status2, fetchedAt: Date.now() });
+        return status2;
+      }
+    }
+
+    // Strategy 3: broad text search as last resort
+    const status3 = await this._gammaLookup(`slug_contains=${encodeURIComponent(marketId.slice(0, 30))}`);
+    if (status3) {
+      this.marketStatusCache.set(marketId, { status: status3, fetchedAt: Date.now() });
+      return status3;
+    }
+
+    logger.warn(`PositionLifecycle: Could not find market "${marketId.slice(0, 40)}" on Gamma API (tried slug, condition_id, text search)`);
+    return null;
+  }
+
+  private async _gammaLookup(query: string): Promise<MarketStatus | null> {
     try {
-      const res = await fetch(`${GAMMA_API_BASE}/markets?slug=${encodeURIComponent(marketId)}`, {
+      const res = await fetch(`${GAMMA_API_BASE}/markets?${query}`, {
         signal: AbortSignal.timeout(8_000),
       });
       if (!res.ok) return null;
 
       const markets = (await res.json()) as MarketStatus[];
       if (!markets || markets.length === 0) return null;
-
-      const status = markets[0];
-      this.marketStatusCache.set(marketId, { status, fetchedAt: Date.now() });
-      return status;
+      return markets[0];
     } catch {
       return null;
     }
