@@ -72,6 +72,14 @@ export class SignalGenerator extends EventEmitter {
   // Deduplication: marketId → last signal timestamp
   private readonly recentSignals = new Map<string, number>();
 
+  // Rate-limiting queue — shares the same Cerebras API as the copy-trading
+  // classifier, so we must throttle to avoid 429 cascades. Process at most
+  // 1 signal assessment per 2 seconds, and skip if the queue is too deep.
+  private static _queueTail: Promise<void> = Promise.resolve();
+  private static readonly MIN_GAP_MS = 2000;
+  private static readonly MAX_QUEUE_DEPTH = 10;
+  private _queueDepth = 0;
+
   constructor(opts: {
     marketCache: MarketCache;
     classifier: AIClassifier;
@@ -112,10 +120,14 @@ export class SignalGenerator extends EventEmitter {
         `SignalGenerator: ${topMatches.length} market match(es) for "${headline.slice(0, 60)}"`,
       );
 
-      // 2. Assess each matched market via AI
+      // 2. Assess each matched market via AI (rate-limited to avoid 429 cascades)
       for (const market of topMatches) {
+        if (this._queueDepth >= SignalGenerator.MAX_QUEUE_DEPTH) {
+          logger.debug(`SignalGenerator: queue full (${this._queueDepth}), dropping remaining matches`);
+          break;
+        }
         try {
-          await this.assessAndEmit(item, market);
+          await this.rateLimitedAssess(item, market);
         } catch (err) {
           logger.warn(
             `SignalGenerator: assessment failed for market ${market.conditionId ?? 'unknown'}: ${err}`,
@@ -139,6 +151,26 @@ export class SignalGenerator extends EventEmitter {
   }
 
   // ─── Private Methods ──────────────────────────────────────────
+
+  /**
+   * Rate-limited wrapper around assessAndEmit. Uses a single-lane queue
+   * with a 2-second gap between calls to avoid competing with the
+   * copy-trading AI classifier for API quota.
+   */
+  private async rateLimitedAssess(item: NewsInput, market: CachedMarket): Promise<void> {
+    this._queueDepth++;
+    let releaseSlot!: () => void;
+    const prevTail = SignalGenerator._queueTail;
+    SignalGenerator._queueTail = new Promise<void>(resolve => { releaseSlot = resolve; });
+
+    await prevTail;
+    try {
+      await this.assessAndEmit(item, market);
+    } finally {
+      this._queueDepth--;
+      setTimeout(releaseSlot, SignalGenerator.MIN_GAP_MS);
+    }
+  }
 
   /**
    * Assess a single market against the news item and emit a signal if warranted.
