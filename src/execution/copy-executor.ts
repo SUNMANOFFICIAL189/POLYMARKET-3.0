@@ -209,6 +209,15 @@ export class CopyExecutor {
         logger.info(`CopyExecutor: COLD WALLET — ${leaderTrade.leaderWallet.slice(0,10)} rolling WR ${(rollingStats.winRate * 100).toFixed(0)}% — 25% size (devil's advocate will assess)`);
         (leaderTrade as any)._coldSizeMultiplier = 0.25;
       }
+    } else {
+      // Fix A: Probationary cap for unproven wallets. Wallets with <5 trades in
+      // the rolling window get "benefit of the doubt" on WR but NOT on sizing.
+      // Prevents another $63 blind bet (0x37c187 went 0/6 on full sizing).
+      const PROBATION_MAX = parseFloat(process.env.PROBATION_MAX_DOLLARS ?? '15');
+      if (rollingStats.sampleSize < this.ROLLING_MIN_SAMPLE) {
+        (leaderTrade as any)._probationCap = PROBATION_MAX;
+        logger.info(`CopyExecutor: PROBATION — ${leaderTrade.leaderWallet.slice(0,10)} only ${rollingStats.sampleSize} trades — capped at $${PROBATION_MAX} until proven`);
+      }
     }
 
     // Expired market detection — if market question contains a date that has passed, auto-reject
@@ -370,6 +379,15 @@ export class CopyExecutor {
       const beforeCold = ourSize;
       ourSize = Math.round(ourSize * coldMultiplier * 100) / 100;
       logger.info(`CopyExecutor: Cold wallet reduction — ${coldMultiplier}x → $${beforeCold.toFixed(2)} → $${ourSize.toFixed(2)}`);
+    }
+
+    // Fix A: Probationary cap — unproven wallets (<5 trades) get hard-capped
+    // before any other cap logic. The $63 Barcelona loss proved full-sized bets
+    // on zero-history wallets are unacceptable.
+    const probationCap = (leaderTrade as any)?._probationCap;
+    if (probationCap && ourSize > probationCap) {
+      logger.info(`CopyExecutor: Probation cap $${ourSize.toFixed(2)} → $${probationCap.toFixed(2)} (wallet has <5 trades)`);
+      ourSize = probationCap;
     }
 
     // P3: Hard cap position size at $150 — but exempt longshots (< 0.25 entry)
