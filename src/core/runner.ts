@@ -16,10 +16,15 @@ import { LeaderSelector } from '../leaderboard/selector.js';
 import { WalletMonitor } from '../monitor/wallet-monitor.js';
 import { ConfirmationLayer } from '../confirmation/confirmation-layer.js';
 import { CopyExecutor } from '../execution/copy-executor.js';
+import { SignalExecutor } from '../execution/signal-executor.js';
 import { NewsScanner } from '../signals/news-scanner.js';
+import { MarketCache } from '../signals/market-cache.js';
+import { SignalGenerator } from '../signals/signal-generator.js';
+import { AIClassifier } from '../signals/ai-classifier.js';
 import * as db from '../data/supabase.js';
 import { PositionLifecycleManager } from './position-lifecycle.js';
 import type { Leader, LeaderTrade } from '../types/index.js';
+import type { TradingSignal } from '../signals/signal-generator.js';
 
 export class Runner {
   private config = loadConfig();
@@ -44,6 +49,11 @@ export class Runner {
   // Signals
   private newsScanner: NewsScanner;
   private _newsBuffer: Array<{headline: string; source: string; timestamp: number}> = [];
+
+  // Hybrid strategy (Phase 2)
+  private marketCache: MarketCache;
+  private signalGenerator: SignalGenerator;
+  private signalExecutor: SignalExecutor;
 
   // Execution
   private confirmationLayer: ConfirmationLayer;
@@ -116,6 +126,18 @@ export class Runner {
       paperMode: cfg.paperMode,
       ourPortfolio: cfg.totalCapitalUsdc,
       riskLevel: cfg.risk.level,
+    });
+
+    // Phase 2 (hybrid): Signal-based original trading components
+    this.marketCache = new MarketCache();
+    this.signalGenerator = new SignalGenerator({
+      marketCache: this.marketCache,
+      classifier: new AIClassifier(),
+    });
+    this.signalExecutor = new SignalExecutor({
+      paperEngine: this.paperEngine,
+      riskManager: this.riskManager,
+      paperMode: cfg.paperMode,
     });
 
     // Position Lifecycle Manager — auto-closes resolved, stale, and stop-loss positions
@@ -214,6 +236,7 @@ export class Runner {
     this.scraper.stop();
     this.walletMonitor.stop();
     this.newsScanner.stop();
+    this.marketCache.stop();
 
     logger.info('PATS-Copy stopped');
   }
@@ -229,6 +252,34 @@ export class Runner {
       this._newsBuffer.push(newsEntry);
       if (this._newsBuffer.length > 100) this._newsBuffer.splice(0, this._newsBuffer.length - 80);
       this.confirmationLayer.updateNews(this._newsBuffer);
+
+      // Phase 2 (hybrid): Feed news into signal generator for original trades.
+      // The signal generator matches news against active markets and emits
+      // trading signals when it finds high-confidence opportunities.
+      this.signalGenerator.processNewsItem(newsEntry).catch(err =>
+        logger.debug(`SignalGenerator: news processing failed: ${err}`)
+      );
+    });
+
+    // Start market cache (polls Gamma API for active non-sports markets)
+    this.marketCache.start();
+
+    // Handle signals from the signal generator
+    this.signalGenerator.on('signal', async (signal: TradingSignal) => {
+      logger.info(`SIGNAL RECEIVED: ${signal.side.toUpperCase()} on "${signal.market.question.slice(0, 50)}" (${(signal.confidence * 100).toFixed(0)}% confidence) — ${signal.reasoning}`);
+      sendTelegramAlert(
+        `🎯 <b>SIGNAL TRADE</b>\n` +
+        `📊 ${signal.side.toUpperCase()} "${signal.market.question.slice(0, 50)}"\n` +
+        `💪 ${(signal.confidence * 100).toFixed(0)}% confidence\n` +
+        `📰 ${signal.newsHeadline.slice(0, 60)}`
+      );
+
+      const result = await this.signalExecutor.execute(signal);
+      if (result.success) {
+        logger.info(`SIGNAL TRADE EXECUTED: $${result.trade?.usdcAmount?.toFixed(2) ?? '?'} on "${signal.market.question.slice(0, 40)}"`);
+      } else {
+        logger.info(`Signal trade not executed: ${result.reason}`);
+      }
     });
   }
 
@@ -539,6 +590,10 @@ export class Runner {
       consecutiveVetoes: this.consecutiveVetoes,
       aiCost: `$${confirmStats.aiStats.estimatedCost.toFixed(3)}`,
       walletPolls: walletStats.pollCount,
+      signalTrades: this.signalExecutor.getStats().executed,
+      signalOpen: this.signalExecutor.getStats().openPositions,
+      marketsCached: this.marketCache.getStats().totalMarkets,
+      signalsGenerated: this.signalGenerator.getStats().signalsGenerated,
     });
   }
 }

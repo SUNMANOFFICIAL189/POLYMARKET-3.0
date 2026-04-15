@@ -1,0 +1,146 @@
+import { logger } from '../utils/logger.js';
+import { PaperTradingEngine } from '../core/paper-trading.js';
+import type { CopyTradeInput, PaperTradeResult } from '../core/paper-trading.js';
+import { RiskManager } from '../core/risk-manager.js';
+import type { TradingSignal } from '../signals/signal-generator.js';
+import type { Trade } from '../types/index.js';
+
+/**
+ * SignalExecutor — executes trades from the signal-based original trading pipeline.
+ *
+ * Unlike CopyExecutor (which mirrors leaders), this executor enters positions
+ * based on the bot's OWN AI-assessed news signals. Position sizing is based on
+ * signal confidence, not leader proportionality.
+ */
+
+const SIZING_TIERS: Array<{ minConf: number; maxDollars: number }> = [
+  { minConf: 0.95, maxDollars: 50 },
+  { minConf: 0.90, maxDollars: 35 },
+  { minConf: 0.80, maxDollars: 20 },
+];
+
+export class SignalExecutor {
+  private paperEngine: PaperTradingEngine;
+  private riskManager: RiskManager;
+  private paperMode: boolean;
+  private openSignalTrades: Map<string, Trade> = new Map();
+  private executedCount = 0;
+  private blockedCount = 0;
+  private maxOpenSignalPositions: number;
+
+  constructor(opts: {
+    paperEngine: PaperTradingEngine;
+    riskManager: RiskManager;
+    paperMode: boolean;
+    maxOpenSignalPositions?: number;
+  }) {
+    this.paperEngine = opts.paperEngine;
+    this.riskManager = opts.riskManager;
+    this.paperMode = opts.paperMode;
+    this.maxOpenSignalPositions = opts.maxOpenSignalPositions
+      ?? (Number(process.env.MAX_SIGNAL_POSITIONS ?? '5') || 5);
+  }
+
+  async execute(signal: TradingSignal): Promise<{ success: boolean; reason: string; trade?: Trade }> {
+    const marketId = signal.market.slug;
+    const marketQ = signal.market.question;
+
+    if (this.openSignalTrades.has(marketId)) {
+      return { success: false, reason: `Already have signal position in ${marketId.slice(0, 20)}` };
+    }
+
+    if (this.openSignalTrades.size >= this.maxOpenSignalPositions) {
+      this.blockedCount++;
+      return { success: false, reason: `Signal position cap ${this.maxOpenSignalPositions} reached` };
+    }
+
+    // Confidence-based sizing
+    let ourSize = 20;
+    for (const tier of SIZING_TIERS) {
+      if (signal.confidence >= tier.minConf) {
+        ourSize = tier.maxDollars;
+        break;
+      }
+    }
+    const maxSignalSize = Number(process.env.MAX_SIGNAL_DOLLARS ?? '50') || 50;
+    if (ourSize > maxSignalSize) ourSize = maxSignalSize;
+
+    const riskCheck = this.riskManager.checkTrade(ourSize);
+    if (!riskCheck.allowed) {
+      this.blockedCount++;
+      logger.info(`SignalExecutor: Risk blocked — ${riskCheck.reason}`);
+      return { success: false, reason: `Risk: ${riskCheck.reason}` };
+    }
+
+    const outcomeIdx = signal.market.outcomes.findIndex(
+      o => o.toLowerCase() === 'yes' || o.toLowerCase() === signal.side
+    );
+    const entryPrice = outcomeIdx >= 0 && outcomeIdx < signal.market.outcomePrices.length
+      ? signal.market.outcomePrices[outcomeIdx]
+      : 0.5;
+
+    logger.info(`SignalExecutor: ${this.paperMode ? '[PAPER]' : '[LIVE]'} SIGNAL TRADE`, {
+      market: marketQ.slice(0, 50),
+      side: signal.side,
+      confidence: `${(signal.confidence * 100).toFixed(0)}%`,
+      size: `$${ourSize.toFixed(2)}`,
+      price: entryPrice.toFixed(3),
+      news: signal.newsHeadline.slice(0, 60),
+    });
+
+    if (this.paperMode) {
+      const input: CopyTradeInput = {
+        marketId,
+        question: marketQ,
+        tokenId: signal.market.conditionId,
+        outcome: signal.market.outcomes[outcomeIdx] ?? 'Yes',
+        side: signal.side,
+        usdcSize: ourSize,
+        leaderEntryPrice: entryPrice,
+        riskLevel: 'paper',
+      };
+
+      const result: PaperTradeResult | null = this.paperEngine.executeCopyTrade(input);
+      if (result) {
+        this.openSignalTrades.set(marketId, result.trade);
+        this.executedCount++;
+        logger.info(`SignalExecutor: SIGNAL TRADE EXECUTED — $${ourSize.toFixed(2)} on "${marketQ.slice(0, 40)}" (${(signal.confidence * 100).toFixed(0)}% confidence)`);
+        return { success: true, reason: 'Signal trade executed', trade: result.trade };
+      }
+
+      return { success: false, reason: 'Paper engine rejected trade' };
+    }
+
+    return { success: false, reason: 'Signal trading is paper-only for now' };
+  }
+
+  closePosition(marketId: string, exitPrice: number, reason: string): Trade | null {
+    const trade = this.openSignalTrades.get(marketId);
+    if (!trade) return null;
+
+    if (this.paperMode) {
+      const closed = this.paperEngine.closeTradeByMarketId(marketId, exitPrice, reason);
+      if (closed) {
+        this.openSignalTrades.delete(marketId);
+        logger.info(`SignalExecutor: Signal position closed — "${marketId.slice(0, 30)}" pnl=$${closed.pnl?.toFixed(2) ?? 'n/a'} (${reason})`);
+        return closed;
+      }
+    }
+
+    this.openSignalTrades.delete(marketId);
+    return null;
+  }
+
+  getOpenTrades(): Trade[] {
+    return Array.from(this.openSignalTrades.values());
+  }
+
+  getStats() {
+    return {
+      executed: this.executedCount,
+      blocked: this.blockedCount,
+      openPositions: this.openSignalTrades.size,
+      maxPositions: this.maxOpenSignalPositions,
+    };
+  }
+}
