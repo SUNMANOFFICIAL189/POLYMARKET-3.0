@@ -1,6 +1,7 @@
 import { logger } from '../utils/logger.js';
 import { PaperTradingEngine } from '../core/paper-trading.js';
 import { RiskManager } from '../core/risk-manager.js';
+import { categoriseMarket } from '../signals/market-categoriser.js';
 import * as cliWrapper from './cli-wrapper.js';
 import type { LeaderTrade, CopyTrade, ConfirmationDecision, RiskLevel } from '../types/index.js';
 
@@ -260,6 +261,19 @@ export class CopyExecutor {
       return { success: false, reason: `Dead market: price ${leaderTrade.entryPrice.toFixed(4)} near zero` };
     }
 
+    // Phase 1 (hybrid): Sports category filter. The AI has zero information
+    // advantage on sports markets (news feeds don't cover live scores). 70% of
+    // historical volume was sports, contributing the majority of losses.
+    // Override: ALLOW_SPORTS=true in .env to re-enable.
+    if (process.env.ALLOW_SPORTS !== 'true') {
+      const category = categoriseMarket(leaderTrade.marketQuestion);
+      if (category === 'sports') {
+        this.blockedCount++;
+        logger.info(`CopyExecutor: SPORTS FILTER — "${leaderTrade.marketQuestion.slice(0, 50)}" skipped (no AI edge on sports)`);
+        return { success: false, reason: `Sports market filtered (no information advantage)` };
+      }
+    }
+
     // P2: Heavy favourite filter — applies to ALL ranks
     const entryPrice = leaderTrade.entryPrice;
     if (entryPrice > MAX_WATCHER_PRICE) {
@@ -405,6 +419,11 @@ export class CopyExecutor {
       this.blockedCount++;
       return { success: false, reason: `Computed size $${ourSize.toFixed(2)} too small (min $1)` };
     }
+
+    // Phase 3 (hybrid): Contrarian paper-test. Log what the inverse trade would
+    // be so we can track whether fading the leaders outperforms following them.
+    const contrarianSide = leaderTrade.side === 'buy' ? 'sell' : 'buy';
+    logger.info(`CONTRARIAN PAPER: would ${contrarianSide.toUpperCase()} ${leaderTrade.outcome} on "${leaderTrade.marketQuestion.slice(0, 50)}" @ ${leaderTrade.entryPrice.toFixed(3)} ($${ourSize.toFixed(2)})`);
 
     logger.info(`CopyExecutor: ${this.paperMode ? '[PAPER]' : '[LIVE]'} Copying trade`, {
       market: leaderTrade.marketQuestion.slice(0, 50),
