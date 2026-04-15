@@ -91,12 +91,14 @@ export class ConfirmationLayer {
 
     // Run AI confirmation
     let aiResult;
+    const tradeCategory = categoriseMarket(trade.marketQuestion);
     try {
       aiResult = await this.classifier.classifyTrade(
         trade.marketQuestion,
         trade.side,
         trade.outcome,
         newsContext,
+        tradeCategory,
       );
     } catch (err) {
       logger.warn(`ConfirmationLayer: AI classifier failed: ${err} — BLOCKING trade (no AI = no trade)`);
@@ -249,11 +251,13 @@ export class ConfirmationLayer {
     try {
       const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
       const newsContext = this._recentNews.filter(n => n.timestamp >= twoHoursAgo);
+      const watcherCategory = categoriseMarket(trade.marketQuestion);
       const aiResult = await this.classifier.classifyTrade(
         trade.marketQuestion,
         trade.side,
         trade.outcome,
         newsContext,
+        watcherCategory,
       );
       aiConfidence = aiResult.confidence;
       aiReasoning = aiResult.reasoning;

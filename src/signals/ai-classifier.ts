@@ -85,17 +85,25 @@ JSON format:
     leaderSide: 'buy' | 'sell',
     leaderOutcome: string,
     recentNews: Array<{ headline: string; source: string; timestamp: number }>,
+    marketCategory?: string,
   ): Promise<TradeConfirmationResult> {
     const newsContext = recentNews.length > 0
       ? recentNews.slice(0, 10).map(n => `- [${n.source}] ${n.headline}`).join('\n')
       : '(no recent news found for this market)';
 
     const today = new Date().toISOString().slice(0, 10);
+    const isSports = marketCategory === 'sports';
+
+    const sportsWarning = isSports
+      ? `\n\nCRITICAL: This is a SPORTS prediction market. Our news feeds do NOT cover live sports scores, match analysis, or athletic performance data. You have ZERO information advantage on sports outcomes. Without specific sports intelligence, recommend SKIP. Do NOT approve sports trades based on absence of contradicting news — that absence is because we don't have sports data, not because the trade is safe.`
+      : '';
+
     const prompt = `You are a trade risk assessor for a prediction market copy-trading bot on Polymarket.
 
 A trader opened a position. Your job is to independently assess whether this trade makes sense given current information. You are a SKEPTICAL second opinion, not a rubber stamp.
 
 TODAY'S DATE: ${today}
+MARKET CATEGORY: ${marketCategory ?? 'unknown'}
 
 TRADE:
 - Market: "${marketQuestion}"
@@ -106,11 +114,11 @@ RECENT NEWS (last 2 hours):
 ${newsContext}
 
 DECISION FRAMEWORK:
-- VETO (confidence 0.7-1.0): News clearly contradicts the trade direction. The event the market asks about has already been decided, resolved, or is physically impossible. The market question contains a deadline that has already passed (today is ${today}).
+- VETO (confidence 0.7-1.0): News clearly contradicts the trade direction. The event has already been decided, resolved, or is physically impossible. The market question contains a deadline that has already passed (today is ${today}).
 - SKIP (confidence 0.4-0.6): Insufficient information to form a view. No relevant news and no basis to assess the trade direction.
 - COPY (confidence 0.7-1.0): News actively SUPPORTS the trade direction with specific evidence. The trade aligns with recent developments.
 
-IMPORTANT: Absence of contradicting news is NOT a reason to copy. If you have no information, recommend SKIP. Only recommend COPY when you have positive evidence supporting the trade direction.
+IMPORTANT: Absence of contradicting news is NOT a reason to copy. If you have no information, recommend SKIP. Only recommend COPY when you have positive evidence supporting the trade direction.${sportsWarning}
 
 Respond with ONLY a JSON object:
 {"recommendation": "copy|skip|veto", "confidence": 0.0-1.0, "reasoning": "one sentence", "hasOpposingSignals": true|false, "hasSupportingSignals": true|false}`;
