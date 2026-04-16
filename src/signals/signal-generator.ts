@@ -51,7 +51,7 @@ const PRIMARY_KEY = process.env.CEREBRAS_API_KEY ?? '';
 
 // ─── Constants ────────────────────────────────────────────────────
 
-const DEFAULT_MIN_CONFIDENCE = 0.80;
+const DEFAULT_MIN_CONFIDENCE = 0.65;
 const DEDUP_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
 const MAX_MATCHES = 5;
 const AI_TIMEOUT_MS = 15_000;
@@ -102,7 +102,7 @@ export class SignalGenerator extends EventEmitter {
     try {
       const headline = item.headline?.trim();
       if (!headline) {
-        logger.debug('SignalGenerator: empty headline, skipping');
+        logger.info('SignalGenerator: empty headline, skipping');
         return;
       }
 
@@ -111,7 +111,7 @@ export class SignalGenerator extends EventEmitter {
       const topMatches = matches.slice(0, MAX_MATCHES);
 
       if (topMatches.length === 0) {
-        logger.debug(`SignalGenerator: no market matches for "${headline.slice(0, 60)}"`);
+        logger.info(`SignalGenerator: no market matches for "${headline.slice(0, 60)}"`);
         return;
       }
 
@@ -123,7 +123,7 @@ export class SignalGenerator extends EventEmitter {
       // 2. Assess each matched market via AI (rate-limited to avoid 429 cascades)
       for (const market of topMatches) {
         if (this._queueDepth >= SignalGenerator.MAX_QUEUE_DEPTH) {
-          logger.debug(`SignalGenerator: queue full (${this._queueDepth}), dropping remaining matches`);
+          logger.info(`SignalGenerator: queue full (${this._queueDepth}), dropping remaining matches`);
           break;
         }
         try {
@@ -180,7 +180,7 @@ export class SignalGenerator extends EventEmitter {
     const marketKey = market.conditionId ?? market.question;
     const lastSignalTs = this.recentSignals.get(marketKey);
     if (lastSignalTs && Date.now() - lastSignalTs < DEDUP_WINDOW_MS) {
-      logger.debug(
+      logger.info(
         `SignalGenerator: dedup — skipping "${market.question.slice(0, 50)}" (signalled ${Math.round((Date.now() - lastSignalTs) / 60_000)}m ago)`,
       );
       return;
@@ -198,14 +198,14 @@ export class SignalGenerator extends EventEmitter {
     );
 
     if (assessment.action === 'skip') {
-      logger.debug(
+      logger.info(
         `SignalGenerator: AI skip for "${market.question.slice(0, 50)}" — ${assessment.reasoning}`,
       );
       return;
     }
 
     if (assessment.confidence < this.minConfidence) {
-      logger.debug(
+      logger.info(
         `SignalGenerator: confidence ${assessment.confidence.toFixed(2)} < ${this.minConfidence} for "${market.question.slice(0, 50)}"`,
       );
       return;
@@ -339,7 +339,7 @@ Respond with ONLY a JSON object, no markdown:
       const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        logger.debug('SignalGenerator: no JSON found in AI response');
+        logger.info('SignalGenerator: no JSON found in AI response');
         return skipFallback;
       }
 
@@ -361,7 +361,7 @@ Respond with ONLY a JSON object, no markdown:
 
       return { action: action as 'buy' | 'sell' | 'skip', confidence, reasoning };
     } catch {
-      logger.debug('SignalGenerator: JSON parse error in AI response');
+      logger.info('SignalGenerator: JSON parse error in AI response');
       return skipFallback;
     }
   }

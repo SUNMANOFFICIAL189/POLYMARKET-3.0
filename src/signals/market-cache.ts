@@ -47,7 +47,7 @@ interface GammaMarket {
 // ---------------------------------------------------------------------------
 
 const GAMMA_URL =
-  'https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=200';
+  'https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=500&order=volume24hr&ascending=false';
 const FETCH_TIMEOUT_MS = 15_000;
 const DEFAULT_POLL_INTERVAL_MS = 300_000; // 5 minutes
 
