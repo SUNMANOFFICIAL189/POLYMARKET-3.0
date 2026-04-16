@@ -97,11 +97,19 @@ export class MarketCache {
    * to the score. Optionally filter by category. Returns the top 10 matches
    * sorted by score descending.
    */
+  private static readonly STOPWORDS = new Set([
+    "will","the","and","for","that","this","with","from","have","has","had",
+    "are","was","were","been","being","before","after","about","into","over",
+    "than","its","not","but","what","when","where","who","how","which",
+    "their","more","any","all","can","could","would","should","may","might",
+    "just","also","new","one","two","says","said","why","does","did",
+  ]);
+
   searchMarkets(query: string, category?: string): CachedMarket[] {
     const words = query
       .toLowerCase()
       .split(/\s+/)
-      .filter((w) => w.length > 0);
+      .filter((w) => w.length > 2 && !MarketCache.STOPWORDS.has(w));
 
     if (words.length === 0) return [];
 
@@ -115,7 +123,8 @@ export class MarketCache {
       for (const word of words) {
         if (questionLower.includes(word)) score++;
       }
-      if (score > 0) scored.push({ market, score });
+      // Require at least 2 meaningful keyword matches to reduce noise
+      if (score >= 2) scored.push({ market, score });
     }
 
     scored.sort((a, b) => b.score - a.score);
