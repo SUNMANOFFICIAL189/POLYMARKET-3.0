@@ -72,6 +72,8 @@ export class SignalGenerator extends EventEmitter {
   // Deduplication: marketId → last signal timestamp
   private readonly recentSignals = new Map<string, number>();
 
+  private readonly _startTime = Date.now();
+
   // Rate-limiting queue — shares the same Cerebras API as the copy-trading
   // classifier, so we must throttle to avoid 429 cascades. Process at most
   // 1 signal assessment per 2 seconds, and skip if the queue is too deep.
@@ -98,6 +100,9 @@ export class SignalGenerator extends EventEmitter {
    */
   async processNewsItem(item: NewsInput): Promise<void> {
     this.newsProcessed++;
+
+    // Skip startup burst — cached RSS items are stale and flood the API
+    if (Date.now() - this._startTime < 90000) return;
 
     try {
       const headline = item.headline?.trim();
