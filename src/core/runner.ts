@@ -275,8 +275,29 @@ export class Runner {
       );
 
       const result = await this.signalExecutor.execute(signal);
-      if (result.success) {
-        logger.info(`SIGNAL TRADE EXECUTED: $${result.trade?.usdcAmount?.toFixed(2) ?? '?'} on "${signal.market.question.slice(0, 40)}"`);
+      if (result.success && result.trade) {
+        if (this.config.supabase.url) {
+          try {
+            const dbId = await db.insertCopyTrade({
+              leaderWallet: 'signal-bot',
+              marketId: signal.market.slug,
+              marketQuestion: signal.market.question,
+              tokenId: signal.market.conditionId,
+              outcome: signal.market.outcomes[0] ?? 'Yes',
+              side: signal.side,
+              leaderEntryPrice: result.trade.entryPrice,
+              ourEntryPrice: result.trade.entryPrice,
+              ourSize: result.trade.usdcAmount,
+              confirmationResult: 'approved' as any,
+              confirmationReason: `Signal: ${signal.reasoning} | News: ${signal.newsHeadline.slice(0, 80)}`,
+              status: 'open' as any,
+              riskLevel: 'paper' as any,
+              entryTime: new Date().toISOString(),
+            } as any);
+            if (dbId) { result.trade.id = dbId; logger.info(`Supabase: signal trade saved ${dbId}`); }
+          } catch (err) { logger.warn(`Supabase: signal trade insert failed: ${err}`); }
+        }
+        logger.info(`SIGNAL TRADE EXECUTED: $${result.trade.usdcAmount?.toFixed(2) ?? '?'} on "${signal.market.question.slice(0, 40)}"`);
       } else {
         logger.info(`Signal trade not executed: ${result.reason}`);
       }
