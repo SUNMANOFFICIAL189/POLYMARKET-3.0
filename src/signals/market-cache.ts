@@ -123,8 +123,8 @@ export class MarketCache {
       for (const word of words) {
         if (questionLower.includes(word)) score++;
       }
-      // Require at least 2 meaningful keyword matches to reduce noise
-      if (score >= 2) scored.push({ market, score });
+      // Allow 1+ keyword match — AI confidence threshold handles quality control
+      if (score >= 1) scored.push({ market, score });
     }
 
     scored.sort((a, b) => b.score - a.score);

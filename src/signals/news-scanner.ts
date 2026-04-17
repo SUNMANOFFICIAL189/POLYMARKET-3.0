@@ -22,21 +22,44 @@ interface RSSFeed {
 }
 
 const DEFAULT_FEEDS: RSSFeed[] = [
+  // --- Tier 1: High-priority mainstream ---
   { name: 'NPR News', url: 'https://feeds.npr.org/1001/rss.xml', priority: 'high' },
   { name: 'Politico', url: 'https://rss.politico.com/politics-news.xml', priority: 'high' },
   { name: 'AP News', url: 'https://rsshub.app/apnews/topics/apf-topnews', priority: 'high' },
+  { name: 'Reuters World', url: 'https://www.reutersagency.com/feed/?taxonomy=best-sectors&post_type=best', priority: 'high' },
+  // --- Tier 1: High-priority crypto-native ---
+  { name: 'The Block', url: 'https://www.theblock.co/rss/all', priority: 'high' },
+  { name: 'Decrypt', url: 'https://decrypt.co/feed', priority: 'high' },
+  // --- Tier 2: Medium-priority ---
   { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml', priority: 'medium' },
   { name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', priority: 'medium' },
+  { name: 'CoinTelegraph', url: 'https://cointelegraph.com/rss', priority: 'medium' },
+  { name: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml', priority: 'medium' },
+  { name: 'The Hill', url: 'https://thehill.com/feed/', priority: 'medium' },
+  { name: 'Axios', url: 'https://api.axios.com/feed/', priority: 'medium' },
 ];
 
 const RELEVANCE_KEYWORDS = [
+  // Politics & governance
   'election', 'president', 'vote', 'poll', 'congress', 'senate', 'supreme court',
+  'indictment', 'impeach', 'resign', 'trial', 'verdict',
+  // Macro & monetary
   'fed', 'federal reserve', 'interest rate', 'inflation', 'gdp', 'recession',
+  'rate cut', 'rate hike', 'fomc', 'tariff',
+  // Crypto & web3
   'bitcoin', 'crypto', 'ethereum', 'sec', 'regulation',
+  'stablecoin', 'defi', 'nft', 'solana', 'xrp',
+  // Geopolitics & conflict
   'war', 'conflict', 'sanctions', 'nato', 'china', 'russia', 'ukraine', 'iran',
+  'ceasefire', 'blockade', 'strait', 'hormuz', 'nuclear', 'iran deal',
+  // Religion & world events
+  'pope', 'vatican',
+  // Tech & companies
   'ai', 'openai', 'google', 'apple', 'tesla', 'spacex', 'nvidia',
-  'trump', 'biden', 'harris', 'indictment', 'trial', 'verdict',
+  'trump', 'biden', 'harris',
+  // Markets & corporate
   'merger', 'acquisition', 'ipo', 'earnings',
+  // Prediction markets
   'polymarket', 'prediction market',
 ];
 
@@ -49,7 +72,7 @@ export class NewsScanner extends EventEmitter {
   constructor(opts: { feeds?: RSSFeed[]; pollingMs?: number } = {}) {
     super();
     this.feeds = opts.feeds ?? DEFAULT_FEEDS;
-    this.pollingMs = opts.pollingMs ?? 30_000;
+    this.pollingMs = opts.pollingMs ?? 15_000;
   }
 
   start(): void {

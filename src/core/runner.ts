@@ -20,6 +20,7 @@ import { SignalExecutor } from '../execution/signal-executor.js';
 import { NewsScanner } from '../signals/news-scanner.js';
 import { MarketCache } from '../signals/market-cache.js';
 import { SignalGenerator } from '../signals/signal-generator.js';
+import { MarketMovementScanner } from '../signals/market-movement-scanner.js';
 import { AIClassifier } from '../signals/ai-classifier.js';
 import * as db from '../data/supabase.js';
 import { PositionLifecycleManager } from './position-lifecycle.js';
@@ -54,6 +55,7 @@ export class Runner {
   private marketCache: MarketCache;
   private signalGenerator: SignalGenerator;
   private signalExecutor: SignalExecutor;
+  private movementScanner: MarketMovementScanner;
 
   // Execution
   private confirmationLayer: ConfirmationLayer;
@@ -139,6 +141,8 @@ export class Runner {
       riskManager: this.riskManager,
       paperMode: cfg.paperMode,
     });
+
+    this.movementScanner = new MarketMovementScanner({ marketCache: this.marketCache });
 
     // Position Lifecycle Manager — auto-closes resolved, stale, and stop-loss positions
     this.lifecycleManager = new PositionLifecycleManager({
@@ -237,6 +241,7 @@ export class Runner {
     this.walletMonitor.stop();
     this.newsScanner.stop();
     this.marketCache.stop();
+    this.movementScanner.stop();
 
     logger.info('PATS-Copy stopped');
   }
@@ -263,6 +268,42 @@ export class Runner {
 
     // Start market cache (polls Gamma API for active non-sports markets)
     this.marketCache.start();
+    this.movementScanner.start();
+
+    // Wire movement scanner signals to the same handler as news signals
+    this.movementScanner.on('signal', async (signal: TradingSignal) => {
+      logger.info('MOVEMENT SIGNAL: ' + signal.side.toUpperCase() + ' on "' + signal.market.question.slice(0, 50) + '" (' + (signal.confidence * 100).toFixed(0) + '% confidence)');
+      sendTelegramAlert(
+        '<b>MOVEMENT SIGNAL</b>\n' +
+        signal.side.toUpperCase() + ' "' + signal.market.question.slice(0, 50) + '"\n' +
+        (signal.confidence * 100).toFixed(0) + '% confidence\n' +
+        signal.reasoning.slice(0, 80)
+      );
+      const result = await this.signalExecutor.execute(signal);
+      if (result.success && result.trade) {
+        if (this.config.supabase.url) {
+          try {
+            const dbId = await db.insertCopyTrade({
+              leaderWallet: 'signal-bot',
+              marketId: signal.market.slug,
+              marketQuestion: signal.market.question,
+              tokenId: signal.market.conditionId,
+              outcome: signal.market.outcomes[0] ?? 'Yes',
+              side: signal.side,
+              leaderEntryPrice: result.trade.entryPrice,
+              ourEntryPrice: result.trade.entryPrice,
+              ourSize: result.trade.usdcAmount,
+              confirmationResult: 'approved',
+              confirmationReason: signal.reasoning.slice(0, 200),
+              status: 'open',
+              riskLevel: 'paper',
+              entryTime: new Date().toISOString(),
+            } as any);
+            if (dbId) { result.trade.id = dbId; logger.info('Supabase: movement signal trade saved ' + dbId); }
+          } catch (err) { logger.warn('Supabase: movement signal insert failed: ' + err); }
+        }
+      }
+    });
 
     // Handle signals from the signal generator
     this.signalGenerator.on('signal', async (signal: TradingSignal) => {
@@ -615,6 +656,8 @@ export class Runner {
       signalOpen: this.signalExecutor.getStats().openPositions,
       marketsCached: this.marketCache.getStats().totalMarkets,
       signalsGenerated: this.signalGenerator.getStats().signalsGenerated,
+      movementScans: this.movementScanner.getStats().scansCompleted,
+      movementSignals: this.movementScanner.getStats().signalsEmitted,
     });
   }
 }
