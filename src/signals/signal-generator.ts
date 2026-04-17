@@ -45,8 +45,8 @@ interface AISignalAssessment {
 
 // ─── AI Provider Config ───────────────────────────────────────────
 
-const PRIMARY_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
-const PRIMARY_MODEL = process.env.OLLAMA_MODEL ?? 'llama3.2';
+const PRIMARY_URL = process.env.FALLBACK_AI_URL ?? 'https://openrouter.ai/api';
+const PRIMARY_MODEL = process.env.FALLBACK_AI_MODEL ?? 'google/gemma-4-31b-it:free';
 const PRIMARY_KEY = process.env.CEREBRAS_API_KEY ?? '';
 
 // ─── Constants ────────────────────────────────────────────────────
