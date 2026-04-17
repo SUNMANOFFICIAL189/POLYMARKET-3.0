@@ -76,8 +76,8 @@ export class SignalGenerator extends EventEmitter {
   // classifier, so we must throttle to avoid 429 cascades. Process at most
   // 1 signal assessment per 2 seconds, and skip if the queue is too deep.
   private static _queueTail: Promise<void> = Promise.resolve();
-  private static readonly MIN_GAP_MS = 2000;
-  private static readonly MAX_QUEUE_DEPTH = 10;
+  private static readonly MIN_GAP_MS = 4000;
+  private static readonly MAX_QUEUE_DEPTH = 20;
   private _queueDepth = 0;
 
   constructor(opts: {

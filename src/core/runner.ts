@@ -49,6 +49,7 @@ export class Runner {
 
   // Signals
   private newsScanner: NewsScanner;
+  private _bootTime = Date.now();
   private _newsBuffer: Array<{headline: string; source: string; timestamp: number}> = [];
 
   // Hybrid strategy (Phase 2)
