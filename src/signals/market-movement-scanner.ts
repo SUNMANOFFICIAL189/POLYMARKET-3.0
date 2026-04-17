@@ -14,7 +14,7 @@ import type { TradingSignal } from './signal-generator.js';
 
 const PRIMARY_URL = process.env.FALLBACK_AI_URL ?? 'https://openrouter.ai/api';
 const PRIMARY_MODEL = process.env.FALLBACK_AI_MODEL ?? 'google/gemma-4-31b-it:free';
-const PRIMARY_KEY = process.env.CEREBRAS_API_KEY ?? '';
+const PRIMARY_KEY = process.env.OPENROUTER_API_KEY ?? '';
 
 const SCAN_INTERVAL_MS = Number(process.env.MOVEMENT_SCAN_MS ?? '600000') || 600000;
 const MOVE_THRESHOLD = Number(process.env.MOVEMENT_THRESHOLD ?? '0.08') || 0.08;
