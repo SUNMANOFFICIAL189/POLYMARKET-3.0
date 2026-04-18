@@ -46,7 +46,7 @@ interface AISignalAssessment {
 // ─── AI Provider Config ───────────────────────────────────────────
 
 const PRIMARY_URL = process.env.FALLBACK_AI_URL ?? 'https://openrouter.ai/api';
-const PRIMARY_MODEL = process.env.FALLBACK_AI_MODEL ?? 'google/gemma-4-31b-it:free';
+const PRIMARY_MODEL = process.env.FALLBACK_AI_MODEL ?? 'google/gemma-4-31b-it';
 const PRIMARY_KEY = process.env.OPENROUTER_API_KEY ?? '';
 
 // ─── Constants ────────────────────────────────────────────────────
