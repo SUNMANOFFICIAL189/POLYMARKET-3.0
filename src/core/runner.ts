@@ -147,9 +147,13 @@ export class Runner {
 
     // Position Lifecycle Manager — auto-closes resolved, stale, and stop-loss positions
     this.lifecycleManager = new PositionLifecycleManager({
-      closePosition: (marketId, exitPrice, reason) =>
-        this.copyExecutor.closePosition(marketId, exitPrice, reason),
-      getOpenTrades: () => this.copyExecutor.getOpenTrades(),
+      closePosition: (marketId, exitPrice, reason) => {
+        // Try copy executor first, then signal executor
+        const copy = this.copyExecutor.closePosition(marketId, exitPrice, reason);
+        if (copy) return copy;
+        return this.signalExecutor.closePosition(marketId, exitPrice, reason) as any;
+      },
+      getOpenTrades: () => [...this.copyExecutor.getOpenTrades(), ...(this.signalExecutor.getOpenTrades() as any[])],
       persistClose: async (trade) => {
         if (trade.id && cfg.supabase.url) {
           try {
@@ -577,7 +581,9 @@ export class Runner {
       const memoryTrades = this.copyExecutor.getOpenTrades();
 
       const supabaseIds = new Set(supabaseOpen.map(t => t.marketId));
-      const memoryIds = new Set(memoryTrades.map(t => t.marketId));
+      const signalTrades = this.signalExecutor.getOpenTrades();
+      const allMemoryTrades = [...memoryTrades, ...signalTrades as any[]];
+      const memoryIds = new Set(allMemoryTrades.map(t => t.marketId));
 
       let orphansClosed = 0;
       let missingAdded = 0;
