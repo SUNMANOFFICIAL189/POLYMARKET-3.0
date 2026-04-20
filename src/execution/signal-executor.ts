@@ -38,7 +38,7 @@ export class SignalExecutor {
     this.riskManager = opts.riskManager;
     this.paperMode = opts.paperMode;
     this.maxOpenSignalPositions = opts.maxOpenSignalPositions
-      ?? (Number(process.env.MAX_SIGNAL_POSITIONS ?? '5') || 5);
+      ?? (Number(process.env.MAX_SIGNAL_POSITIONS ?? '15') || 5);
   }
 
   async execute(signal: TradingSignal): Promise<{ success: boolean; reason: string; trade?: Trade }> {

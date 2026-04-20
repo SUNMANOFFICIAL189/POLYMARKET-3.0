@@ -52,7 +52,7 @@ const PRIMARY_KEY = process.env.OPENROUTER_API_KEY ?? '';
 // ─── Constants ────────────────────────────────────────────────────
 
 const DEFAULT_MIN_CONFIDENCE = 0.65;
-const DEDUP_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
+const DEDUP_WINDOW_MS = 120 * 60 * 1000; // 30 minutes
 const MAX_MATCHES = 5;
 const AI_TIMEOUT_MS = 15_000;
 const MAX_BODY_CHARS = 300;
