@@ -449,10 +449,20 @@ export class LeaderboardScraper {
 
     return raw
       .filter(e => e.address && e.address.startsWith('0x'))
+      // Sanity filter: reject entries with contradictory data
+      .filter(e => {
+        const wr = Number(e.winRate || e.win_rate || 0);
+        const pnl = Number(e.profit || e.pnl || 0);
+        // If WR is suspiciously low (<1%) but PnL is huge (>$10k), data is unreliable
+        if (wr < 0.01 && pnl > 10000) return false;
+        return true;
+      })
       .map(e => {
         const profit = Number(e.profit || e.pnl || 0);
         const winRate = Number(e.winRate || e.win_rate || 0);
-        const normalizedWinRate = winRate > 1 ? winRate / 100 : winRate;
+        // If WR is 0 or missing, treat as unknown (0.5) not terrible (0.0)
+        const rawWinRate = winRate > 1 ? winRate / 100 : winRate;
+        const normalizedWinRate = (rawWinRate === 0 || isNaN(rawWinRate)) ? 0.5 : rawWinRate;
         const tradeCount = Number(e.numTrades || e.num_trades || e.tradeCount || 0);
 
         // Initial composite (scorer will refine)
@@ -466,7 +476,8 @@ export class LeaderboardScraper {
           displayName: e.name || e.pseudonym,
           compositeScore: Math.min(100, Math.max(0, compositeScore)),
           winRate30d: normalizedWinRate,
-          profitFactor14d: profit > 0 ? Math.min(5.0, 1.0 + profit / 500) : (profit < 0 ? 0.5 : 1.0),
+          // Profit factor: use neutral 1.0 — real PF not available from scraper
+          profitFactor14d: 1.0,
           tradeCount30d: tradeCount,
           totalPnl30d: profit,
           lastTradeTime: e.lastTrade || undefined,
