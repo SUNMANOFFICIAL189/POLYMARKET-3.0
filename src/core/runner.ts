@@ -432,6 +432,11 @@ export class Runner {
     }
 
     const newLeader = this.selector.update(rescored);
+    // Re-assert current leader in Supabase after upsert (prevents is_current_leader drift)
+    const currentLeaderAddr = this.selector.getCurrentLeader()?.walletAddress;
+    if (currentLeaderAddr && this.config.supabase.url) {
+      db.setCurrentLeader(currentLeaderAddr).catch(() => {});
+    }
     if (newLeader && newLeader.walletAddress !== this.currentLeader?.walletAddress) {
       this.currentLeader = newLeader;
     }

@@ -38,6 +38,10 @@ function ScoreBar({ score }: { score: number }) {
   )
 }
 
+function walletLink(addr: string): string {
+  return 'https://polymarket.com/profile/' + addr;
+}
+
 export function LeaderboardTable({ leaders, currentLeaderWallet }: LeaderboardTableProps) {
   if (leaders.length === 0) {
     return (
@@ -94,9 +98,14 @@ export function LeaderboardTable({ leaders, currentLeaderWallet }: LeaderboardTa
                       {leader.display_name}
                     </span>
                   )}
-                  <span className="font-mono text-xs text-slate-400">
+                  <a
+                    href={`https://polymarket.com/profile/${leader.wallet_address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs text-slate-400 hover:text-green-400 hover:underline transition-colors cursor-pointer"
+                  >
                     {truncateWallet(leader.wallet_address)}
-                  </span>
+                  </a>
                 </div>
               </TableCell>
 

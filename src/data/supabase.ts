@@ -33,7 +33,7 @@ export async function upsertLeader(leader: Leader): Promise<void> {
     trade_count_30d: leader.tradeCount30d,
     total_pnl_30d: leader.totalPnl30d,
     last_trade_time: leader.lastTradeTime,
-    is_current_leader: leader.isCurrentLeader,
+    // is_current_leader removed — managed exclusively by setCurrentLeader()
     tracked_since: leader.trackedSince,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'wallet_address' });

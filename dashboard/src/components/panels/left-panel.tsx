@@ -368,9 +368,16 @@ export default function LeftPanel({
 
         {currentLeaderWallet ? (
           <>
-            <div style={S.leaderWallet}>
+            <a
+              href={`https://polymarket.com/profile/${currentLeaderWallet}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{...S.leaderWallet, textDecoration: 'none', cursor: 'pointer'}}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.textDecoration = 'underline'; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.textDecoration = 'none'; }}
+            >
               {truncateWallet(currentLeaderWallet)}
-            </div>
+            </a>
             <div style={S.leaderScore}>
               Score:{' '}
               <span style={{ color: 'var(--green)', fontWeight: 700 }}>
