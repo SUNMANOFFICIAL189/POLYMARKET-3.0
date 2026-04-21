@@ -653,7 +653,7 @@ export class CopyExecutor {
   }
 
   private getWalletRollingStats(wallet: string): { winRate: number; sampleSize: number } {
-    const win = this.walletRollingWindow.get(wallet) ?? [];
+    const win = this.walletRollingWindow.get(wallet.toLowerCase()) ?? [];
     if (win.length === 0) return { winRate: 0.5, sampleSize: 0 }; // no data → benefit of the doubt
     return { winRate: win.filter(Boolean).length / win.length, sampleSize: win.length };
   }

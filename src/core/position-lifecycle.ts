@@ -119,6 +119,7 @@ export class PositionLifecycleManager {
         if (status.closed && !status.acceptingOrders) {
           // Market resolved — determine settlement price
           const exitPrice = this.getSettlementPrice(status, trade.outcome);
+          if (exitPrice < 0) { logger.warn(`PositionLifecycle: Skipping close for "${marketId}" — could not determine settlement price`); continue; }
           logger.info(`PositionLifecycle: Market "${marketId}" RESOLVED. Outcome prices: ${status.outcomePrices}. Our outcome: ${trade.outcome}. Exit price: ${exitPrice}`);
 
           const closed = await this.closePosition(marketId, exitPrice, 'market_resolved');
@@ -212,7 +213,7 @@ export class PositionLifecycleManager {
           }
         }
       } catch (err) {
-        // Don't spam logs for stop-loss check failures — they run every 60s
+        logger.warn(`PositionLifecycle: Stop-loss check failed for ${marketId}: ${err}`);
       }
     }
   }
@@ -285,7 +286,7 @@ export class PositionLifecycleManager {
       const prices = JSON.parse(status.outcomePrices) as string[];
       const outcomes = JSON.parse(status.outcomes) as string[];
 
-      if (!ourOutcome || !outcomes.length) return 0.5;
+      if (!ourOutcome || !outcomes.length) return -1; // signal: skip close
 
       const idx = outcomes.findIndex(o =>
         o.toLowerCase() === ourOutcome.toLowerCase()
@@ -295,9 +296,9 @@ export class PositionLifecycleManager {
         return parseFloat(prices[idx]);
       }
 
-      return 0.5; // Unknown outcome mapping
+      return -1; // signal: skip close (unknown outcome)
     } catch {
-      return 0.5;
+      return -1; // signal: skip close (parse error)
     }
   }
 

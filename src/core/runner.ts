@@ -267,7 +267,7 @@ export class Runner {
       // The signal generator matches news against active markets and emits
       // trading signals when it finds high-confidence opportunities.
       this.signalGenerator.processNewsItem(newsEntry).catch(err =>
-        logger.debug(`SignalGenerator: news processing failed: ${err}`)
+        logger.warn(`SignalGenerator: news processing failed: ${err}`)
       );
     });
 
@@ -487,7 +487,7 @@ export class Runner {
       // F9a: Attach rolling wallet stats BEFORE confirmation so devil's advocate
       // has data to operate on. Previously set inside copyExecutor.execute() which
       // runs after confirmation, leaving devil's advocate permanently dormant.
-      const rollingStats = this.copyExecutor.getLeaderRollingStats(trade.leaderWallet);
+      const rollingStats = this.copyExecutor.getLeaderRollingStats(trade.leaderWallet.toLowerCase());
       (trade as any).walletRollingWR = rollingStats.winRate;
       (trade as any).walletRollingCount = rollingStats.sampleSize;
 
