@@ -135,7 +135,7 @@ function deriveMetrics(trades: CopyTrade[], _performance: DailyPerformance[], de
 
   const openPositions = trades.filter(t => t.status === 'open').length
   const paperMode = process.env.PAPER_MODE !== 'false'
-  const maxOpenPositionsConfig = Number(process.env.MAX_OPEN_POSITIONS ?? '10') || 10
+  const maxOpenPositionsConfig = (Number(process.env.MAX_OPEN_POSITIONS ?? '10') || 10) + (Number(process.env.MAX_SIGNAL_POSITIONS ?? '15') || 15)
   const riskPreset = process.env.RISK ?? 'paper'
 
   return {
