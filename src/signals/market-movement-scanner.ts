@@ -87,6 +87,9 @@ export class MarketMovementScanner extends EventEmitter {
         const move = Math.abs(currentPrice - previousPrice);
         const movePct = previousPrice > 0 ? move / previousPrice : 0;
 
+        // Skip penny markets — moves on $0.001 prices are noise, not signals
+        if (currentPrice < 0.02 && previousPrice < 0.02) continue;
+
         if (movePct >= MOVE_THRESHOLD) {
           movedCount++;
           this.movementsDetected++;

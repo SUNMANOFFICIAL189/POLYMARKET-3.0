@@ -49,6 +49,19 @@ export class SignalExecutor {
       return { success: false, reason: `Already have signal position in ${marketId.slice(0, 20)}` };
     }
 
+    // Thesis-level dedup: skip if any open position shares 3+ meaningful words
+    // Prevents 7 positions on "US x Iran peace deal" variants
+    const STOP = new Set(['will','the','and','for','by','on','in','to','of','a','be','or','is']);
+    const newWords = new Set(marketQ.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !STOP.has(w)));
+    for (const [, existingTrade] of this.openSignalTrades) {
+      const existingWords = new Set((existingTrade.question || '').toLowerCase().split(/\s+/).filter((w: string) => w.length > 2 && !STOP.has(w)));
+      let overlap = 0;
+      for (const w of newWords) { if (existingWords.has(w)) overlap++; }
+      if (overlap >= 3) {
+        return { success: false, reason: `Thesis dedup: "${marketQ.slice(0, 30)}" overlaps with existing position` };
+      }
+    }
+
     if (this.openSignalTrades.size >= this.maxOpenSignalPositions) {
       this.blockedCount++;
       return { success: false, reason: `Signal position cap ${this.maxOpenSignalPositions} reached` };

@@ -169,7 +169,7 @@ export class Runner {
           }
         }
       },
-      maxPositionAgeMs: parseInt(process.env.MAX_POSITION_AGE_HOURS ?? '48') * 3600000,
+      maxPositionAgeMs: parseInt(process.env.MAX_POSITION_AGE_HOURS ?? '24') * 3600000,
       stopLossPct: parseFloat(process.env.STOP_LOSS_PCT ?? '0.30'),
     });
   }
