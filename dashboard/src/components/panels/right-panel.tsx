@@ -202,11 +202,17 @@ export function RightPanel({ leaders, currentLeaderWallet, recentTrades, mirofis
               pnl < 0 ? S.pnlNegative :
               S.pnlNeutral
             return (
-              <div key={leader.wallet_address} style={S.marketRow(isActive)}>
+              <a
+                key={leader.wallet_address}
+                href={`https://polymarket.com/profile/${leader.wallet_address}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{...S.marketRow(isActive), textDecoration: 'none', cursor: 'pointer'}}
+              >
                 <span style={S.marketName}>{displayName(leader)}</span>
                 <span style={S.score}>{scoreCents(leader.composite_score)}</span>
                 <span style={pnlStyle}>{pnlFormatted(leader.win_rate_30d)}</span>
-              </div>
+              </a>
             )
           })
         )}
