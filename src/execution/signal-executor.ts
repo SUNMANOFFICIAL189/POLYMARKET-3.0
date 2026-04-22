@@ -145,6 +145,14 @@ export class SignalExecutor {
   }
 
   getOpenTrades(): Trade[] {
+    // Sync: remove trades that the paper engine has already closed internally
+    // (stop-loss, TTL, or resolution within the paper engine's own logic)
+    for (const [marketId, trade] of this.openSignalTrades) {
+      if (!this.paperEngine.hasOpenPosition(marketId)) {
+        logger.info('SignalExecutor: Purging ghost position "' + marketId.slice(0, 30) + '" (paper engine already closed)');
+        this.openSignalTrades.delete(marketId);
+      }
+    }
     return Array.from(this.openSignalTrades.values());
   }
 
