@@ -196,8 +196,8 @@ export class CopyExecutor {
     // Graduated cold streak filter — smarter than binary block/allow
     // Hard data: 0% WR wallet (0x2005d16a) lost $723 in 24h when unblocked
     const rollingStats = this.getWalletRollingStats(leaderTrade.leaderWallet);
-    (leaderTrade as any).walletRollingWR = rollingStats.winRate;
-    (leaderTrade as any).walletRollingCount = rollingStats.sampleSize;
+    leaderTrade.walletRollingWR = rollingStats.winRate;
+    leaderTrade.walletRollingCount = rollingStats.sampleSize;
 
     if (rollingStats.sampleSize >= this.ROLLING_MIN_SAMPLE) {
       if (rollingStats.winRate < 0.20) {
@@ -208,7 +208,7 @@ export class CopyExecutor {
       } else if (rollingStats.winRate < this.ROLLING_MIN_WIN_RATE) {
         // REDUCED SIZE: 20-40% WR = underperforming. Trade at 25% size, devil's advocate decides.
         logger.info(`CopyExecutor: COLD WALLET — ${leaderTrade.leaderWallet.slice(0,10)} rolling WR ${(rollingStats.winRate * 100).toFixed(0)}% — 25% size (devil's advocate will assess)`);
-        (leaderTrade as any)._coldSizeMultiplier = 0.25;
+        leaderTrade.coldSizeMultiplier = 0.25;
       }
     } else {
       // Fix A: Probationary cap for unproven wallets. Wallets with <5 trades in
@@ -216,7 +216,7 @@ export class CopyExecutor {
       // Prevents another $63 blind bet (0x37c187 went 0/6 on full sizing).
       const PROBATION_MAX = parseFloat(process.env.PROBATION_MAX_DOLLARS ?? '15');
       if (rollingStats.sampleSize < this.ROLLING_MIN_SAMPLE) {
-        (leaderTrade as any)._probationCap = PROBATION_MAX;
+        leaderTrade.probationCap = PROBATION_MAX;
         logger.info(`CopyExecutor: PROBATION — ${leaderTrade.leaderWallet.slice(0,10)} only ${rollingStats.sampleSize} trades — capped at $${PROBATION_MAX} until proven`);
       }
     }
@@ -388,7 +388,7 @@ export class CopyExecutor {
     }
 
     // Apply cold wallet size reduction (25% for 20-40% WR wallets)
-    const coldMultiplier = (leaderTrade as any)?._coldSizeMultiplier;
+    const coldMultiplier = leaderTrade.coldSizeMultiplier;
     if (coldMultiplier && coldMultiplier < 1.0) {
       const beforeCold = ourSize;
       ourSize = Math.round(ourSize * coldMultiplier * 100) / 100;
@@ -398,7 +398,7 @@ export class CopyExecutor {
     // Fix A: Probationary cap — unproven wallets (<5 trades) get hard-capped
     // before any other cap logic. The $63 Barcelona loss proved full-sized bets
     // on zero-history wallets are unacceptable.
-    const probationCap = (leaderTrade as any)?._probationCap;
+    const probationCap = leaderTrade.probationCap;
     if (probationCap && ourSize > probationCap) {
       logger.info(`CopyExecutor: Probation cap $${ourSize.toFixed(2)} → $${probationCap.toFixed(2)} (wallet has <5 trades)`);
       ourSize = probationCap;

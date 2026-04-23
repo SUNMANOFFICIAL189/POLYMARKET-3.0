@@ -23,7 +23,7 @@ export class SignalExecutor {
   private paperEngine: PaperTradingEngine;
   private riskManager: RiskManager;
   private paperMode: boolean;
-  private openSignalTrades: Map<string, Trade> = new Map();
+  private signalMarketIds: Set<string> = new Set(); // lightweight tracker — paper engine has the trades
   private executedCount = 0;
   private blockedCount = 0;
   private maxOpenSignalPositions: number;
@@ -45,15 +45,15 @@ export class SignalExecutor {
     const marketId = signal.market.slug;
     const marketQ = signal.market.question;
 
-    if (this.openSignalTrades.has(marketId)) {
-      return { success: false, reason: `Already have signal position in ${marketId.slice(0, 20)}` };
+    if (this.signalMarketIds.has(marketId) || this.paperEngine.hasOpenPosition(marketId)) {
+      return { success: false, reason: `Already have position in ${marketId.slice(0, 20)}` };
     }
 
     // Thesis-level dedup: skip if any open position shares 3+ meaningful words
     // Prevents 7 positions on "US x Iran peace deal" variants
     const STOP = new Set(['will','the','and','for','by','on','in','to','of','a','be','or','is']);
     const newWords = new Set(marketQ.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !STOP.has(w)));
-    for (const [, existingTrade] of this.openSignalTrades) {
+    for (const existingTrade of this.getOpenTrades()) {
       const existingWords = new Set((existingTrade.question || '').toLowerCase().split(/\s+/).filter((w: string) => w.length > 2 && !STOP.has(w)));
       let overlap = 0;
       for (const w of newWords) { if (existingWords.has(w)) overlap++; }
@@ -62,7 +62,7 @@ export class SignalExecutor {
       }
     }
 
-    if (this.openSignalTrades.size >= this.maxOpenSignalPositions) {
+    if (this.signalMarketIds.size >= this.maxOpenSignalPositions) {
       this.blockedCount++;
       return { success: false, reason: `Signal position cap ${this.maxOpenSignalPositions} reached` };
     }
@@ -115,7 +115,7 @@ export class SignalExecutor {
 
       const result: PaperTradeResult | null = this.paperEngine.executeCopyTrade(input);
       if (result) {
-        this.openSignalTrades.set(marketId, result.trade);
+        this.signalMarketIds.add(marketId);
         this.executedCount++;
         logger.info(`SignalExecutor: SIGNAL TRADE EXECUTED — $${ourSize.toFixed(2)} on "${marketQ.slice(0, 40)}" (${(signal.confidence * 100).toFixed(0)}% confidence)`);
         return { success: true, reason: 'Signal trade executed', trade: result.trade };
@@ -128,39 +128,38 @@ export class SignalExecutor {
   }
 
   closePosition(marketId: string, exitPrice: number, reason: string): Trade | null {
-    const trade = this.openSignalTrades.get(marketId);
-    if (!trade) return null;
+    if (!this.signalMarketIds.has(marketId)) return null;
 
     if (this.paperMode) {
       const closed = this.paperEngine.closeTradeByMarketId(marketId, exitPrice, reason);
       if (closed) {
-        this.openSignalTrades.delete(marketId);
+        this.signalMarketIds.delete(marketId);
         logger.info(`SignalExecutor: Signal position closed — "${marketId.slice(0, 30)}" pnl=$${closed.pnl?.toFixed(2) ?? 'n/a'} (${reason})`);
         return closed;
       }
     }
 
-    this.openSignalTrades.delete(marketId);
+    this.signalMarketIds.delete(marketId);
     return null;
   }
 
   getOpenTrades(): Trade[] {
-    // Sync: remove trades that the paper engine has already closed internally
-    // (stop-loss, TTL, or resolution within the paper engine's own logic)
-    for (const [marketId, trade] of this.openSignalTrades) {
-      if (!this.paperEngine.hasOpenPosition(marketId)) {
-        logger.info('SignalExecutor: Purging ghost position "' + marketId.slice(0, 30) + '" (paper engine already closed)');
-        this.openSignalTrades.delete(marketId);
+    // Paper engine is sole source of truth. We just know which IDs are ours.
+    const paperTrades = this.paperEngine.getOpenTradesList();
+    // Purge IDs for trades the paper engine no longer has
+    for (const id of this.signalMarketIds) {
+      if (!this.paperEngine.hasOpenPosition(id)) {
+        this.signalMarketIds.delete(id);
       }
     }
-    return Array.from(this.openSignalTrades.values());
+    return paperTrades.filter(t => this.signalMarketIds.has(t.marketId));
   }
 
   getStats() {
     return {
       executed: this.executedCount,
       blocked: this.blockedCount,
-      openPositions: this.openSignalTrades.size,
+      openPositions: this.signalMarketIds.size,
       maxPositions: this.maxOpenSignalPositions,
     };
   }

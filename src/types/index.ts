@@ -253,6 +253,10 @@ export interface LeaderTrade {
   tradeId?: string;
   rank?: number; // 1 = leader, 2-5 = watcher
   specialistCategory?: string | null; // wallet's primary category (null = generalist, undefined = unknown)
+  walletRollingWR?: number;
+  walletRollingCount?: number;
+  coldSizeMultiplier?: number;
+  probationCap?: number;
 }
 
 export type CopyTradeStatus = 'pending' | 'open' | 'closed' | 'stopped' | 'vetoed';
@@ -260,6 +264,7 @@ export type ConfirmationDecision = 'approved' | 'vetoed' | 'skipped';
 
 export interface CopyTrade {
   id?: string;
+  source?: 'copy' | 'signal' | 'movement';  // identifies which pipeline created this trade
   leaderWallet: string;
   leaderTradeId?: string;
   marketId: string;
@@ -269,16 +274,24 @@ export interface CopyTrade {
   side: Side;
   leaderEntryPrice: number;
   ourEntryPrice?: number;
+  entryPrice?: number;     // alias for ourEntryPrice — used by lifecycle stop-loss
   ourSize: number;
-  confirmationResult: ConfirmationDecision;
+  confirmationResult: ConfirmationDecision | string;
   confirmationReason?: string;
-  status: CopyTradeStatus;
-  riskLevel: RiskLevel;
+  status: CopyTradeStatus | string;
+  riskLevel: RiskLevel | string;
   pnl?: number;
+  pnlPct?: number;
   entryTime: string;
   exitTime?: string;
   exitReason?: string;
   createdAt?: string;
+  // Rolling wallet stats (previously smuggled via `as any`)
+  walletRollingWR?: number;
+  walletRollingCount?: number;
+  // Sizing modifiers (previously smuggled via `as any`)
+  coldSizeMultiplier?: number;
+  probationCap?: number;
   watcherRank?: number; // rank of trader who triggered this copy (1-5)
 }
 

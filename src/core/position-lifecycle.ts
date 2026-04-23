@@ -198,7 +198,7 @@ export class PositionLifecycleManager {
         if (!status || status.closed) continue; // skip resolved markets (handled by resolution checker)
 
         const currentPrice = this.getCurrentPrice(status, trade.outcome);
-        const entryPrice = trade.ourEntryPrice ?? (trade as any).entryPrice ?? 0.5;
+        const entryPrice = trade.ourEntryPrice ?? trade.entryPrice ?? 0.5;
 
         if (entryPrice <= 0) continue;
 

@@ -42,6 +42,10 @@ export class PaperTradingEngine {
     logger.info('PaperTradingEngine initialized', { balance: `$${balance}`, riskLevel });
   }
 
+  getOpenTradesList(): Trade[] {
+    return Array.from(this.openTrades.values());
+  }
+
   hasOpenPosition(marketId: string): boolean {
     return this.openMarketIds.has(marketId);
   }

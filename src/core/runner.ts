@@ -158,7 +158,7 @@ export class Runner {
         if (trade.id && cfg.supabase.url) {
           try {
             await db.updateCopyTrade(trade.id, {
-              status: 'closed' as any,
+              status: 'closed',
               pnl: trade.pnl,
               exitTime: trade.exitTime,
             });
@@ -303,7 +303,7 @@ export class Runner {
               status: 'open',
               riskLevel: 'paper',
               entryTime: new Date().toISOString(),
-            } as any);
+            });
             if (dbId) { result.trade.id = dbId; logger.info('Supabase: movement signal trade saved ' + dbId); }
           } catch (err) { logger.warn('Supabase: movement signal insert failed: ' + err); }
         }
@@ -339,7 +339,7 @@ export class Runner {
               status: 'open' as any,
               riskLevel: 'paper' as any,
               entryTime: new Date().toISOString(),
-            } as any);
+            });
             if (dbId) { result.trade.id = dbId; logger.info(`Supabase: signal trade saved ${dbId}`); }
           } catch (err) { logger.warn(`Supabase: signal trade insert failed: ${err}`); }
         }
@@ -488,8 +488,8 @@ export class Runner {
       // has data to operate on. Previously set inside copyExecutor.execute() which
       // runs after confirmation, leaving devil's advocate permanently dormant.
       const rollingStats = this.copyExecutor.getLeaderRollingStats(trade.leaderWallet.toLowerCase());
-      (trade as any).walletRollingWR = rollingStats.winRate;
-      (trade as any).walletRollingCount = rollingStats.sampleSize;
+      trade.walletRollingWR = rollingStats.winRate;
+      trade.walletRollingCount = rollingStats.sampleSize;
 
       let tradeForConfirmation = trade;
       if (trade.rank && trade.rank >= 2 && this.copyExecutor.isHotWallet(trade.leaderWallet)) {
@@ -587,7 +587,7 @@ export class Runner {
 
       const supabaseIds = new Set(supabaseOpen.map(t => t.marketId));
       const signalTrades = this.signalExecutor.getOpenTrades();
-      const allMemoryTrades = [...memoryTrades, ...signalTrades as any[]];
+      const allMemoryTrades = [...memoryTrades, ...(signalTrades as any[])];
       const memoryIds = new Set(allMemoryTrades.map(t => t.marketId));
 
       let orphansClosed = 0;
@@ -597,7 +597,7 @@ export class Runner {
       for (const sbTrade of supabaseOpen) {
         if (!memoryIds.has(sbTrade.marketId) && sbTrade.id) {
           await db.updateCopyTrade(sbTrade.id, {
-            status: 'stopped' as any,
+            status: 'stopped',
             exitTime: new Date().toISOString(),
           });
           orphansClosed++;

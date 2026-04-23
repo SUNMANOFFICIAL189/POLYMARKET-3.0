@@ -182,15 +182,15 @@ export class ConfirmationLayer {
 
     // R5: Devil's advocate challenge — uses wallet context to validate trade
     let devilsAdvocateReduction = 1.0;
-    if (decision === 'approved' && (trade as any).walletRollingWR !== undefined) {
+    if (decision === 'approved' && trade.walletRollingWR !== undefined) {
       try {
         const challenge = await this.classifier.challengeTrade(
           trade.marketQuestion,
           trade.side,
           trade.outcome,
           trade.entryPrice,
-          (trade as any).walletRollingWR ?? 0.5,
-          (trade as any).walletRollingCount ?? 0,
+          trade.walletRollingWR ?? 0.5,
+          trade.walletRollingCount ?? 0,
         );
         if (!challenge.proceed) {
           devilsAdvocateReduction = 0.5;
