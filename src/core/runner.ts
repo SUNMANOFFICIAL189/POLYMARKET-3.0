@@ -646,6 +646,12 @@ export class Runner {
         closedTrades: paperStats.totalTrades,
         winRate: paperStats.totalTrades > 0 ? paperStats.winRate : null,
         pnl: paperStats.totalPnl,
+        signalTrades: this.signalExecutor.getStats().executed,
+        signalOpen: this.signalExecutor.getStats().openPositions,
+        signalsGenerated: this.signalGenerator.getStats().signalsGenerated,
+        movementScans: this.movementScanner.getStats().scansCompleted,
+        movementSignals: this.movementScanner.getStats().signalsEmitted,
+        marketsCached: this.marketCache.getStats().totalMarkets,
         updatedAt: new Date().toISOString(),
       }));
     } catch { /* non-fatal */ }
