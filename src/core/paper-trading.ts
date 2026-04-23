@@ -42,6 +42,33 @@ export class PaperTradingEngine {
     logger.info('PaperTradingEngine initialized', { balance: `$${balance}`, riskLevel });
   }
 
+  injectOpenTrade(opts: {
+    marketId: string; question: string; entryPrice: number;
+    usdcAmount: number; entryTime: string; outcome: string; side: Side;
+  }): void {
+    if (this.openMarketIds.has(opts.marketId)) return; // already tracked
+    const trade: Trade = {
+      id: 'hydrated-' + opts.marketId.slice(0, 12),
+      marketId: opts.marketId,
+      question: opts.question,
+      tokenId: '',
+      outcome: opts.outcome,
+      side: opts.side,
+      entryPrice: opts.entryPrice,
+      size: opts.usdcAmount / opts.entryPrice,
+      usdcAmount: opts.usdcAmount,
+      convictionScore: 0,
+      riskLevel: 'paper',
+      status: 'open',
+      pnl: undefined,
+      stopLoss: 0.30,
+      signalIds: [],
+      entryTime: opts.entryTime,
+    };
+    this.openTrades.set(trade.id, trade);
+    this.openMarketIds.add(opts.marketId);
+  }
+
   getOpenTradesList(): Trade[] {
     return Array.from(this.openTrades.values());
   }

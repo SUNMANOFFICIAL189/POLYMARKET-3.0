@@ -237,14 +237,23 @@ export class Runner {
     if (this.config.supabase.url) {
       try {
         const openSignals = await db.getOpenCopyTrades();
-        const signalIds = openSignals
-          .filter(t => t.leaderWallet === 'signal-bot')
-          .map(t => t.marketId);
-        for (const id of signalIds) {
-          this.signalExecutor.registerExistingPosition(id);
+        const signalTrades = openSignals.filter(t => t.leaderWallet === 'signal-bot');
+        for (const t of signalTrades) {
+          // Register ID in signal executor
+          this.signalExecutor.registerExistingPosition(t.marketId);
+          // Inject into paper engine so lifecycle manager can check TTL/stop-loss
+          this.paperEngine.injectOpenTrade({
+            marketId: t.marketId,
+            question: t.marketQuestion,
+            entryPrice: t.ourEntryPrice ?? t.entryPrice ?? 0.5,
+            usdcAmount: t.ourSize,
+            entryTime: t.entryTime,
+            outcome: t.outcome,
+            side: t.side,
+          });
         }
-        if (signalIds.length > 0) {
-          logger.info(`Hydrated ${signalIds.length} signal position(s) from Supabase`);
+        if (signalTrades.length > 0) {
+          logger.info(`Hydrated ${signalTrades.length} signal position(s) from Supabase into paper engine`);
         }
       } catch (err) {
         logger.warn(`Signal hydration failed: ${err}`);
