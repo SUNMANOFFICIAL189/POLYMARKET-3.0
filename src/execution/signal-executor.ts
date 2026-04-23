@@ -143,6 +143,10 @@ export class SignalExecutor {
     return null;
   }
 
+  registerExistingPosition(marketId: string): void {
+    this.signalMarketIds.add(marketId);
+  }
+
   getOpenTrades(): Trade[] {
     // Paper engine is sole source of truth. We just know which IDs are ours.
     const paperTrades = this.paperEngine.getOpenTradesList();

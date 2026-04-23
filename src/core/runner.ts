@@ -233,6 +233,24 @@ export class Runner {
       this.reconciliationTimer = setInterval(() => this.reconcileWithSupabase(), 15 * 60 * 1000);
     }
 
+    // Hydrate signal trade IDs from Supabase so lifecycle manager knows about them
+    if (this.config.supabase.url) {
+      try {
+        const openSignals = await db.getOpenCopyTrades();
+        const signalIds = openSignals
+          .filter(t => t.leaderWallet === 'signal-bot')
+          .map(t => t.marketId);
+        for (const id of signalIds) {
+          this.signalExecutor.registerExistingPosition(id);
+        }
+        if (signalIds.length > 0) {
+          logger.info(`Hydrated ${signalIds.length} signal position(s) from Supabase`);
+        }
+      } catch (err) {
+        logger.warn(`Signal hydration failed: ${err}`);
+      }
+    }
+
     logger.info('PATS-Copy fully started. Waiting for leaderboard data...');
   }
 
