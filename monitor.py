@@ -274,6 +274,11 @@ def auto_fix(pattern):
         send_alert("Signal pipeline stalled — restarting bot", "FIX")
         restart_bot()
         return True
+    elif pattern == "trades_stuck":
+        send_alert("Trades stuck for 1h+ — flushing stale positions + restarting", "FIX")
+        flush_open_positions()
+        restart_bot()
+        return True
     return False
 
 # ─── Write diagnostic snapshot ───────────────────────────────────
