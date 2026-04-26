@@ -78,14 +78,6 @@ export class SignalExecutor {
     const maxSignalSize = Number(process.env.MAX_SIGNAL_DOLLARS ?? '50') || 50;
     if (ourSize > maxSignalSize) ourSize = maxSignalSize;
 
-    // Phase 3: minimum entry price floor — markets below $0.03 are near-zero
-    // probability and almost always expire worthless. Skip them.
-    const MIN_ENTRY_PRICE = Number(process.env.MIN_SIGNAL_ENTRY_PRICE ?? '0.03') || 0.03;
-    if (entryPrice > 0 && entryPrice < MIN_ENTRY_PRICE) {
-      logger.info('SignalExecutor: PRICE FLOOR — entry ' + entryPrice.toFixed(3) + ' < $' + MIN_ENTRY_PRICE.toFixed(2) + ' min — skipping penny market');
-      return { success: false, reason: 'Entry price ' + entryPrice.toFixed(3) + ' below $' + MIN_ENTRY_PRICE.toFixed(2) + ' floor' };
-    }
-
     const riskCheck = this.riskManager.checkTrade(ourSize);
     if (!riskCheck.allowed) {
       this.blockedCount++;
@@ -99,6 +91,14 @@ export class SignalExecutor {
     const entryPrice = outcomeIdx >= 0 && outcomeIdx < signal.market.outcomePrices.length
       ? signal.market.outcomePrices[outcomeIdx]
       : 0.5;
+
+    // Phase 3: minimum entry price floor — markets below $0.03 are near-zero
+    // probability and almost always expire worthless. Skip them.
+    const MIN_ENTRY_PRICE = Number(process.env.MIN_SIGNAL_ENTRY_PRICE ?? '0.03') || 0.03;
+    if (entryPrice > 0 && entryPrice < MIN_ENTRY_PRICE) {
+      logger.info('SignalExecutor: PRICE FLOOR — entry ' + entryPrice.toFixed(3) + ' < $' + MIN_ENTRY_PRICE.toFixed(2) + ' min — skipping penny market');
+      return { success: false, reason: 'Entry price ' + entryPrice.toFixed(3) + ' below $' + MIN_ENTRY_PRICE.toFixed(2) + ' floor' };
+    }
 
     logger.info(`SignalExecutor: ${this.paperMode ? '[PAPER]' : '[LIVE]'} SIGNAL TRADE`, {
       market: marketQ.slice(0, 50),
