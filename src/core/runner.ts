@@ -243,6 +243,7 @@ export class Runner {
           this.signalExecutor.registerExistingPosition(t.marketId);
           // Inject into paper engine so lifecycle manager can check TTL/stop-loss
           this.paperEngine.injectOpenTrade({
+            id: t.id,
             marketId: t.marketId,
             question: t.marketQuestion,
             entryPrice: t.ourEntryPrice ?? t.entryPrice ?? 0.5,

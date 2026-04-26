@@ -43,12 +43,12 @@ export class PaperTradingEngine {
   }
 
   injectOpenTrade(opts: {
-    marketId: string; question: string; entryPrice: number;
+    id?: string; marketId: string; question: string; entryPrice: number;
     usdcAmount: number; entryTime: string; outcome: string; side: Side;
   }): void {
     if (this.openMarketIds.has(opts.marketId)) return; // already tracked
     const trade: Trade = {
-      id: 'hydrated-' + opts.marketId.slice(0, 12),
+      id: opts.id ?? ('hydrated-' + opts.marketId.slice(0, 12)),
       marketId: opts.marketId,
       question: opts.question,
       tokenId: '',
