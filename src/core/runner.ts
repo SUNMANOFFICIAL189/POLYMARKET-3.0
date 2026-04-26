@@ -379,7 +379,12 @@ export class Runner {
 
   private setupWalletMonitor(): void {
     this.walletMonitor.on('new-trade', (trade: LeaderTrade) => {
-      this.handleLeaderTrade(trade);
+      // Phase 3: Copy pipeline disabled. 428 trades at -$0.78 avg = -$332 dead weight.
+      // Signal pipeline is profitable (+$287). No value in copying leaders.
+      // Leaderboard scraper + wallet monitor still run for data/scoring.
+      if (process.env.ENABLE_COPY_TRADES === 'true') {
+        this.handleLeaderTrade(trade);
+      }
     });
 
     this.walletMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string; rank?: number; exitPrice?: number }) => {
