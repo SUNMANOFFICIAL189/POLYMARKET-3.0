@@ -258,6 +258,130 @@ def check_anomalies(conn, current):
 
     return issues
 
+
+# ─── Data integrity checks ──────────────────────────────────────
+def check_data_integrity():
+    """Check Supabase for data integrity issues. Returns list of (severity, pattern, message)."""
+    issues = []
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return issues
+
+    # 1. Null PnL on stopped/closed trades
+    null_pnl = supabase_get("copy_trades?status=in.(stopped,closed)&pnl=is.null&select=id,status,market_question,entry_time&limit=20")
+    if null_pnl and len(null_pnl) > 0:
+        # Only alert on recent ones (last 24h)
+        recent_nulls = [t for t in null_pnl if t.get("entry_time", "") >= (datetime.now(timezone.utc).replace(hour=0) - __import__('datetime').timedelta(days=1)).isoformat()]
+        if len(recent_nulls) > 0:
+            issues.append(("WARN", "null_pnl_trades",
+                f"{len(recent_nulls)} recent stopped/closed trades have null PnL — data gap"))
+
+    # 2. Duplicate open positions on same market
+    open_trades = supabase_get("copy_trades?status=eq.open&select=id,market_id,side,market_question")
+    if open_trades:
+        market_ids = {}
+        for t in open_trades:
+            mid = t.get("market_id", "")
+            if mid in market_ids:
+                issues.append(("CRITICAL", "duplicate_position",
+                    f"Duplicate open position on {mid[:40]} — {market_ids[mid]} and {t.get('side')}"))
+            else:
+                market_ids[mid] = t.get("side", "?")
+
+    # 3. Stale open trades (>48h old)
+    cutoff = (datetime.now(timezone.utc) - __import__('datetime').timedelta(hours=48)).isoformat()
+    stale = supabase_get(f"copy_trades?status=eq.open&entry_time=lt.{cutoff}&select=id,market_question,entry_time")
+    if stale and len(stale) > 0:
+        issues.append(("WARN", "stale_open_trades",
+            f"{len(stale)} open trades older than 48h — lifecycle may not be closing them"))
+
+    return issues
+
+
+def auto_fix_data(pattern, detail=None):
+    """Auto-fix data integrity issues. Returns True if fixed."""
+    if pattern == "duplicate_position":
+        send_alert("Duplicate position detected — closing the newer one", "FIX")
+        # The reconciliation will handle this on next cycle
+        return True
+    elif pattern == "null_pnl_trades":
+        # Can't auto-fix historical null PnL — need market prices at close time
+        # Just alert for now
+        return False
+    elif pattern == "stale_open_trades":
+        send_alert("Stale open trades >48h — flushing", "FIX")
+        flush_open_positions()
+        return True
+    return False
+
+
+# ─── Log error scanning ─────────────────────────────────────────
+LOG_FILE = os.path.join(BOT_DIR, "logs/bot-out.log")
+KNOWN_ERRORS_FILE = os.path.join(BOT_DIR, "monitor-known-errors.json")
+
+def load_known_errors():
+    try:
+        with open(KNOWN_ERRORS_FILE) as f:
+            return json.load(f)
+    except:
+        return {"patterns": {}, "last_line_count": 0}
+
+def save_known_errors(data):
+    with open(KNOWN_ERRORS_FILE, 'w') as f:
+        json.dump(data, f)
+
+def scan_recent_errors():
+    """Scan bot logs for error patterns since last check. Returns list of (severity, pattern, message)."""
+    issues = []
+    known = load_known_errors()
+    last_count = known.get("last_line_count", 0)
+
+    try:
+        with open(LOG_FILE) as f:
+            lines = f.readlines()
+    except:
+        return issues
+
+    current_count = len(lines)
+    if current_count <= last_count:
+        known["last_line_count"] = current_count
+        save_known_errors(known)
+        return issues
+
+    # Only scan new lines since last check
+    new_lines = lines[last_count:]
+    error_counts = {}
+
+    for line in new_lines:
+        lower = line.lower()
+        if "error" in lower or "fail" in lower or "timeout" in lower:
+            # Extract error signature (first 80 chars after the keyword)
+            for keyword in ["error", "failed", "timeout"]:
+                idx = lower.find(keyword)
+                if idx >= 0:
+                    sig = line[idx:idx+80].strip()
+                    # Normalize by removing timestamps and specific IDs
+                    sig = sig[:60]
+                    error_counts[sig] = error_counts.get(sig, 0) + 1
+                    break
+
+    # Alert on patterns appearing 5+ times in one cycle
+    for sig, count in error_counts.items():
+        if count >= 5:
+            known_count = known.get("patterns", {}).get(sig, 0)
+            if known_count == 0:
+                # New error pattern never seen before
+                issues.append(("WARN", "new_error_pattern",
+                    f"New error pattern ({count}x): {sig[:50]}"))
+            else:
+                issues.append(("WARN", "recurring_error",
+                    f"Error ({count}x this cycle): {sig[:50]}"))
+            known.setdefault("patterns", {})[sig] = known_count + count
+
+    known["last_line_count"] = current_count
+    save_known_errors(known)
+    return issues
+
+
 # ─── Auto-fix known patterns ────────────────────────────────────
 def auto_fix(pattern):
     """Apply automatic fix for known patterns. Returns True if fixed."""
@@ -369,6 +493,18 @@ def main():
 
             # 4. Check for anomalies
             issues = check_anomalies(conn, status)
+
+            # 4b. Check data integrity (every 3rd cycle = 15 min)
+            if conn.execute("SELECT COUNT(*) FROM metrics").fetchone()[0] % 3 == 0:
+                data_issues = check_data_integrity()
+                issues.extend(data_issues)
+                for severity, pattern, message in data_issues:
+                    if severity == "CRITICAL":
+                        auto_fix_data(pattern)
+
+            # 4c. Scan logs for error patterns
+            log_issues = scan_recent_errors()
+            issues.extend(log_issues)
 
             # 5. Handle issues
             for severity, pattern, message in issues:

@@ -24,6 +24,8 @@ export class SignalExecutor {
   private riskManager: RiskManager;
   private paperMode: boolean;
   private signalMarketIds: Set<string> = new Set(); // lightweight tracker — paper engine has the trades
+  private recentlyClosedMarkets: Map<string, number> = new Map(); // marketId -> close timestamp
+  private readonly REENTRY_COOLDOWN_MS = 15 * 60 * 1000; // 15 min cooldown after closing
   private executedCount = 0;
   private blockedCount = 0;
   private maxOpenSignalPositions: number;
@@ -47,6 +49,12 @@ export class SignalExecutor {
 
     if (this.signalMarketIds.has(marketId) || this.paperEngine.hasOpenPosition(marketId)) {
       return { success: false, reason: `Already have position in ${marketId.slice(0, 20)}` };
+    }
+
+    // Re-entry cooldown: prevent opening on a market we just closed (avoids Supabase race)
+    const closedAt = this.recentlyClosedMarkets.get(marketId);
+    if (closedAt && Date.now() - closedAt < this.REENTRY_COOLDOWN_MS) {
+      return { success: false, reason: `Cooldown: ${marketId.slice(0, 20)} closed ${Math.round((Date.now() - closedAt) / 60000)}m ago` };
     }
 
     // Thesis-level dedup: skip if any open position shares 3+ meaningful words
@@ -137,6 +145,7 @@ export class SignalExecutor {
 
   closePosition(marketId: string, exitPrice: number, reason: string): Trade | null {
     if (!this.signalMarketIds.has(marketId)) return null;
+    this.recentlyClosedMarkets.set(marketId, Date.now());
 
     if (this.paperMode) {
       const closed = this.paperEngine.closeTradeByMarketId(marketId, exitPrice, reason);

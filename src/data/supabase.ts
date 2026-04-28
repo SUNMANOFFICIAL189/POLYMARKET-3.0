@@ -142,27 +142,19 @@ export async function upsertDailyPerformance(perf: DailyPerformance): Promise<vo
     pnl: perf.pnl,
     pnl_pct: perf.pnlPct,
     trades_executed: perf.tradesExecuted,
-    trades_vetoed: perf.tradesVetoed,
     wins: perf.wins,
     losses: perf.losses,
     win_rate: perf.winRate,
     max_drawdown: perf.maxDrawdown,
     exposure: perf.exposure,
     risk_level: perf.riskLevel,
-    leader_wallet: perf.leaderWallet,
-    leader_name: perf.leaderName,
-    balance_usdc: perf.balance,
   }, { onConflict: 'date' });
   if (error) logger.error(`upsertDailyPerformance failed: ${error.message}`);
 }
 
 export async function updateBotBalance(balance: number): Promise<void> {
-  const today = new Date().toISOString().split('T')[0];
-  const { error } = await getClient().from('daily_performance').upsert({
-    date: today,
-    balance_usdc: balance,
-  }, { onConflict: 'date' });
-  if (error) logger.error(`updateBotBalance failed: ${error.message}`);
+  // balance_usdc column doesn't exist in schema — use .bot-status.json instead
+  // Kept as no-op to avoid breaking callers
 }
 
 // ─── Leader History Stats ──────────────────────────────────────
