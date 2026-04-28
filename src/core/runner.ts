@@ -626,13 +626,38 @@ export class Runner {
       let orphansClosed = 0;
       let missingAdded = 0;
 
-      // Gap A: Supabase has "open" trades that memory doesn't know about → close as orphaned
+      // Gap A: Supabase has "open" trades that memory doesn't know about.
+      // The trade was likely closed by lifecycle (removed from memory) but the
+      // Supabase write may be pending or failed. Compute PnL from current market
+      // price before marking as stopped.
       for (const sbTrade of supabaseOpen) {
         if (!memoryIds.has(sbTrade.marketId) && sbTrade.id) {
+          let exitPrice = sbTrade.ourEntryPrice ?? sbTrade.entryPrice ?? 0.5;
+          let pnl: number | undefined;
+          try {
+            const cached = this.marketCache.getMarket(sbTrade.marketId);
+            if (cached) {
+              const outcomeIdx = cached.outcomes.findIndex(
+                (o: string) => o.toLowerCase() === (sbTrade.outcome ?? 'yes').toLowerCase()
+              );
+              if (outcomeIdx >= 0 && outcomeIdx < cached.outcomePrices.length) {
+                exitPrice = cached.outcomePrices[outcomeIdx];
+              }
+            }
+          } catch { /* use entry price as fallback */ }
+          const entryPrice = sbTrade.ourEntryPrice ?? sbTrade.entryPrice ?? 0.5;
+          const size = sbTrade.ourSize ?? 20;
+          if (sbTrade.side === 'buy') {
+            pnl = (exitPrice - entryPrice) * (size / entryPrice);
+          } else {
+            pnl = (entryPrice - exitPrice) * (size / entryPrice);
+          }
           await db.updateCopyTrade(sbTrade.id, {
             status: 'stopped',
+            pnl: pnl ?? 0,
             exitTime: new Date().toISOString(),
           });
+          logger.info(`Reconciliation: orphan ${sbTrade.marketId.slice(0, 20)} stopped with pnl=$${(pnl ?? 0).toFixed(2)}`);
           orphansClosed++;
         }
       }
