@@ -234,16 +234,35 @@ def check_anomalies(conn, current):
                 issues.append(("WARN", "signal_dead",
                     f"signalsGenerated stuck at {newest_val} for 2h"))
 
-    # 5. Closed trades not increasing (nothing resolving)
+    # 5. Closed trades not increasing — only alert if a position has exceeded TTL
+    # Signal trades have 24h TTL. Don't alert if all positions are younger than that.
     recent_closed = conn.execute(
         "SELECT closed_trades FROM metrics ORDER BY ts DESC LIMIT 24"
     ).fetchall()
     if len(recent_closed) >= 24:
         oldest_c = recent_closed[-1][0] or 0
         newest_c = recent_closed[0][0] or 0
-        if newest_c == oldest_c and (current.get("openPositions", 0) or 0) > 3:
-            issues.append(("WARN", "trades_stuck",
-                f"closedTrades frozen at {newest_c} for 2h with {current.get('openPositions', 0)} positions open"))
+        open_count = current.get("openPositions", 0) or 0
+        if newest_c == oldest_c and open_count > 3:
+            # Check if any position should have closed by now (older than TTL)
+            has_overdue = False
+            try:
+                open_trades = supabase_get("copy_trades?status=eq.open&select=entry_time")
+                if open_trades:
+                    ttl_hours = 24
+                    now = datetime.now(timezone.utc)
+                    for t in open_trades:
+                        entry = t.get("entry_time", "")
+                        if entry:
+                            age_h = (now - datetime.fromisoformat(entry.replace("Z", "+00:00"))).total_seconds() / 3600
+                            if age_h > ttl_hours:
+                                has_overdue = True
+                                break
+            except:
+                has_overdue = True  # if we can't check, assume worst case
+            if has_overdue:
+                issues.append(("CRITICAL", "trades_stuck",
+                    f"closedTrades frozen at {newest_c} for 2h — position(s) have exceeded {ttl_hours}h TTL"))
 
     # 6. Rapid PnL decline (lost >3% in last hour)
     recent_pnl = conn.execute(
