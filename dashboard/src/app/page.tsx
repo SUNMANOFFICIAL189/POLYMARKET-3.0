@@ -16,7 +16,7 @@ import { RightPanel } from '@/components/panels/right-panel'
 import { NeuralGlobe } from '@/components/globe'
 import type { Leader, CopyTrade, DailyPerformance, LeaderHistory, ChartPoint, MirofishScan } from '@/lib/types'
 
-function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoint[] {
+function deriveChartPoints(trades: CopyTrade[], depositAmount: number, currentBotBalance?: number): ChartPoint[] {
   // Chart shows PORTFOLIO VALUE over time.
   // Realized P&L events move the line historically.
   // Final point = actual current balance (deposit - reserved + realized).
@@ -53,9 +53,11 @@ function deriveChartPoints(trades: CopyTrade[], depositAmount: number): ChartPoi
     minute: '2-digit',
     hour12: false,
   })
-  // Only add if actual balance differs from last realized point (open positions exist)
-  if (Math.abs(actualBalance - running) > 1) {
-    points.push({ time: now, balance: Math.max(0, actualBalance) })
+  // Use real balance from bot-status.json if available (most accurate),
+  // otherwise fall back to calculated balance from trade deltas
+  const finalBalance = currentBotBalance ?? running
+  if (Math.abs(finalBalance - running) > 1 || currentBotBalance !== undefined) {
+    points.push({ time: now, balance: Math.max(0, finalBalance) })
   }
 
   return points
@@ -174,7 +176,7 @@ export default async function DashboardPage() {
     mirofishOverrideCount, mirofishOverrideLosses, mirofishOverrideWins,
   } = deriveMetrics(trades, performance, 6300)
 
-  const chartPoints = deriveChartPoints(trades, 6300)
+  const chartPoints = deriveChartPoints(trades, 6300, readBotStatus()?.balance ?? undefined)
 
   return (
     <div style={{
