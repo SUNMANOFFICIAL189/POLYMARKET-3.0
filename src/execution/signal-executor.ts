@@ -4,6 +4,7 @@ import type { CopyTradeInput, PaperTradeResult } from '../core/paper-trading.js'
 import { RiskManager } from '../core/risk-manager.js';
 import type { TradingSignal } from '../signals/signal-generator.js';
 import type { Trade } from '../types/index.js';
+import { categoriseMarket } from '../signals/market-categoriser.js';
 
 /**
  * SignalExecutor — executes trades from the signal-based original trading pipeline.
@@ -57,16 +58,33 @@ export class SignalExecutor {
       return { success: false, reason: `Cooldown: ${marketId.slice(0, 20)} closed ${Math.round((Date.now() - closedAt) / 60000)}m ago` };
     }
 
-    // Thesis-level dedup: skip if any open position shares 3+ meaningful words
-    // Prevents 7 positions on "US x Iran peace deal" variants
+    // Category gate: ban BUY on politics/geopolitical markets (0W/10L in data)
+    // SELL on politics stays enabled (proven profitable)
+    if (signal.side === 'buy') {
+      const category = categoriseMarket(marketQ);
+      if (category === 'politics') {
+        logger.info(`SignalExecutor: CATEGORY GATE — BUY blocked on politics market: "${marketQ.slice(0, 40)}"`);
+        return { success: false, reason: 'Category gate: BUY disabled for politics markets' };
+      }
+    }
+
+    // Thesis-level dedup + Rule B: cap at 2 positions per thesis cluster
+    // A "thesis" = markets sharing 3+ meaningful words (e.g. "US Iran peace deal" variants)
+    // Block entry if 2+ existing positions already share the same thesis
     const STOP = new Set(['will','the','and','for','by','on','in','to','of','a','be','or','is']);
     const newWords = new Set(marketQ.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !STOP.has(w)));
+    const MAX_THESIS_POSITIONS = Number(process.env.MAX_THESIS_POSITIONS ?? '2') || 2;
+    let thesisOverlapCount = 0;
     for (const existingTrade of this.getOpenTrades()) {
       const existingWords = new Set((existingTrade.question || '').toLowerCase().split(/\s+/).filter((w: string) => w.length > 2 && !STOP.has(w)));
       let overlap = 0;
       for (const w of newWords) { if (existingWords.has(w)) overlap++; }
       if (overlap >= 3) {
-        return { success: false, reason: `Thesis dedup: "${marketQ.slice(0, 30)}" overlaps with existing position` };
+        thesisOverlapCount++;
+        if (thesisOverlapCount >= MAX_THESIS_POSITIONS) {
+          logger.info(`SignalExecutor: RULE B — thesis cap (${MAX_THESIS_POSITIONS}) reached for "${marketQ.slice(0, 30)}" — ${thesisOverlapCount} similar positions open`);
+          return { success: false, reason: `Rule B: ${thesisOverlapCount} positions on same thesis (max ${MAX_THESIS_POSITIONS})` };
+        }
       }
     }
 
@@ -106,6 +124,17 @@ export class SignalExecutor {
     if (entryPrice > 0 && entryPrice < MIN_ENTRY_PRICE) {
       logger.info('SignalExecutor: PRICE FLOOR — entry ' + entryPrice.toFixed(3) + ' < $' + MIN_ENTRY_PRICE.toFixed(2) + ' min — skipping penny market');
       return { success: false, reason: 'Entry price ' + entryPrice.toFixed(3) + ' below $' + MIN_ENTRY_PRICE.toFixed(2) + ' floor' };
+    }
+
+    // Rule A: BUY requires 80% confidence (SELL stays at 65%)
+    // Exempt penny BUY (<$0.05 entry) — lottery tickets with positive EV (+$30.98/trade avg)
+    if (signal.side === 'buy') {
+      const BUY_MIN_CONFIDENCE = Number(process.env.BUY_MIN_CONFIDENCE ?? '0.80') || 0.80;
+      const isPennyBuy = entryPrice > 0 && entryPrice < 0.05;
+      if (!isPennyBuy && signal.confidence < BUY_MIN_CONFIDENCE) {
+        logger.info(`SignalExecutor: RULE A — BUY confidence ${(signal.confidence * 100).toFixed(0)}% < ${(BUY_MIN_CONFIDENCE * 100).toFixed(0)}% min (non-penny) — skipping`);
+        return { success: false, reason: `Rule A: BUY confidence ${(signal.confidence * 100).toFixed(0)}% below ${(BUY_MIN_CONFIDENCE * 100).toFixed(0)}% threshold` };
+      }
     }
 
     logger.info(`SignalExecutor: ${this.paperMode ? '[PAPER]' : '[LIVE]'} SIGNAL TRADE`, {
