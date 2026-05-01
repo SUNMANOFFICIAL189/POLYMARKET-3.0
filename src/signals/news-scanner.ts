@@ -37,6 +37,15 @@ const DEFAULT_FEEDS: RSSFeed[] = [
   { name: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml', priority: 'medium' },
   { name: 'The Hill', url: 'https://thehill.com/feed/', priority: 'medium' },
   { name: 'Axios', url: 'https://api.axios.com/feed/', priority: 'medium' },
+  // --- Tier 3: Added for SELL signal volume ---
+  { name: 'CNBC', url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114', priority: 'medium' },
+  { name: 'Bloomberg Crypto', url: 'https://feeds.bloomberg.com/crypto/news.rss', priority: 'medium' },
+  { name: 'MarketWatch', url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories', priority: 'medium' },
+  { name: 'Financial Times', url: 'https://www.ft.com/rss/home', priority: 'medium' },
+  { name: 'Guardian World', url: 'https://www.theguardian.com/world/rss', priority: 'low' },
+  { name: 'Foreign Affairs', url: 'https://www.foreignaffairs.com/rss.xml', priority: 'low' },
+  { name: 'DL News', url: 'https://www.dlnews.com/arc/outboundfeeds/rss/', priority: 'medium' },
+  { name: 'Watcher Guru', url: 'https://watcher.guru/news/feed', priority: 'low' },
 ];
 
 const RELEVANCE_KEYWORDS = [
@@ -61,6 +70,17 @@ const RELEVANCE_KEYWORDS = [
   'merger', 'acquisition', 'ipo', 'earnings',
   // Prediction markets
   'polymarket', 'prediction market',
+  // Energy & commodities (SELL-relevant)
+  'oil', 'crude', 'opec', 'natural gas', 'commodity',
+  // Geopolitical escalation (strong SELL signals)
+  'invasion', 'missile', 'airstrike', 'coup', 'assassination',
+  'deploy', 'mobilize', 'retaliation', 'escalation',
+  // Financial stress (strong SELL signals)
+  'default', 'bankruptcy', 'bank failure', 'crash', 'collapse',
+  'debt ceiling', 'shutdown', 'downgrade',
+  // Crypto-specific (price movement triggers)
+  'halving', 'etf', 'whale', 'liquidation', 'hack', 'exploit',
+  'binance', 'coinbase', 'exchange', 'staking',
 ];
 
 export class NewsScanner extends EventEmitter {
