@@ -49,7 +49,7 @@ interface GammaMarket {
 const GAMMA_URL =
   'https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=500&order=volume24hr&ascending=false';
 const FETCH_TIMEOUT_MS = 15_000;
-const DEFAULT_POLL_INTERVAL_MS = 300_000; // 5 minutes
+const DEFAULT_POLL_INTERVAL_MS = 180_000; // 3 minutes (was 5 — faster refresh for SELL signal volume)
 
 // ---------------------------------------------------------------------------
 // MarketCache
@@ -128,7 +128,7 @@ export class MarketCache {
     }
 
     scored.sort((a, b) => b.score - a.score);
-    return scored.slice(0, 10).map((s) => s.market);
+    return scored.slice(0, 15).map((s) => s.market); // increased from 10 for broader SELL coverage
   }
 
   /** Exact lookup by slug. Returns null if not found. */

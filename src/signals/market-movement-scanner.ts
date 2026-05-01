@@ -17,7 +17,8 @@ const PRIMARY_MODEL = process.env.FALLBACK_AI_MODEL ?? 'google/gemma-4-31b-it';
 const PRIMARY_KEY = process.env.OPENROUTER_API_KEY ?? '';
 
 const SCAN_INTERVAL_MS = Number(process.env.MOVEMENT_SCAN_MS ?? '600000') || 600000;
-const MOVE_THRESHOLD = Number(process.env.MOVEMENT_THRESHOLD ?? '0.08') || 0.08;
+const MOVE_THRESHOLD_UP = Number(process.env.MOVEMENT_THRESHOLD_UP ?? '0.08') || 0.08;
+const MOVE_THRESHOLD_DOWN = Number(process.env.MOVEMENT_THRESHOLD_DOWN ?? '0.05') || 0.05; // lower for SELL — 63% WR
 const MIN_CONFIDENCE = 0.65;
 const COOLDOWN_MS = 60 * 60 * 1000;
 
@@ -45,7 +46,7 @@ export class MarketMovementScanner extends EventEmitter {
     logger.info(
       'MarketMovementScanner: Starting — scan every ' +
       (SCAN_INTERVAL_MS / 1000) + 's, threshold ' +
-      (MOVE_THRESHOLD * 100).toFixed(0) + '%'
+      (MOVE_THRESHOLD_UP * 100).toFixed(0) + '%/' + (MOVE_THRESHOLD_DOWN * 100).toFixed(0) + '% (up/down)'
     );
     setTimeout(() => this.scan(), 120_000);
     this.intervalId = setInterval(() => this.scan(), SCAN_INTERVAL_MS);
@@ -90,10 +91,11 @@ export class MarketMovementScanner extends EventEmitter {
         // Skip penny markets — moves on $0.001 prices are noise, not signals
         if (currentPrice < 0.02 && previousPrice < 0.02) continue;
 
-        if (movePct >= MOVE_THRESHOLD) {
+        const direction = currentPrice > previousPrice ? 'up' : 'down';
+        const threshold = direction === 'down' ? MOVE_THRESHOLD_DOWN : MOVE_THRESHOLD_UP;
+        if (movePct >= threshold) {
           movedCount++;
           this.movementsDetected++;
-          const direction = currentPrice > previousPrice ? 'up' : 'down';
           logger.info(
             'MarketMovementScanner: ' + market.question.slice(0, 50) +
             ' moved ' + direction + ' ' + (movePct * 100).toFixed(1) +
