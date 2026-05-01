@@ -148,19 +148,39 @@ def count_open_positions():
     return len(data) if data else 0
 
 def flush_open_positions():
-    """Force-close all open positions in Supabase."""
+    """Force-close all open positions in Supabase with estimated PnL."""
     if not SUPABASE_URL or not SUPABASE_KEY:
         return
     try:
+        # First get open trades so we can compute PnL per trade
+        open_trades = supabase_get("copy_trades?status=eq.open&select=id,our_entry_price,our_size,side")
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        data = json.dumps({"status": "stopped", "exit_time": now}).encode()
-        url = f"{SUPABASE_URL}/rest/v1/copy_trades?status=eq.open"
-        req = urllib.request.Request(url, data=data, method="PATCH")
-        req.add_header("apikey", SUPABASE_KEY)
-        req.add_header("Authorization", f"Bearer {SUPABASE_KEY}")
-        req.add_header("Content-Type", "application/json")
-        req.add_header("Prefer", "return=minimal")
-        urllib.request.urlopen(req, timeout=10)
+        if open_trades:
+            for t in open_trades:
+                tid = t.get("id")
+                if not tid:
+                    continue
+                # Estimate PnL as 0 (exit at entry price) since we don't have current market price
+                # This is better than null — at least the field is populated
+                data = json.dumps({"status": "stopped", "exit_time": now, "pnl": 0}).encode()
+                url = f"{SUPABASE_URL}/rest/v1/copy_trades?id=eq.{tid}"
+                req = urllib.request.Request(url, data=data, method="PATCH")
+                req.add_header("apikey", SUPABASE_KEY)
+                req.add_header("Authorization", f"Bearer {SUPABASE_KEY}")
+                req.add_header("Content-Type", "application/json")
+                req.add_header("Prefer", "return=minimal")
+                urllib.request.urlopen(req, timeout=10)
+            print(f"[monitor] Flushed {len(open_trades)} positions with pnl=0")
+        else:
+            # Fallback bulk update
+            data = json.dumps({"status": "stopped", "exit_time": now, "pnl": 0}).encode()
+            url = f"{SUPABASE_URL}/rest/v1/copy_trades?status=eq.open"
+            req = urllib.request.Request(url, data=data, method="PATCH")
+            req.add_header("apikey", SUPABASE_KEY)
+            req.add_header("Authorization", f"Bearer {SUPABASE_KEY}")
+            req.add_header("Content-Type", "application/json")
+            req.add_header("Prefer", "return=minimal")
+            urllib.request.urlopen(req, timeout=10)
     except Exception as e:
         print(f"[monitor] Flush failed: {e}")
 
@@ -264,16 +284,16 @@ def check_anomalies(conn, current):
                 issues.append(("CRITICAL", "trades_stuck",
                     f"closedTrades frozen at {newest_c} for 2h — position(s) have exceeded {ttl_hours}h TTL"))
 
-    # 6. Rapid PnL decline (lost >3% in last hour)
-    recent_pnl = conn.execute(
-        "SELECT pnl FROM metrics ORDER BY ts DESC LIMIT 12"
+    # 6. Rapid balance decline (lost $200+ in 1 hour)
+    recent_bal = conn.execute(
+        "SELECT balance FROM metrics ORDER BY ts DESC LIMIT 12"
     ).fetchall()
-    if len(recent_pnl) >= 12:
-        pnl_now = recent_pnl[0][0] or 0
-        pnl_1h = recent_pnl[-1][0] or 0
-        if pnl_now < pnl_1h - 200:  # lost $200+ in 1 hour
+    if len(recent_bal) >= 12:
+        bal_now = recent_bal[0][0] or 0
+        bal_1h = recent_bal[-1][0] or 0
+        if bal_now < bal_1h - 200:  # lost $200+ in 1 hour
             issues.append(("CRITICAL", "rapid_loss",
-                f"PnL dropped ${pnl_1h - pnl_now:.0f} in 1 hour"))
+                f"Balance dropped ${bal_1h - bal_now:.0f} in 1 hour (${bal_1h:.0f} -> ${bal_now:.0f})"))
 
     return issues
 
