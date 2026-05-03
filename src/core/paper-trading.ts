@@ -14,6 +14,7 @@ export interface CopyTradeInput {
   usdcSize: number;
   leaderEntryPrice: number;
   riskLevel: RiskLevel;
+  endDate?: string;
 }
 
 export interface PaperTradeResult {
@@ -45,6 +46,7 @@ export class PaperTradingEngine {
   injectOpenTrade(opts: {
     id?: string; marketId: string; question: string; entryPrice: number;
     usdcAmount: number; entryTime: string; outcome: string; side: Side;
+    endDate?: string;
   }): void {
     if (this.openMarketIds.has(opts.marketId)) return; // already tracked
     const trade: Trade = {
@@ -64,6 +66,7 @@ export class PaperTradingEngine {
       stopLoss: 0.30,
       signalIds: [],
       entryTime: opts.entryTime,
+      endDate: opts.endDate,
     };
     this.openTrades.set(trade.id, trade);
     this.openMarketIds.add(opts.marketId);

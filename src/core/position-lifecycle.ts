@@ -158,8 +158,21 @@ export class PositionLifecycleManager {
       if (isNaN(entryTime)) continue;
 
       const ageMs = now - entryTime;
-      if (ageMs > this.MAX_POSITION_AGE_MS) {
-        logger.info(`PositionLifecycle: Position "${marketId}" is ${(ageMs / 3600000).toFixed(1)}h old (max: ${this.MAX_POSITION_AGE_MS / 3600000}h) — auto-closing`);
+      // Dynamic TTL: use market endDate if available, otherwise fallback to MAX_POSITION_AGE_MS
+      // Cap at 14 days regardless of market resolution date
+      const MAX_TTL_MS = 14 * 24 * 3600000; // 14 days hard cap
+      let effectiveTTL = this.MAX_POSITION_AGE_MS; // default 24h
+      const endDateStr = (trade as any).endDate;
+      if (endDateStr) {
+        const endDate = new Date(endDateStr).getTime();
+        if (!isNaN(endDate) && endDate > now) {
+          // Set TTL to 1 day before market resolution, capped at 14 days
+          effectiveTTL = Math.min(endDate - entryTime - 24 * 3600000, MAX_TTL_MS);
+          if (effectiveTTL < this.MAX_POSITION_AGE_MS) effectiveTTL = this.MAX_POSITION_AGE_MS; // never shorter than default
+        }
+      }
+      if (ageMs > effectiveTTL) {
+        logger.info(`PositionLifecycle: Position "${marketId}" is ${(ageMs / 3600000).toFixed(1)}h old (ttl: ${(effectiveTTL / 3600000).toFixed(0)}h) — auto-closing`);
 
         // Try to get current price from market status
         let exitPrice = 0.5; // default fallback

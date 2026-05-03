@@ -14,10 +14,17 @@ import { categoriseMarket } from '../signals/market-categoriser.js';
  * signal confidence, not leader proportionality.
  */
 
-const SIZING_TIERS: Array<{ minConf: number; maxDollars: number }> = [
-  { minConf: 0.95, maxDollars: 50 },
-  { minConf: 0.90, maxDollars: 35 },
-  { minConf: 0.80, maxDollars: 20 },
+// BUY sizing (unchanged — penny BUY only at $20)
+const BUY_SIZING_TIERS: Array<{ minConf: number; maxDollars: number }> = [
+  { minConf: 0.65, maxDollars: 20 },
+];
+
+// SELL sizing — scaled up based on 74.3% WR across 35 trades
+const SELL_SIZING_TIERS: Array<{ minConf: number; maxDollars: number }> = [
+  { minConf: 0.90, maxDollars: 100 },
+  { minConf: 0.85, maxDollars: 75 },
+  { minConf: 0.75, maxDollars: 50 },
+  { minConf: 0.65, maxDollars: 35 },
 ];
 
 export class SignalExecutor {
@@ -93,15 +100,16 @@ export class SignalExecutor {
       return { success: false, reason: `Signal position cap ${this.maxOpenSignalPositions} reached` };
     }
 
-    // Confidence-based sizing
+    // Side-aware confidence-based sizing
+    const tiers = signal.side === 'sell' ? SELL_SIZING_TIERS : BUY_SIZING_TIERS;
     let ourSize = 20;
-    for (const tier of SIZING_TIERS) {
+    for (const tier of tiers) {
       if (signal.confidence >= tier.minConf) {
         ourSize = tier.maxDollars;
         break;
       }
     }
-    const maxSignalSize = Number(process.env.MAX_SIGNAL_DOLLARS ?? '50') || 50;
+    const maxSignalSize = Number(process.env.MAX_SIGNAL_DOLLARS ?? '100') || 100;
     if (ourSize > maxSignalSize) ourSize = maxSignalSize;
 
     const riskCheck = this.riskManager.checkTrade(ourSize);
@@ -126,15 +134,22 @@ export class SignalExecutor {
       return { success: false, reason: 'Entry price ' + entryPrice.toFixed(3) + ' below $' + MIN_ENTRY_PRICE.toFixed(2) + ' floor' };
     }
 
-    // Rule A: BUY requires 80% confidence (SELL stays at 65%)
-    // Exempt penny BUY (<$0.05 entry) — lottery tickets with positive EV (+$30.98/trade avg)
-    if (signal.side === 'buy') {
-      const BUY_MIN_CONFIDENCE = Number(process.env.BUY_MIN_CONFIDENCE ?? '0.80') || 0.80;
-      const isPennyBuy = entryPrice > 0 && entryPrice < 0.05;
-      if (!isPennyBuy && signal.confidence < BUY_MIN_CONFIDENCE) {
-        logger.info(`SignalExecutor: RULE A — BUY confidence ${(signal.confidence * 100).toFixed(0)}% < ${(BUY_MIN_CONFIDENCE * 100).toFixed(0)}% min (non-penny) — skipping`);
-        return { success: false, reason: `Rule A: BUY confidence ${(signal.confidence * 100).toFixed(0)}% below ${(BUY_MIN_CONFIDENCE * 100).toFixed(0)}% threshold` };
-      }
+    // Rule A: BUY restricted to penny markets only (<$0.05 entry)
+    // Non-penny BUY: 19 trades, -$53.27, no edge. Penny BUY: 10 trades, +$236.17 (lottery ticket wins)
+    if (signal.side === 'buy' && entryPrice >= 0.05) {
+      logger.info('SignalExecutor: RULE A — non-penny BUY blocked (entry $' + entryPrice.toFixed(3) + ' >= $0.05)');
+      return { success: false, reason: 'Rule A: BUY only allowed on penny markets (<$0.05)' };
+    }
+
+    // Block "Up or Down" coin-flip markets — no edge (50% base rate)
+    if (marketQ.toLowerCase().includes('up or down')) {
+      logger.info('SignalExecutor: COIN-FLIP BLOCK — "Up or Down" market blocked: "' + marketQ.slice(0, 40) + '"');
+      return { success: false, reason: 'Coin-flip market blocked (up or down)' };
+    }
+
+    // SELL dead zone: $0.20-0.35 entry has 25% WR — cap at $20
+    if (signal.side === 'sell' && entryPrice >= 0.20 && entryPrice < 0.35) {
+      ourSize = Math.min(ourSize, 20);
     }
 
     logger.info(`SignalExecutor: ${this.paperMode ? '[PAPER]' : '[LIVE]'} SIGNAL TRADE`, {
@@ -151,6 +166,7 @@ export class SignalExecutor {
         marketId,
         question: marketQ,
         tokenId: signal.market.conditionId,
+        endDate: signal.market.endDate ?? undefined,
         outcome: signal.market.outcomes[outcomeIdx] ?? 'Yes',
         side: signal.side,
         usdcSize: ourSize,

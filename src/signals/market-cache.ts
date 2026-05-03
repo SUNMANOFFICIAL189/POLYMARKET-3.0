@@ -124,7 +124,16 @@ export class MarketCache {
         if (questionLower.includes(word)) score++;
       }
       // Allow 1+ keyword match — AI confidence threshold handles quality control
-      if (score >= 1) scored.push({ market, score });
+      if (score >= 1) {
+        // Short-date priority: markets resolving within 3 days get +3 bonus score
+        // This prioritises quick-turnover trades that resolve fast
+        if (market.endDate) {
+          const daysUntil = (new Date(market.endDate).getTime() - Date.now()) / (24 * 3600000);
+          if (daysUntil > 0 && daysUntil <= 3) score += 3;
+          else if (daysUntil > 3 && daysUntil <= 7) score += 1;
+        }
+        scored.push({ market, score });
+      }
     }
 
     scored.sort((a, b) => b.score - a.score);

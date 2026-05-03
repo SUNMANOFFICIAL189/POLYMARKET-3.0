@@ -156,6 +156,7 @@ export interface Trade {
   signalIds: string[];
   entryTime: string | Date;
   exitTime?: string | Date;
+  endDate?: string;
 }
 
 // ─── Wallet Types ──────────────────────────────────────────────
