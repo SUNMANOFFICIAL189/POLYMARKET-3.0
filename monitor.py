@@ -184,6 +184,47 @@ def flush_open_positions():
     except Exception as e:
         print(f"[monitor] Flush failed: {e}")
 
+def flush_overdue_positions():
+    """Close only positions older than 7 days — leave active positions alone."""
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return
+    try:
+        open_trades = supabase_get("copy_trades?status=eq.open&select=id,entry_time,market_question")
+        if not open_trades:
+            return
+        now = datetime.now(timezone.utc)
+        flushed = 0
+        for t in open_trades:
+            entry = t.get("entry_time", "")
+            tid = t.get("id")
+            if not entry or not tid:
+                continue
+            try:
+                entry_dt = datetime.fromisoformat(entry.replace("Z", "+00:00"))
+                age_days = (now - entry_dt).total_seconds() / 86400
+            except:
+                continue
+            if age_days > 7:
+                exit_time = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+                data = json.dumps({"status": "stopped", "exit_time": exit_time, "pnl": 0}).encode()
+                url = f"{SUPABASE_URL}/rest/v1/copy_trades?id=eq.{tid}"
+                req = urllib.request.Request(url, data=data, method="PATCH")
+                req.add_header("apikey", SUPABASE_KEY)
+                req.add_header("Authorization", f"Bearer {SUPABASE_KEY}")
+                req.add_header("Content-Type", "application/json")
+                req.add_header("Prefer", "return=minimal")
+                urllib.request.urlopen(req, timeout=10)
+                q = (t.get("market_question") or "?")[:40]
+                print(f"[monitor] Flushed overdue position: {q} ({age_days:.1f} days old)")
+                flushed += 1
+        if flushed > 0:
+            send_alert(f"Flushed {flushed} overdue position(s) (>7 days old)", "FIX")
+        else:
+            print("[monitor] No overdue positions found (all <7 days)")
+    except Exception as e:
+        print(f"[monitor] Flush overdue failed: {e}")
+
+
 def restart_bot():
     """Restart the polymarket-bot process via pm2."""
     try:
@@ -254,8 +295,8 @@ def check_anomalies(conn, current):
                 issues.append(("WARN", "signal_dead",
                     f"signalsGenerated stuck at {newest_val} for 2h"))
 
-    # 5. Closed trades not increasing — only alert if a position has exceeded TTL
-    # Signal trades have 24h TTL. Don't alert if all positions are younger than that.
+    # 5. Closed trades not increasing — only alert if a position has TRULY exceeded its TTL
+    # TTL is dynamic: min(14 days, market endDate - 1 day). Default fallback: 7 days.
     recent_closed = conn.execute(
         "SELECT closed_trades FROM metrics ORDER BY ts DESC LIMIT 24"
     ).fetchall()
@@ -264,25 +305,30 @@ def check_anomalies(conn, current):
         newest_c = recent_closed[0][0] or 0
         open_count = current.get("openPositions", 0) or 0
         if newest_c == oldest_c and open_count > 3:
-            # Check if any position should have closed by now (older than TTL)
             has_overdue = False
+            overdue_count = 0
             try:
-                open_trades = supabase_get("copy_trades?status=eq.open&select=entry_time")
+                open_trades = supabase_get("copy_trades?status=eq.open&select=id,entry_time,market_question")
                 if open_trades:
-                    ttl_hours = 24
                     now = datetime.now(timezone.utc)
+                    default_ttl_hours = 7 * 24  # 7 day default if no endDate
+                    max_ttl_hours = 14 * 24     # 14 day hard cap
                     for t in open_trades:
                         entry = t.get("entry_time", "")
-                        if entry:
-                            age_h = (now - datetime.fromisoformat(entry.replace("Z", "+00:00"))).total_seconds() / 3600
-                            if age_h > ttl_hours:
-                                has_overdue = True
-                                break
+                        if not entry:
+                            continue
+                        entry_dt = datetime.fromisoformat(entry.replace("Z", "+00:00"))
+                        age_h = (now - entry_dt).total_seconds() / 3600
+                        # Only flag if position is older than 7 days (default TTL)
+                        # The lifecycle manager handles dynamic TTL per-market
+                        if age_h > default_ttl_hours:
+                            has_overdue = True
+                            overdue_count += 1
             except:
-                has_overdue = True  # if we can't check, assume worst case
+                pass  # if we can't check, DON'T assume worst case — avoid false flushes
             if has_overdue:
                 issues.append(("CRITICAL", "trades_stuck",
-                    f"closedTrades frozen at {newest_c} for 2h — position(s) have exceeded {ttl_hours}h TTL"))
+                    f"closedTrades frozen — {overdue_count} position(s) older than 7 days"))
 
     # 6. Rapid balance decline (lost $200+ in 1 hour)
     recent_bal = conn.execute(
@@ -438,8 +484,9 @@ def auto_fix(pattern):
         restart_bot()
         return True
     elif pattern == "trades_stuck":
-        send_alert("Trades stuck for 1h+ — flushing stale positions + restarting", "FIX")
-        flush_open_positions()
+        # Only flush positions older than 7 days — not ALL open positions
+        send_alert("Overdue positions detected — flushing only stale ones", "FIX")
+        flush_overdue_positions()
         restart_bot()
         return True
     return False
