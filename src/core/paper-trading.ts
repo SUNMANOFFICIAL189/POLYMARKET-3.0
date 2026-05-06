@@ -122,6 +122,7 @@ export class PaperTradingEngine {
       stopLoss: this.riskDial.config.stopLossPct,
       signalIds: [],
       entryTime: new Date().toISOString(),
+      endDate: input.endDate,
     };
 
     this.balance -= input.usdcSize;
