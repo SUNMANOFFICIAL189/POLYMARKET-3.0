@@ -647,6 +647,14 @@ def main():
         except Exception as e:
             print(f"[monitor] Check failed: {e}")
 
+        # Healthchecks.io heartbeat — fire-and-forget; loop must not crash on ping failure
+        hc_url = ENV.get("HC_PING_MONITOR_PY", "")
+        if hc_url:
+            try:
+                urllib.request.urlopen(hc_url, timeout=5)
+            except Exception:
+                pass
+
         time.sleep(CHECK_INTERVAL)
 
 

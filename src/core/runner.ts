@@ -757,5 +757,11 @@ export class Runner {
       movementScans: this.movementScanner.getStats().scansCompleted,
       movementSignals: this.movementScanner.getStats().signalsEmitted,
     });
+
+    // Healthchecks.io heartbeat — fire-and-forget; never block or crash on ping failure.
+    const hcUrl = process.env.HC_PING_BOT_STATUS;
+    if (hcUrl) {
+      fetch(hcUrl, { signal: AbortSignal.timeout(5_000) }).catch(() => {});
+    }
   }
 }
