@@ -27,6 +27,24 @@ import { PositionLifecycleManager } from './position-lifecycle.js';
 import type { Leader, LeaderTrade } from '../types/index.js';
 import type { TradingSignal } from '../signals/signal-generator.js';
 
+const GAMMA_API_BASE = 'https://gamma-api.polymarket.com';
+
+// Hydration-time helper: copy_trades has no endDate column, but lifecycle's
+// dynamic TTL needs it — without it, TTL falls back to 24h and the next sweep
+// flushes hydrated positions.
+async function fetchEndDateBySlug(slug: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${GAMMA_API_BASE}/markets?slug=${encodeURIComponent(slug)}`, {
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) return null;
+    const markets = (await res.json()) as Array<{ endDate?: string | null }>;
+    return markets[0]?.endDate ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export class Runner {
   private config = loadConfig();
   private running = false;
@@ -238,9 +256,12 @@ export class Runner {
       try {
         const openSignals = await db.getOpenCopyTrades();
         const signalTrades = openSignals.filter(t => t.leaderWallet === 'signal-bot');
+        let endDatesFound = 0;
         for (const t of signalTrades) {
           // Register ID in signal executor
           this.signalExecutor.registerExistingPosition(t.marketId);
+          const endDate = await fetchEndDateBySlug(t.marketId);
+          if (endDate) endDatesFound++;
           // Inject into paper engine so lifecycle manager can check TTL/stop-loss
           this.paperEngine.injectOpenTrade({
             id: t.id,
@@ -251,10 +272,11 @@ export class Runner {
             entryTime: t.entryTime,
             outcome: t.outcome,
             side: t.side,
+            endDate: endDate ?? undefined,
           });
         }
         if (signalTrades.length > 0) {
-          logger.info(`Hydrated ${signalTrades.length} signal position(s) from Supabase into paper engine`);
+          logger.info(`Hydrated ${signalTrades.length} signal position(s) from Supabase — endDate resolved for ${endDatesFound}/${signalTrades.length} via Gamma`);
         }
       } catch (err) {
         logger.warn(`Signal hydration failed: ${err}`);
