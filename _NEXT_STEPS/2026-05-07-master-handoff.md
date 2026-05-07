@@ -47,9 +47,34 @@ Steps 7-13 all done in same session:
   * Decision gate at +7 days: if signal v2 stable AND watchdog FP rate < 10%, flip watchdog to `--active` early
 
 **Next priority items, in order:**
-  1. (urgent — newly bumped) **Supabase pnl-write reliability** — fix the close path that drops pnl writes + backfill historical rows. Each restart currently resets balance to under-counting db state.
-  2. (queued) **SELL-aware position sizing** — partial mitigation via Signal v2's <24h cap, but doesn't fix the underlying max-loss math.
-  3. (queued) **Phase D: sports-convergence-copy** — gated on Phase C step 14 success.
+  1. (queued) **SELL-aware position sizing** — partial mitigation via Signal v2's <24h cap, but doesn't fix the underlying max-loss math.
+  2. (queued) **Phase D: sports-convergence-copy** — gated on Phase C step 14 success.
+
+---
+
+## ⚠ UPDATE 2026-05-08 (continued, late) — Supabase pnl-write reliability RESOLVED
+
+**The audit gap is closed. Bot now hydrates to a balance that matches the database, and the database matches reality (modulo $18 in pre-2026-05-06 rows that can't be recovered from rotated logs).**
+
+Branch `fix/pnl-write-reliability` merged → `strategy/buy-optimization` at commit `58d8257`. Two compound bugs fixed:
+- `copy-executor.ts:548` — guard added so closePosition delegates to signalExecutor when the marketId isn't tracked, instead of closing the trade in paperEngine and returning null.
+- `runner.ts:168` — lifecycle closePosition closure made async + await, so the `if (copy)` truthy check sees the resolved value, not the always-truthy Promise.
+
+Backfill script at `~/claude-hq/watchdogs/pats/scripts/backfill_pnl_writes.py`:
+- 46 suspect rows total (status=stopped, pnl=0, our_size>0)
+- 2 recoverable from PM2 logs (BTC-80k −$943.04, US-Iran-war −$0.18) — applied
+- 44 unrecoverable (pre-2026-05-06 logs rotated, or reconciliation-only closures)
+- Per user decision: 44 stay at pnl=0; code fix prevents new occurrences
+
+**Post-deploy verification:**
+- Server HEAD `58d8257`, build clean, pm2 restart count 105
+- Hydration: `balance=$5289.92, realizedPnl=$-785.08` (matches expected: $6,300 − 3×$75 open − $785.08 = $5,289.92)
+- Compiled JS contains both fix guards
+- Zero errors since restart
+
+**db sum(pnl) trajectory:** +$158.14 (pre-backfill) → −$785.08 (post-backfill, matches bot's pre-restart in-memory −$767.15 within $18 residual).
+
+**The bot's view of capital is now accurate.** Phase G live-trading is no longer blocked by accounting drift.
 
 ---
 
