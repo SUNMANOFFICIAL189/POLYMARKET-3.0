@@ -65,6 +65,30 @@ export class SignalExecutor {
       return { success: false, reason: `Cooldown: ${marketId.slice(0, 20)} closed ${Math.round((Date.now() - closedAt) / 60000)}m ago` };
     }
 
+    // Signal v2 — global BUY drop. Set SIGNAL_BUY_ENABLED=true to re-enable.
+    if (signal.side === 'buy' && process.env.SIGNAL_BUY_ENABLED !== 'true') {
+      logger.info(`SignalExecutor: SIGNAL V2 BUY DROP — "${marketQ.slice(0, 40)}" (set SIGNAL_BUY_ENABLED=true to override)`);
+      return { success: false, reason: 'Signal v2: BUY disabled by default' };
+    }
+
+    // Signal v2 — SELL only on markets resolving within MAX_HOURS_SELL_RESOLUTION.
+    // Long-dated SELLs at low entry prices carry asymmetric tail risk that doesn't
+    // trigger stop-loss until catastrophic (see 2026-05-07 -$943 BTC trade).
+    if (signal.side === 'sell') {
+      const maxHours = Number(process.env.MAX_HOURS_SELL_RESOLUTION ?? '24') || 24;
+      const endDateStr = signal.market.endDate;
+      if (endDateStr) {
+        const endTs = new Date(endDateStr).getTime();
+        if (!isNaN(endTs)) {
+          const hoursToResolution = (endTs - Date.now()) / 3600000;
+          if (hoursToResolution > maxHours) {
+            logger.info(`SignalExecutor: SIGNAL V2 SELL ENDDATE FILTER — "${marketQ.slice(0, 40)}" resolves in ${hoursToResolution.toFixed(1)}h (>${maxHours}h cap)`);
+            return { success: false, reason: `Signal v2: resolution ${hoursToResolution.toFixed(1)}h > ${maxHours}h cap` };
+          }
+        }
+      }
+    }
+
     // Category gate: ban BUY on politics/geopolitical markets (0W/10L in data)
     // SELL on politics stays enabled (proven profitable)
     if (signal.side === 'buy') {
