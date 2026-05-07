@@ -215,9 +215,14 @@ export class PositionLifecycleManager {
 
         if (entryPrice <= 0) continue;
 
-        const lossPct = (entryPrice - currentPrice) / entryPrice;
+        // Side-aware loss calculation — must match risk-manager.calculatePnl direction.
+        // BUY: adverse move is price falling (entry > current).
+        // SELL: adverse move is price rising (current > entry).
+        const lossPct = trade.side === 'buy'
+          ? (entryPrice - currentPrice) / entryPrice
+          : (currentPrice - entryPrice) / entryPrice;
         if (lossPct >= this.STOP_LOSS_PCT) {
-          logger.warn(`PositionLifecycle: STOP-LOSS triggered for "${marketId}" — entry: ${entryPrice.toFixed(3)}, current: ${currentPrice.toFixed(3)}, loss: ${(lossPct * 100).toFixed(1)}%`);
+          logger.warn(`PositionLifecycle: STOP-LOSS triggered for "${marketId}" [${(trade.side ?? '?').toUpperCase()}] — entry: ${entryPrice.toFixed(3)}, current: ${currentPrice.toFixed(3)}, loss: ${(lossPct * 100).toFixed(1)}%`);
 
           const closed = await this.closePosition(marketId, currentPrice, 'stop_loss');
           if (closed) {
