@@ -6,6 +6,26 @@
 
 ---
 
+## ⚠ UPDATE 2026-05-07 (next session) — Phase A RESOLVED
+
+**Phase A is CLOSED. Not a regression. Do NOT roll back `ef206c1`. Phase B is unblocked — start there.**
+
+**Single-trade explanation for the loss:** `9f11b560` SELL on `will-bitcoin-dip-to-80k-on-may-6`, entry 0.0408, size $75, exit 0.555 at 04:46:40 UTC = **−$943.04** PnL (97% of the observed PnL swing). Math: (0.555 − 0.041) × 1,829 shares = $940. Side-aware stop-loss math is correct. The fix surfaced pre-existing tail risk that the previous buggy code had been masking by never firing stop-loss on adverse SELL moves at all.
+
+**Two real architectural gaps (queued in `~/claude-hq/docs/BACKLOG.md`, NOT addressed yet):**
+1. SELL-aware position sizing (cap max-loss as % of equity, not dollar-size)
+2. Supabase pnl-write reliability (11/30 recent SELL stops have pnl=0 in db while bot logged real losses)
+
+Both should become Tier 1 watchdog rules in Phase B step 3 — they are the right rules to write because they catch exactly this class of bug class.
+
+**Currently-open positions are safe.** `aliens-by-2027` and `nvidia-largest-by-may-31` are both bounded at ~$22 max stop-loss exposure each. Combined ~$45 if both stop.
+
+**Full investigation written up in vault Decision Log entry `2026-05-07 · Phase A balance-drop investigation — NOT a regression`.**
+
+**Skip Phase A below. Resume from Phase B (architectural watchdog Tier 1, scaffold complete in commit `75f7add`, resume from step 2).**
+
+---
+
 ## Current state at end of session
 
 | | |
