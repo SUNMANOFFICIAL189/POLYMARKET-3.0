@@ -83,6 +83,37 @@ export class RiskManager {
     return { allowed: true };
   }
 
+  /**
+   * Cap a proposed position size by max-loss-as-percentage-of-balance.
+   *
+   * For BUY: max loss per share = entry price (loss if YES → 0).
+   * For SELL: max loss per share = (1 − entry price) (loss if YES → 1).
+   *   At low entry prices, SELL exposure is asymmetrically large: a $75 SELL
+   *   at entry 0.04 carries up to ~$1,800 max-loss exposure (24× the dollar
+   *   size). The 2026-05-07 BTC-80k −$943 trade was exactly this class.
+   *
+   * Returns the (possibly reduced) size. Returns 0 if the cap would shrink
+   * the position below the minimum-economic-size floor — caller should treat
+   * 0 as "skip, not worth opening at this size."
+   *
+   * Tunable via MAX_LOSS_PCT_PER_TRADE (default 0.05 = 5% of balance).
+   * Calibrated against 116 historical SELL closures: 5% rejects the
+   * catastrophic ≤$0.05 entry-price bucket while allowing the slightly
+   * profitable $0.05–$0.10 bucket through. See BACKLOG entry for analysis.
+   */
+  capByMaxLoss(rawSize: number, entryPrice: number, side: 'buy' | 'sell', minSize = 5): number {
+    if (rawSize <= 0 || entryPrice <= 0 || entryPrice >= 1) return rawSize;
+    const maxLossPct = Number(process.env.MAX_LOSS_PCT_PER_TRADE ?? '0.05') || 0.05;
+    const maxLossDollars = maxLossPct * this.balance;
+    const maxLossPerShare = side === 'sell' ? 1 - entryPrice : entryPrice;
+    const shares = rawSize / entryPrice;
+    const proposedMaxLoss = maxLossPerShare * shares;
+    if (proposedMaxLoss <= maxLossDollars) return rawSize;
+    const allowedShares = maxLossDollars / maxLossPerShare;
+    const allowedSize = allowedShares * entryPrice;
+    return allowedSize < minSize ? 0 : Math.floor(allowedSize * 100) / 100;
+  }
+
   checkStopLoss(trade: Trade, currentPrice: number): boolean {
     if (trade.side === 'buy') {
       const stopPrice = trade.entryPrice * (1 - trade.stopLoss);

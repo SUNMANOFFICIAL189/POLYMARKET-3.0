@@ -415,6 +415,22 @@ export class CopyExecutor {
       logger.info(`CopyExecutor: Longshot exempt from cap — $${ourSize.toFixed(2)} at ${entryPriceForCap.toFixed(3)} odds (keeping full size)`);
     }
 
+    // Final safety net: max-loss-as-percentage-of-balance. Currently dormant
+    // (copy executor is mostly idle in 2026-05) but the cap belongs here for
+    // when copy-trading is revived. SELL with low entry price → asymmetric
+    // tail risk; this enforces a portfolio-percentage ceiling. Tunable via
+    // MAX_LOSS_PCT_PER_TRADE (default 5%).
+    const cappedSize = this.riskManager.capByMaxLoss(ourSize, entryPriceForCap, leaderTrade.side);
+    if (cappedSize === 0) {
+      this.blockedCount++;
+      logger.info(`CopyExecutor: MAX-LOSS CAP — ${leaderTrade.side.toUpperCase()} entry ${entryPriceForCap.toFixed(3)} size $${ourSize.toFixed(2)} would exceed max-loss budget — rejecting`);
+      return { success: false, reason: `Max-loss cap: ${leaderTrade.side} at ${entryPriceForCap.toFixed(3)} too risky for current balance` };
+    }
+    if (cappedSize < ourSize) {
+      logger.info(`CopyExecutor: MAX-LOSS CAP — ${leaderTrade.side.toUpperCase()} size reduced $${ourSize.toFixed(2)} → $${cappedSize.toFixed(2)} (entry ${entryPriceForCap.toFixed(3)})`);
+      ourSize = cappedSize;
+    }
+
     if (ourSize < 1) {
       this.blockedCount++;
       return { success: false, reason: `Computed size $${ourSize.toFixed(2)} too small (min $1)` };
