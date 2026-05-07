@@ -23,7 +23,33 @@ Steps 2-6 all completed in the 2026-05-08 continuation session:
 
 **Next decision gate (2026-05-22):** Review audit.log false-positive rate. If <10%, flip `--soak` → `--active` per Phase F step 24.
 
-**Next major work item:** Phase C — Signal v2 (drop BUY + SELL <24h cap). Unblocked.
+---
+
+## ⚠ UPDATE 2026-05-08 (continued) — Phase C DEPLOYED, observation started
+
+**Phase C is DEPLOYED. Bot is running Signal v2 (commit `f2fd8e4`). 7-14 day observation window opens now.**
+
+Steps 7-13 all done in same session:
+  * Step 7-10: branched `strategy/signal-v2`, edited `signal-executor.ts` + `.env.example`
+  * Step 11: `tsc` clean, committed `f2fd8e4`, pushed `strategy/signal-v2`
+  * Step 12: fast-forward merged → `strategy/buy-optimization`, pushed
+  * Step 13: server pulled (HEAD verified `f2fd8e4`), `npm run build` clean, `pm2 restart` (PID 519630, restart count 104). Hydration succeeded — 2 open, 712 closed, balance recomputed to **$6,308.14** from Supabase
+
+**Important side effect of restart:** The post-restart balance ($6,308.14) is **$925 higher than the pre-restart in-memory balance ($5,382.85)**. The recomputation comes from Supabase `sum(pnl) = +$158.14` which doesn't include the catastrophic −$943 BTC trade (that row has `pnl=0` in the db — see Phase A finding). The bot's view of capital is now over-stated by ~$925 until the BACKLOG `Supabase pnl-write reliability` item is fixed and historical rows are backfilled.
+
+**Behavior change deployed:**
+  * BUY signal trades blocked unless `SIGNAL_BUY_ENABLED=true` (default off)
+  * SELL signal trades rejected when `hoursToResolution > MAX_HOURS_SELL_RESOLUTION` (default 24h)
+
+**Step 14 (observation, 7-14 days) starts now:**
+  * Track WR, PnL, trade volume daily
+  * Watch watchdog audit.log daily for new findings
+  * Decision gate at +7 days: if signal v2 stable AND watchdog FP rate < 10%, flip watchdog to `--active` early
+
+**Next priority items, in order:**
+  1. (urgent — newly bumped) **Supabase pnl-write reliability** — fix the close path that drops pnl writes + backfill historical rows. Each restart currently resets balance to under-counting db state.
+  2. (queued) **SELL-aware position sizing** — partial mitigation via Signal v2's <24h cap, but doesn't fix the underlying max-loss math.
+  3. (queued) **Phase D: sports-convergence-copy** — gated on Phase C step 14 success.
 
 ---
 
