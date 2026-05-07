@@ -6,9 +6,26 @@
 
 ---
 
-## ⚠ UPDATE 2026-05-07 (next session) — Phase A RESOLVED
+## ⚠ UPDATE 2026-05-08 (continuation session) — Phase A + Phase B BOTH COMPLETE
 
-**Phase A is CLOSED. Not a regression. Do NOT roll back `ef206c1`. Phase B is unblocked — start there.**
+**Phase A is CLOSED. Not a regression. Do NOT roll back `ef206c1`.**
+
+**Phase B is CLOSED. Architectural watchdog Tier 1 live in --soak mode.**
+
+Steps 2-6 all completed in the 2026-05-08 continuation session:
+  * Step 2: 3 semgrep static rules (`enddate-flow`, `side-aware-pnl`, `single-trade-pool`) — calibrated and committed
+  * Step 3: 4 Python runtime rules — 2 from original plan (`supabase_consistency`, `cron_file_existence`) + 2 added per Phase A findings (`low_priced_sell_max_loss`, `supabase_pnl_write_reliability`)
+  * Step 4: orchestrator.py + lib/alerts.py — three modes (--soak default, --active, --once-stdout)
+  * Step 5: revert-validation — all 4 known bugs from 2026-05-07 confirmed to fire the corresponding rule when the fix is reverted on a temp branch
+  * Step 6: launchd loaded, soak running, reminders.json rebased — flip-to-active reminder now fires 2026-05-22
+
+**Currently running:** Watchdog runs every 30 min via `com.claude-hq.pats-watchdog`. Audit log accumulates at `~/claude-hq/watchdogs/pats/audit.log` (gitignored). No Telegram alerts during soak.
+
+**Next decision gate (2026-05-22):** Review audit.log false-positive rate. If <10%, flip `--soak` → `--active` per Phase F step 24.
+
+**Next major work item:** Phase C — Signal v2 (drop BUY + SELL <24h cap). Unblocked.
+
+---
 
 **Single-trade explanation for the loss:** `9f11b560` SELL on `will-bitcoin-dip-to-80k-on-may-6`, entry 0.0408, size $75, exit 0.555 at 04:46:40 UTC = **−$943.04** PnL (97% of the observed PnL swing). Math: (0.555 − 0.041) × 1,829 shares = $940. Side-aware stop-loss math is correct. The fix surfaced pre-existing tail risk that the previous buggy code had been masking by never firing stop-loss on adverse SELL moves at all.
 
