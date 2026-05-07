@@ -165,11 +165,15 @@ export class Runner {
 
     // Position Lifecycle Manager — auto-closes resolved, stale, and stop-loss positions
     this.lifecycleManager = new PositionLifecycleManager({
-      closePosition: (marketId, exitPrice, reason) => {
-        // Try copy executor first, then signal executor
-        const copy = this.copyExecutor.closePosition(marketId, exitPrice, reason);
+      closePosition: async (marketId, exitPrice, reason) => {
+        // Try copy executor first, then signal executor.
+        // copyExecutor.closePosition is async — must be awaited so `if (copy)` checks
+        // the resolved value, not the Promise (which is always truthy and would mask
+        // the fall-through to signalExecutor for signal-bot trades, leaving the close
+        // unpersisted — root cause of the 2026-05-07 -$943 audit gap).
+        const copy = await this.copyExecutor.closePosition(marketId, exitPrice, reason);
         if (copy) return copy;
-        return this.signalExecutor.closePosition(marketId, exitPrice, reason) as any;
+        return (await this.signalExecutor.closePosition(marketId, exitPrice, reason)) as any;
       },
       getOpenTrades: () => [...this.copyExecutor.getOpenTrades(), ...(this.signalExecutor.getOpenTrades() as any[])],
       persistClose: async (trade) => {

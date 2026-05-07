@@ -546,6 +546,13 @@ export class CopyExecutor {
    */
   async closePosition(marketId: string, currentPrice: number, reason = 'leader_closed'): Promise<CopyTrade | null> {
     const copyTrade = this.openCopyTrades.get(marketId);
+    // Guard: if this executor doesn't track the marketId, don't touch paperEngine.
+    // Signal-bot trades live in signalExecutor (per c0e44b9). Touching paperEngine
+    // here would close the trade in memory but return null to the caller — the
+    // close would never get persisted to Supabase, leaving an orphan row that
+    // reconciliation later overwrites with pnl=0 (root cause of the 2026-05-07
+    // -$943 audit gap).
+    if (!copyTrade) return null;
 
     if (this.paperMode) {
       const closed = this.paperEngine.closeTradeByMarketId(marketId, currentPrice, reason);
