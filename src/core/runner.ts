@@ -208,12 +208,23 @@ export class Runner {
       db.initSupabase(this.config.supabase.url, this.config.supabase.serviceKey);
       // Hydrate paper trading engine from Supabase so restarts don't lose state
       await this.paperEngine.hydrateFromSupabase();
-      // Hydrate executor's open positions so close detection persists Supabase updates
+      // Hydrate executor's open positions so close detection persists Supabase updates.
+      // Filter OUT signal-bot trades — those are owned by signalExecutor only.
+      // Duplicating them in copyExecutor causes lifecycle close paths to misattribute,
+      // leaving signalExecutor's recentlyClosedMarkets cooldown unset → duplicate opens
+      // within the cooldown window when the next signal arrives on the same market.
       const { data: openRows } = await db.getClient()
         .from('copy_trades')
         .select('*')
         .in('status', ['open', 'pending']);
-      if (openRows) this.copyExecutor.hydrateOpenTrades(openRows);
+      if (openRows) {
+        const copyOnly = openRows.filter(r => r.leader_wallet !== 'signal-bot');
+        this.copyExecutor.hydrateOpenTrades(copyOnly);
+        const signalCount = openRows.length - copyOnly.length;
+        if (signalCount > 0) {
+          logger.info(`Hydration: ${copyOnly.length} copy trade(s) → copyExecutor, ${signalCount} signal-bot trade(s) → signalExecutor only`);
+        }
+      }
 
       // Hydrate rolling wallet performance window from recent closed trades
       const { data: perfRows } = await db.getClient()
