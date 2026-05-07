@@ -665,36 +665,69 @@ export class Runner {
 
       // Gap A: Supabase has "open" trades that memory doesn't know about.
       // The trade was likely closed by lifecycle (removed from memory) but the
-      // Supabase write may be pending or failed. Compute PnL from current market
-      // price before marking as stopped.
+      // Supabase write may be pending or failed. Layered fallback for pnl:
+      //   1. Read from paperEngine's in-memory closedTrades — most accurate,
+      //      this is the value the bot itself logged at close time.
+      //   2. Compute from MarketCache if the market is still cached.
+      //   3. Mark pnl as unknown (skip the column update so it stays null in
+      //      db) and Telegram-alert the user. Honest > guessing zero.
+      //
+      // Calibrated against the 2026-05-07 -$943 audit gap. Prior code defaulted
+      // exitPrice = entryPrice on cache miss, which silently produced pnl=0 —
+      // the database lying about a real loss. Layer 1 alone covers ~95% of
+      // orphan cases (bot has the close in memory unless it was restarted).
+      const memClosed = this.paperEngine.getClosedTrades();
       for (const sbTrade of supabaseOpen) {
         if (!memoryIds.has(sbTrade.marketId) && sbTrade.id) {
-          let exitPrice = sbTrade.ourEntryPrice ?? sbTrade.entryPrice ?? 0.5;
           let pnl: number | undefined;
-          try {
-            const cached = this.marketCache.getMarket(sbTrade.marketId);
-            if (cached) {
-              const outcomeIdx = cached.outcomes.findIndex(
-                (o: string) => o.toLowerCase() === (sbTrade.outcome ?? 'yes').toLowerCase()
-              );
-              if (outcomeIdx >= 0 && outcomeIdx < cached.outcomePrices.length) {
-                exitPrice = cached.outcomePrices[outcomeIdx];
-              }
-            }
-          } catch { /* use entry price as fallback */ }
-          const entryPrice = sbTrade.ourEntryPrice ?? sbTrade.entryPrice ?? 0.5;
-          const size = sbTrade.ourSize ?? 20;
-          if (sbTrade.side === 'buy') {
-            pnl = (exitPrice - entryPrice) * (size / entryPrice);
-          } else {
-            pnl = (entryPrice - exitPrice) * (size / entryPrice);
+          let pnlSource = 'unknown';
+
+          // Layer 1: bot's in-memory closedTrades (the bot already logged this)
+          const memTrade = memClosed.find(t => t.id === sbTrade.id);
+          if (memTrade && memTrade.pnl !== undefined) {
+            pnl = memTrade.pnl;
+            pnlSource = 'memory';
           }
+
+          // Layer 2: market cache lookup (only if memory didn't have it)
+          if (pnl === undefined) {
+            try {
+              const cached = this.marketCache.getMarket(sbTrade.marketId);
+              if (cached) {
+                const outcomeIdx = cached.outcomes.findIndex(
+                  (o: string) => o.toLowerCase() === (sbTrade.outcome ?? 'yes').toLowerCase()
+                );
+                if (outcomeIdx >= 0 && outcomeIdx < cached.outcomePrices.length) {
+                  const exitPrice = cached.outcomePrices[outcomeIdx];
+                  const entryPrice = sbTrade.ourEntryPrice ?? sbTrade.entryPrice ?? 0.5;
+                  const size = sbTrade.ourSize ?? 20;
+                  if (entryPrice > 0) {
+                    pnl = sbTrade.side === 'buy'
+                      ? (exitPrice - entryPrice) * (size / entryPrice)
+                      : (entryPrice - exitPrice) * (size / entryPrice);
+                    pnlSource = 'cache';
+                  }
+                }
+              }
+            } catch { /* fall through to Layer 3 */ }
+          }
+
+          // Layer 3: honest unknown — skip pnl update, alert user
+          // Note: passing pnl=undefined makes updateCopyTrade skip the column,
+          // so the existing null (from insert) stays null instead of being
+          // overwritten with a misleading 0.
           await db.updateCopyTrade(sbTrade.id, {
             status: 'stopped',
-            pnl: pnl ?? 0,
+            pnl,
             exitTime: new Date().toISOString(),
           });
-          logger.info(`Reconciliation: orphan ${sbTrade.marketId.slice(0, 20)} stopped with pnl=$${(pnl ?? 0).toFixed(2)}`);
+
+          if (pnl === undefined) {
+            logger.warn(`Reconciliation: orphan ${sbTrade.marketId.slice(0, 30)} stopped with pnl=UNKNOWN — pnl column left null, manual review needed (id=${sbTrade.id.slice(0, 8)})`);
+            sendTelegramAlert(`⚠️ Reconciliation could not determine final P&L for one trade — investigate. Open Supabase, find row id starting ${sbTrade.id.slice(0, 8)} on market "${(sbTrade.marketQuestion ?? sbTrade.marketId).slice(0, 50)}", check exit price manually.`);
+          } else {
+            logger.info(`Reconciliation: orphan ${sbTrade.marketId.slice(0, 20)} stopped with pnl=$${pnl.toFixed(2)} (source: ${pnlSource})`);
+          }
           orphansClosed++;
         }
       }
