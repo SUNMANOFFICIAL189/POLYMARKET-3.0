@@ -47,8 +47,7 @@ Steps 7-13 all done in same session:
   * Decision gate at +7 days: if signal v2 stable AND watchdog FP rate < 10%, flip watchdog to `--active` early
 
 **Next priority items, in order:**
-  1. (queued) **SELL-aware position sizing** — partial mitigation via Signal v2's <24h cap, but doesn't fix the underlying max-loss math.
-  2. (queued) **Phase D: sports-convergence-copy** — gated on Phase C step 14 success.
+  1. (queued) **Phase D: sports-convergence-copy** — gated on Phase C step 14 success.
 
 ---
 
@@ -75,6 +74,32 @@ Backfill script at `~/claude-hq/watchdogs/pats/scripts/backfill_pnl_writes.py`:
 **db sum(pnl) trajectory:** +$158.14 (pre-backfill) → −$785.08 (post-backfill, matches bot's pre-restart in-memory −$767.15 within $18 residual).
 
 **The bot's view of capital is now accurate.** Phase G live-trading is no longer blocked by accounting drift.
+
+---
+
+## ⚠ UPDATE 2026-05-08 (continued, very late) — SELL-aware position sizing shipped
+
+**Two-part rule deployed at commit `935d44f`. The structural conditions for the −$943 catastrophic loss no longer exist in any layer.**
+
+1. **SELL entry-price floor at $0.05** (`MIN_SELL_ENTRY_PRICE`). Calibrated against 116 historical signal-bot SELLs: the ≤$0.05 bucket netted −$840 driven by the −$943 event; the $0.05–$0.10 bucket was +$104 with no large losses. Floor removes the catastrophic class.
+
+2. **5% max-loss-per-trade cap** (`MAX_LOSS_PCT_PER_TRADE`). New `RiskManager.capByMaxLoss()` helper. For SELL, `max_loss_per_share = (1 − entry)`; cap shrinks size if worst-case loss exceeds 5% of balance, rejects entirely if reduction drops below $5 floor. Belt-and-suspenders backstop for outsized exposures in the $0.05–$0.10 range.
+
+**Backtest** at $5,289 balance against 156 historical trades:
+- Floor-rejected: 32 (avoid −$840 of losses)
+- Size-reduced: 25 (small −$47 drag)
+- Untouched: 99 (no change)
+- Counterfactual: bot −$452 → +$340 = **+$792 improvement**
+- The 2026-05-07 BTC trade: FLOOR-REJECTED ✓
+
+**Originally proposed cap was 1.5%; recalibrated to 5% during analysis.** User pushed back ("how often do these losses happen?") and the data showed that while catastrophic events ARE rare (~2% of cheap SELLs), the strategy is still net-negative because each rare event eats 50 small wins. The right line was the entry-price bucket, not a portfolio-%. 5% is a backstop, the floor is the primary mechanism.
+
+**Three layers now block the −$943 class:**
+- Phase A code fix → no more silent pnl-write loss after stop-loss closure
+- Phase C Signal v2 → no SELL on markets resolving >24h away
+- Phase C addendum (this) → no SELL when entry < $0.05; no position with max-loss > 5% of balance
+
+Phase G live-trading: no longer structurally blocked by this class of risk.
 
 ---
 
