@@ -385,9 +385,19 @@ def check_data_integrity():
 def auto_fix_data(pattern, detail=None):
     """Auto-fix data integrity issues. Returns True if fixed."""
     if pattern == "duplicate_position":
-        send_alert("Duplicate position detected — closing the newer one", "FIX")
-        # The reconciliation will handle this on next cycle
-        return True
+        # NB: this path does NOT actually close anything — it just alerts. The bot's
+        # in-memory dedup already prevents duplicate trades; a duplicate row in Supabase
+        # means a prior close failed to persist. Manual cleanup is required: query the
+        # market_id, decide which row is stale, mark it 'stopped' with the close
+        # event's exit_time/pnl. Auto-closing the wrong row could destroy trade history.
+        send_alert(
+            "Duplicate Supabase row detected. Bot's in-memory state already deduped, "
+            "so this means a previous close didn't fully persist. "
+            "What to do: review the market in Supabase and manually mark the stale "
+            "row as 'stopped' (do NOT let the bot re-open). Not auto-fixed.",
+            "WARN"
+        )
+        return False  # not actually fixed — manual action needed
     elif pattern == "null_pnl_trades":
         # Can't auto-fix historical null PnL — need market prices at close time
         # Just alert for now
