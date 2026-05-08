@@ -14,6 +14,9 @@ import { LeaderboardScraper } from '../leaderboard/scraper.js';
 import { TraderScorer } from '../leaderboard/scorer.js';
 import { LeaderSelector } from '../leaderboard/selector.js';
 import { WalletMonitor } from '../monitor/wallet-monitor.js';
+import { PolygonBlockListener } from '../monitor/polygon-block-listener.js';
+import { DivergenceLogger } from '../monitor/divergence-logger.js';
+import type { ParsedTrade } from '../monitor/match-orders-decoder.js';
 import { ConfirmationLayer } from '../confirmation/confirmation-layer.js';
 import { CopyExecutor } from '../execution/copy-executor.js';
 import { SignalExecutor } from '../execution/signal-executor.js';
@@ -64,6 +67,10 @@ export class Runner {
 
   // Monitoring
   private walletMonitor: WalletMonitor;
+  // Branch 2 shadow infrastructure (gated by BLOCK_LISTENER_ENABLED env flag).
+  // When disabled (default), these stay null and have zero effect on the bot.
+  private blockListener: PolygonBlockListener | null = null;
+  private divergenceLogger: DivergenceLogger | null = null;
 
   // Signals
   private newsScanner: NewsScanner;
@@ -136,6 +143,14 @@ export class Runner {
     this.walletMonitor = new WalletMonitor({
       pollIntervalMs: cfg.walletMonitor.pollIntervalMs,
     });
+
+    // Branch 2: Polygon block listener (shadow mode, no trade-driving).
+    // Default OFF — flip BLOCK_LISTENER_ENABLED=true once the 24-48h shadow window starts.
+    if (process.env.BLOCK_LISTENER_ENABLED === 'true') {
+      this.blockListener = new PolygonBlockListener();
+      this.divergenceLogger = new DivergenceLogger();
+      logger.info('Branch 2 shadow listener: ENABLED (events log only, no trades driven)');
+    }
 
     this.newsScanner = new NewsScanner();
 
@@ -254,6 +269,13 @@ export class Runner {
     this.setupWalletMonitor();
     this.walletMonitor.start();
 
+    // Branch 2 shadow listener (no-op when flag is off)
+    if (this.blockListener && this.divergenceLogger) {
+      this.setupBlockListener();
+      this.divergenceLogger.start();
+      await this.blockListener.start();
+    }
+
     // Start leaderboard scraper
     this.scraper.start((rawLeaders) => this.onLeaderboardUpdate(rawLeaders));
 
@@ -317,6 +339,8 @@ export class Runner {
     this.newsScanner.stop();
     this.marketCache.stop();
     this.movementScanner.stop();
+    if (this.blockListener) await this.blockListener.stop();
+    if (this.divergenceLogger) this.divergenceLogger.stop();
 
     logger.info('PATS-Copy stopped');
   }
@@ -422,6 +446,10 @@ export class Runner {
 
   private setupWalletMonitor(): void {
     this.walletMonitor.on('new-trade', (trade: LeaderTrade) => {
+      // Branch 2 shadow: forward every REST-detected trade to the divergence logger
+      // for parity-checking against WS-detected trades. No-op when listener disabled.
+      this.divergenceLogger?.recordRest(trade);
+
       // Phase 3: Copy pipeline disabled. 428 trades at -$0.78 avg = -$332 dead weight.
       // Signal pipeline is profitable (+$287). No value in copying leaders.
       // Leaderboard scraper + wallet monitor still run for data/scoring.
@@ -429,6 +457,8 @@ export class Runner {
         this.handleLeaderTrade(trade);
       }
     });
+
+    // Note: setupBlockListener() handles the WS-side wiring. See below.
 
     this.walletMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string; rank?: number; exitPrice?: number }) => {
       const exitPrice = typeof data.exitPrice === 'number' && data.exitPrice > 0
@@ -456,6 +486,21 @@ export class Runner {
           sendTelegramAlert(`🔴 SYNC ERROR: Failed to persist trade close for ${data.marketQuestion.slice(0, 30)}`);
         }
       }
+    });
+  }
+
+  private setupBlockListener(): void {
+    if (!this.blockListener || !this.divergenceLogger) return;
+    const div = this.divergenceLogger;
+    this.blockListener.on('new-trade', (trade: ParsedTrade) => {
+      // Shadow ONLY. Never drives execution — only feeds the divergence logger.
+      div.recordWs(trade);
+    });
+    this.blockListener.on('connection', (ev) => {
+      logger.info(`PolygonBlockListener connection: ${ev.mode}/${ev.status}${ev.attempt ? ` (attempt ${ev.attempt})` : ''}`);
+    });
+    this.blockListener.on('error', (err: Error) => {
+      logger.warn(`PolygonBlockListener: ${err.message}`);
     });
   }
 
@@ -536,6 +581,8 @@ export class Runner {
 
     if (watcherList.length > 0) {
       this.walletMonitor.setWatchers(watcherList);
+      // Branch 2 shadow: keep WS listener's watch set in sync with REST monitor.
+      this.blockListener?.setWatchers(watcherList.map((w) => w.walletAddress));
     }
 
     const watcherSummary = watcherList.map((w, i) => `${w.walletAddress.slice(0, 8)}(r${w.rank})`).join(', ');
