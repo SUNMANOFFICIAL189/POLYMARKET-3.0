@@ -163,6 +163,11 @@ export class Runner {
 
     this.movementScanner = new MarketMovementScanner({ marketCache: this.marketCache });
 
+    // Latency-aware paper pricing: paperEngine reads current market price from
+    // cache at execution time instead of using leader entry price. Falls back
+    // to leader entry on cache miss — preserves prior behavior.
+    this.paperEngine.setMarketCache(this.marketCache);
+
     // Position Lifecycle Manager — auto-closes resolved, stale, and stop-loss positions
     this.lifecycleManager = new PositionLifecycleManager({
       closePosition: async (marketId, exitPrice, reason) => {
