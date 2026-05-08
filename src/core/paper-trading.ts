@@ -2,6 +2,7 @@ import { logger } from '../utils/logger.js';
 import { RiskDial } from './config.js';
 import { RiskManager } from './risk-manager.js';
 import type { Trade, DailyPerformance, RiskLevel, Side } from '../types/index.js';
+import type { MarketCache } from '../signals/market-cache.js';
 import { randomUUID } from 'crypto';
 import * as db from '../data/supabase.js';
 
@@ -34,6 +35,13 @@ export class PaperTradingEngine {
   private currentDate: string = '';
   private openMarketIds: Set<string> = new Set();
 
+  // Latency-aware pricing (set after construction by runner — optional, falls
+  // back to leader entry price if absent). Tracks how often the cache helps.
+  private marketCache: MarketCache | null = null;
+  private latencyAwarePricedCount = 0;
+  private latencyAwareCacheMissCount = 0;
+  private latencyAwareDriftAlerts = 0;
+
   constructor(balance: number, riskLevel: RiskLevel = 'paper') {
     this.balance = balance;
     this.initialBalance = balance;
@@ -41,6 +49,37 @@ export class PaperTradingEngine {
     this.riskManager = new RiskManager(this.riskDial, balance);
     this.currentDate = new Date().toISOString().split('T')[0];
     logger.info('PaperTradingEngine initialized', { balance: `$${balance}`, riskLevel });
+  }
+
+  /**
+   * Wire a MarketCache so executeCopyTrade can look up the current market
+   * price at execution time instead of using the leader's entry price. This
+   * makes paper PnL honest about the latency between leader trade and our
+   * detection. If the cache hasn't been wired or the market isn't cached,
+   * falls back to leader entry price (prior behavior).
+   */
+  setMarketCache(cache: MarketCache): void {
+    this.marketCache = cache;
+    logger.info('PaperTradingEngine: MarketCache wired — latency-aware pricing active');
+  }
+
+  /**
+   * Look up the current market price for a given marketId+outcome via the
+   * wired MarketCache. Returns null on cache miss, missing outcome, or no
+   * cache wired. Sports markets are intentionally excluded by the cache, so
+   * those will always miss and fall back to leader entry price.
+   */
+  private lookupCurrentMarketPrice(marketId: string, outcome: string): number | null {
+    if (!this.marketCache) return null;
+    const cached = this.marketCache.getMarket(marketId);
+    if (!cached) return null;
+    const idx = cached.outcomes.findIndex(
+      (o: string) => o.toLowerCase() === (outcome ?? 'yes').toLowerCase()
+    );
+    if (idx < 0 || idx >= cached.outcomePrices.length) return null;
+    const price = cached.outcomePrices[idx];
+    if (!Number.isFinite(price) || price <= 0 || price >= 1) return null;
+    return price;
   }
 
   injectOpenTrade(opts: {
@@ -97,12 +136,36 @@ export class PaperTradingEngine {
       return null;
     }
 
+    // Latency-aware base price: prefer current market price (reflects drift
+    // between leader trade and our detection) over leader's entry price.
+    // Falls back to leader entry on cache miss — preserves prior behavior.
+    const currentMarketPrice = this.lookupCurrentMarketPrice(input.marketId, input.outcome);
+    const basePrice = currentMarketPrice ?? input.leaderEntryPrice;
+    const usedLatencyAware = currentMarketPrice !== null;
+    if (usedLatencyAware) {
+      this.latencyAwarePricedCount += 1;
+      const driftPct = ((currentMarketPrice! - input.leaderEntryPrice) / input.leaderEntryPrice) * 100;
+      if (Math.abs(driftPct) > 1) {
+        this.latencyAwareDriftAlerts += 1;
+        logger.info('Paper: latency drift > 1% (using current market price)', {
+          market: input.marketId.slice(0, 12),
+          outcome: input.outcome,
+          side: input.side,
+          leaderEntry: input.leaderEntryPrice.toFixed(4),
+          currentMarket: currentMarketPrice!.toFixed(4),
+          driftPct: driftPct.toFixed(2) + '%',
+        });
+      }
+    } else {
+      this.latencyAwareCacheMissCount += 1;
+    }
+
     // Simulate slippage: 0.1% - 0.5%
     const slippagePct = 0.001 + Math.random() * 0.004;
-    const slippage = input.leaderEntryPrice * slippagePct;
+    const slippage = basePrice * slippagePct;
     const executionPrice = input.side === 'buy'
-      ? input.leaderEntryPrice + slippage
-      : input.leaderEntryPrice - slippage;
+      ? basePrice + slippage
+      : basePrice - slippage;
 
     const shares = input.usdcSize / executionPrice;
 
@@ -351,6 +414,11 @@ export class PaperTradingEngine {
       winRate: totalTrades > 0 ? (wins / totalTrades) * 100 : 0,
       riskLevel: this.riskDial.level,
       portfolioRisk: this.riskManager.getPortfolioRisk(),
+      latencyAware: {
+        priced: this.latencyAwarePricedCount,
+        cacheMiss: this.latencyAwareCacheMissCount,
+        driftAlerts: this.latencyAwareDriftAlerts,
+      },
     };
   }
 }
