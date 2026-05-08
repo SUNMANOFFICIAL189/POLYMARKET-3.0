@@ -24,8 +24,34 @@ export function getClient(): SupabaseClient {
 // ─── Leader Operations ─────────────────────────────────────────
 
 export async function upsertLeader(leader: Leader): Promise<void> {
+  // Skip-if-unchanged: pull existing row first, compare meaningful fields,
+  // only write if at least one differs. Called on every leaderboard poll
+  // for every leader (~20 rows × 12 polls/hour = ~5,800/day baseline).
+  // Most polls produce no logical change for most leaders; the upsert
+  // contributed substantial write IO before this check (2026-05-08 audit).
+  const target = leader.walletAddress.toLowerCase();
+  const { data: existing } = await getClient()
+    .from('leaders')
+    .select('display_name, composite_score, win_rate_30d, profit_factor_14d, trade_count_30d, total_pnl_30d, last_trade_time, tracked_since')
+    .eq('wallet_address', target)
+    .maybeSingle();
+
+  if (existing) {
+    const ex: any = existing;
+    const samePayload =
+      ex.display_name === leader.displayName &&
+      ex.composite_score === leader.compositeScore &&
+      ex.win_rate_30d === leader.winRate30d &&
+      ex.profit_factor_14d === leader.profitFactor14d &&
+      ex.trade_count_30d === leader.tradeCount30d &&
+      ex.total_pnl_30d === leader.totalPnl30d &&
+      ex.last_trade_time === leader.lastTradeTime &&
+      ex.tracked_since === leader.trackedSince;
+    if (samePayload) return; // no-op: avoid the write + WAL + autovacuum churn
+  }
+
   const { error } = await getClient().from('leaders').upsert({
-    wallet_address: leader.walletAddress.toLowerCase(),
+    wallet_address: target,
     display_name: leader.displayName,
     composite_score: leader.compositeScore,
     win_rate_30d: leader.winRate30d,
@@ -47,14 +73,29 @@ export async function upsertLeaders(leaders: Leader[]): Promise<void> {
 }
 
 export async function setCurrentLeader(walletAddress: string): Promise<void> {
-  // Clear all current leaders first
-  await getClient().from('leaders').update({ is_current_leader: false }).neq('wallet_address', '');
+  // Idempotent: only write when state has actually drifted. Called on every
+  // leaderboard poll (~12/hour) for drift-prevention, so the WHERE clauses
+  // below are critical — without them, every poll updates ~141 rows even
+  // when nothing changed (the source of the 2026-05-08 disk-IO budget alert:
+  // public.leaders had 847k lifetime updates, mostly from this function
+  // unconditionally clearing all rows on every call).
+  const target = walletAddress.toLowerCase();
 
-  // Set new current leader (normalise to lowercase to match upsert key)
-  const { error } = await getClient().from('leaders')
+  // Clear: only rows that are currently flagged AND aren't the new target.
+  // Typical no-op call: 0 rows. Typical rotation call: 1 row.
+  const { error: clearErr } = await getClient().from('leaders')
+    .update({ is_current_leader: false })
+    .eq('is_current_leader', true)
+    .neq('wallet_address', target);
+  if (clearErr) logger.error(`setCurrentLeader clear failed: ${clearErr.message}`);
+
+  // Set: only if the target row isn't already flagged.
+  // Typical no-op call: 0 rows. Typical rotation call: 1 row.
+  const { error: setErr } = await getClient().from('leaders')
     .update({ is_current_leader: true })
-    .eq('wallet_address', walletAddress.toLowerCase());
-  if (error) logger.error(`setCurrentLeader failed: ${error.message}`);
+    .eq('wallet_address', target)
+    .eq('is_current_leader', false);
+  if (setErr) logger.error(`setCurrentLeader set failed: ${setErr.message}`);
 }
 
 export async function insertLeaderHistory(event: RotationEvent): Promise<void> {
