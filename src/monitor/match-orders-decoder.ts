@@ -23,7 +23,17 @@
 import { Interface, type TransactionResponse } from 'ethers';
 import type { Side } from '../types/index.js';
 
-const PRODUCTION_CONTRACT = '0xE111180000d2663C0091e4f400237545B87B996B'.toLowerCase();
+// Polymarket runs at least TWO active matchOrders contracts on Polygon, both
+// using the same ABI and selector. Verified 2026-05-10 by enumeration:
+//   0xE111180000d2663C0091e4f400237545B87B996B  ~75% of volume
+//   0xe2222d279d744050d28e00520010520000310F59  ~25% of volume
+// A wallet's data-api `/trades` history is the union of both. The decoder must
+// accept either address; restricting to one was the root cause of Phase 6's
+// inverted recall numbers (2026-05-09 forensic).
+const PRODUCTION_CONTRACTS = [
+  '0xE111180000d2663C0091e4f400237545B87B996B',
+  '0xe2222d279d744050d28e00520010520000310F59',
+].map((a) => a.toLowerCase());
 const SELECTOR = '0x3c2b4399';
 const ORDER_TUPLE =
   '(uint256,address,address,uint256,uint256,uint256,uint8,uint8,uint256,bytes32,bytes32,bytes)';
@@ -31,7 +41,7 @@ const FN_SIG = `matchOrders(bytes32,${ORDER_TUPLE},${ORDER_TUPLE}[],uint256,uint
 
 const iface = new Interface([`function ${FN_SIG}`]);
 
-export const MATCH_ORDERS_CONTRACT = PRODUCTION_CONTRACT;
+export const MATCH_ORDERS_CONTRACTS = PRODUCTION_CONTRACTS;
 export const MATCH_ORDERS_SELECTOR = SELECTOR;
 
 export interface ParsedTrade {
@@ -82,7 +92,7 @@ export function decodeMatchOrders(
   tx: DecoderInputTx,
   watchedWallets: Iterable<string>,
 ): ParsedTrade[] | null {
-  if (!tx.to || tx.to.toLowerCase() !== PRODUCTION_CONTRACT) return null;
+  if (!tx.to || !PRODUCTION_CONTRACTS.includes(tx.to.toLowerCase())) return null;
   if (!tx.data || !tx.data.startsWith(SELECTOR)) return null;
 
   let parsed;
@@ -185,7 +195,7 @@ export function decodeFromTransactionResponse(
  * with a watch list to avoid emitting noise.
  */
 export function decodeAllOrders(tx: DecoderInputTx): ParsedTrade[] | null {
-  if (!tx.to || tx.to.toLowerCase() !== PRODUCTION_CONTRACT) return null;
+  if (!tx.to || !PRODUCTION_CONTRACTS.includes(tx.to.toLowerCase())) return null;
   if (!tx.data || !tx.data.startsWith(SELECTOR)) return null;
 
   let parsed;
