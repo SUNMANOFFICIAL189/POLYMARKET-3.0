@@ -27,7 +27,7 @@ import { MarketMovementScanner } from '../signals/market-movement-scanner.js';
 import { AIClassifier } from '../signals/ai-classifier.js';
 import * as db from '../data/supabase.js';
 import { PositionLifecycleManager } from './position-lifecycle.js';
-import type { Leader, LeaderTrade } from '../types/index.js';
+import { ALL_PIPELINES, type Leader, type LeaderTrade, type PipelineId } from '../types/index.js';
 import type { TradingSignal } from '../signals/signal-generator.js';
 
 const GAMMA_API_BASE = 'https://gamma-api.polymarket.com';
@@ -57,7 +57,13 @@ export class Runner {
 
   // Core modules
   private riskDial: RiskDial;
-  private riskManager: RiskManager;
+  /**
+   * Per-pipeline RiskManagers (Option D, 2026-05-10). Each pipeline holds its
+   * own balance / peakBalance / drawdown / position cap independently. A bad
+   * day on one pipeline cannot reduce another pipeline's risk gates.
+   * Keyed by PipelineId. PaperTradingEngine has its own 'global' RM separately.
+   */
+  private riskManagers: Map<PipelineId, RiskManager> = new Map();
   private paperEngine: PaperTradingEngine;
 
   // Leaderboard
@@ -108,18 +114,24 @@ export class Runner {
       }
     } catch { /* first run or missing file */ }
 
-    // Note: this single shared RiskManager is being phased out by Option D
-    // (per-pipeline RiskManagers in `riskManagers` map). For now it remains
-    // here so existing wiring (executors, lifecycle, status log) continues to
-    // work; the next refactor steps replace it. Tagged 'signal' since the
-    // signal pipeline is the only currently-active one.
-    this.riskManager = new RiskManager('signal', this.riskDial, cfg.totalCapitalUsdc, {
-      restoredPeakBalance: restoredPeak,
-      onPeakBalanceChange: (peak) => {
-        try { writeFileSync(PEAK_BALANCE_FILE, JSON.stringify({ peakBalance: peak, updatedAt: new Date().toISOString() })); }
-        catch { /* non-fatal */ }
-      },
-    });
+    // Build a RiskManager per pipeline (Option D, 2026-05-10). Each pipeline
+    // gets its own isolated balance + drawdown tracking. The signal pipeline
+    // is the only one with peakBalance persistence today, since copy + geo
+    // are disabled (capital=0 by default — see DEFAULT_PIPELINE_SHARE in
+    // config.ts).
+    for (const id of ALL_PIPELINES) {
+      const pcfg = cfg.pipelines[id];
+      const dial = new RiskDial(pcfg.riskLevel);
+      const isSignal = id === 'signal';
+      const rm = new RiskManager(id, dial, pcfg.capital, isSignal ? {
+        restoredPeakBalance: restoredPeak,
+        onPeakBalanceChange: (peak) => {
+          try { writeFileSync(PEAK_BALANCE_FILE, JSON.stringify({ peakBalance: peak, updatedAt: new Date().toISOString() })); }
+          catch { /* non-fatal */ }
+        },
+      } : undefined);
+      this.riskManagers.set(id, rm);
+    }
     this.paperEngine = new PaperTradingEngine(cfg.totalCapitalUsdc, cfg.risk.level);
 
     this.scraper = new LeaderboardScraper({
@@ -161,12 +173,14 @@ export class Runner {
 
     this.confirmationLayer = new ConfirmationLayer();
 
+    // Per-pipeline executor wiring (Option D): each executor gets its OWN
+    // RiskManager from this.riskManagers, isolating capital and risk gates.
     this.copyExecutor = new CopyExecutor({
       paperEngine: this.paperEngine,
-      riskManager: this.riskManager,
+      riskManager: this.getRiskManager('copy'),
       paperMode: cfg.paperMode,
-      ourPortfolio: cfg.totalCapitalUsdc,
-      riskLevel: cfg.risk.level,
+      ourPortfolio: cfg.pipelines.copy.capital,
+      riskLevel: cfg.pipelines.copy.riskLevel,
     });
 
     // Phase 2 (hybrid): Signal-based original trading components
@@ -177,7 +191,7 @@ export class Runner {
     });
     this.signalExecutor = new SignalExecutor({
       paperEngine: this.paperEngine,
-      riskManager: this.riskManager,
+      riskManager: this.getRiskManager('signal'),
       paperMode: cfg.paperMode,
     });
 
@@ -868,5 +882,16 @@ export class Runner {
     if (hcUrl) {
       fetch(hcUrl, { signal: AbortSignal.timeout(5_000) }).catch(() => {});
     }
+  }
+
+  /**
+   * Get the RiskManager for a specific pipeline. Throws if the pipeline isn't
+   * registered (defensive — every PipelineId should have an RM after constructor).
+   * Option D, 2026-05-10.
+   */
+  private getRiskManager(id: PipelineId): RiskManager {
+    const rm = this.riskManagers.get(id);
+    if (!rm) throw new Error(`RiskManager not initialized for pipeline '${id}'`);
+    return rm;
   }
 }

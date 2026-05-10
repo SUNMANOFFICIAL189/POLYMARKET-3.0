@@ -39,10 +39,18 @@ export interface AppConfig {
   };
 }
 
+/**
+ * Default capital allocation when no env override is set.
+ *
+ * Designed to PRESERVE current bot behaviour (signal pipeline gets 100% of
+ * capital, since copy + geopolitics are disabled today). When copy is brought
+ * back via Branch 3, set env vars (e.g. SIGNAL_CAPITAL=4000 COPY_CAPITAL=2000
+ * GEOPOLITICS_CAPITAL=300) to rebalance.
+ */
 const DEFAULT_PIPELINE_SHARE: Record<PipelineId, number> = {
-  signal: 0.6,
-  copy: 0.3,
-  geopolitics: 0.1,
+  signal: 1.0,
+  copy: 0,
+  geopolitics: 0,
 };
 
 /**
