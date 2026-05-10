@@ -1,6 +1,6 @@
 import { logger } from '../utils/logger.js';
 import { RiskDial } from './config.js';
-import type { Trade } from '../types/index.js';
+import type { PipelineId, Trade } from '../types/index.js';
 
 export interface RiskCheck {
   allowed: boolean;
@@ -19,6 +19,18 @@ export interface PortfolioRisk {
 }
 
 export class RiskManager {
+  /**
+   * The pipeline this RiskManager belongs to. Each pipeline holds its own
+   * isolated risk state — balance, peakBalance, drawdown, position cap.
+   * A loss on one pipeline does NOT affect another's risk gates.
+   * (Option D, 2026-05-10. See vault Decision Log.)
+   *
+   * The literal 'signal'|'copy'|'geopolitics' values come from the PipelineId
+   * type; the literal 'global' is reserved for PaperTradingEngine's internal
+   * summary instance which tracks the bot-wide cash ledger across pipelines.
+   */
+  readonly pipelineId: PipelineId | 'global';
+
   private riskDial: RiskDial;
   private balance: number;
   private openTrades: Trade[] = [];
@@ -27,16 +39,17 @@ export class RiskManager {
   private maxDrawdown: number = 0;
   private onPeakBalanceChange?: (peak: number) => void;
 
-  constructor(riskDial: RiskDial, balance: number, opts?: {
+  constructor(pipelineId: PipelineId | 'global', riskDial: RiskDial, balance: number, opts?: {
     restoredPeakBalance?: number;
     onPeakBalanceChange?: (peak: number) => void;
   }) {
+    this.pipelineId = pipelineId;
     this.riskDial = riskDial;
     this.balance = balance;
     this.onPeakBalanceChange = opts?.onPeakBalanceChange;
     this.peakBalance = Math.max(balance, opts?.restoredPeakBalance ?? balance);
     if (this.peakBalance > balance) {
-      logger.info(`RiskManager: Restored peakBalance $${this.peakBalance.toFixed(2)} from persistence (current: $${balance.toFixed(2)}, DD: ${(((this.peakBalance - balance) / this.peakBalance) * 100).toFixed(1)}%)`);
+      logger.info(`RiskManager[${pipelineId}]: Restored peakBalance $${this.peakBalance.toFixed(2)} from persistence (current: $${balance.toFixed(2)}, DD: ${(((this.peakBalance - balance) / this.peakBalance) * 100).toFixed(1)}%)`);
     }
   }
 
@@ -52,7 +65,7 @@ export class RiskManager {
 
   setOpenTrades(trades: Trade[]): void { this.openTrades = trades; }
   updateDailyPnl(pnl: number): void { this.dailyPnl = pnl; }
-  resetDaily(): void { this.dailyPnl = 0; logger.info('Daily risk counters reset'); }
+  resetDaily(): void { this.dailyPnl = 0; logger.info(`RiskManager[${this.pipelineId}]: Daily risk counters reset`); }
 
   checkTrade(usdcAmount: number): RiskCheck {
     const preset = this.riskDial.config;
@@ -118,13 +131,13 @@ export class RiskManager {
     if (trade.side === 'buy') {
       const stopPrice = trade.entryPrice * (1 - trade.stopLoss);
       if (currentPrice <= stopPrice) {
-        logger.warn(`Stop loss hit for ${trade.id}`, { entry: trade.entryPrice, current: currentPrice, stop: stopPrice });
+        logger.warn(`Stop loss hit for ${trade.id} [${this.pipelineId}]`, { entry: trade.entryPrice, current: currentPrice, stop: stopPrice });
         return true;
       }
     } else {
       const stopPrice = trade.entryPrice * (1 + trade.stopLoss);
       if (currentPrice >= stopPrice) {
-        logger.warn(`Stop loss hit for ${trade.id}`, { entry: trade.entryPrice, current: currentPrice, stop: stopPrice });
+        logger.warn(`Stop loss hit for ${trade.id} [${this.pipelineId}]`, { entry: trade.entryPrice, current: currentPrice, stop: stopPrice });
         return true;
       }
     }

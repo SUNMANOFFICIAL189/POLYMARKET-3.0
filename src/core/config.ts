@@ -1,11 +1,23 @@
 import 'dotenv/config';
-import { RISK_PRESETS, type RiskConfig, type RiskLevel } from '../types/index.js';
+import { RISK_PRESETS, ALL_PIPELINES, type PipelineConfig, type PipelineId, type RiskConfig, type RiskLevel } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 export interface AppConfig {
   paperMode: boolean;
   risk: RiskConfig;
   totalCapitalUsdc: number;
+  /**
+   * Per-pipeline capital + risk allocation (Option D, 2026-05-10).
+   * Each pipeline has its own RiskManager instance with isolated balance/drawdown
+   * tracking. A bad day on one pipeline cannot reduce another pipeline's risk
+   * gates. See vault Decision Log "Architecture decision: Option D".
+   *
+   * Default proportional split if no per-pipeline env vars are set:
+   *   signal: 60% of total | copy: 30% | geopolitics: 10%
+   * Env overrides: SIGNAL_CAPITAL, COPY_CAPITAL, GEOPOLITICS_CAPITAL.
+   * If any env var is set, it overrides the proportional default for that pipeline.
+   */
+  pipelines: Record<PipelineId, PipelineConfig>;
   supabase: {
     url: string;
     serviceKey: string;
@@ -25,6 +37,44 @@ export interface AppConfig {
     hysteresisMarginPct: number;
     hysteresisMinDurationMs: number;
   };
+}
+
+const DEFAULT_PIPELINE_SHARE: Record<PipelineId, number> = {
+  signal: 0.6,
+  copy: 0.3,
+  geopolitics: 0.1,
+};
+
+/**
+ * Build per-pipeline config. Each pipeline can be configured via env:
+ *   <PIPELINE>_CAPITAL  (USDC, default = totalCapital * defaultShare)
+ *   <PIPELINE>_RISK_LEVEL  (default = global risk level)
+ *   <PIPELINE>_ENABLED  (default 'true' for signal, 'false' for copy + geopolitics
+ *                        until Branch 3 lands — keeps current behaviour)
+ */
+function buildPipelineConfigs(totalCapital: number, defaultRiskLevel: RiskLevel): Record<PipelineId, PipelineConfig> {
+  const out = {} as Record<PipelineId, PipelineConfig>;
+  for (const id of ALL_PIPELINES) {
+    const upper = id.toUpperCase();
+    const envCapital = process.env[`${upper}_CAPITAL`];
+    const envRisk = process.env[`${upper}_RISK_LEVEL`] as RiskLevel | undefined;
+    const envEnabled = process.env[`${upper}_ENABLED`];
+
+    const defaultCapital = totalCapital * DEFAULT_PIPELINE_SHARE[id];
+    const capital = envCapital ? parseFloat(envCapital) : defaultCapital;
+
+    const riskLevel: RiskLevel = envRisk && RISK_PRESETS[envRisk] ? envRisk : defaultRiskLevel;
+
+    // Default-enabled state matches current bot reality:
+    // - signal: ON (the live pipeline today)
+    // - copy: OFF (disabled since 2026-04-27 Phase 3, awaiting Branch 3 revival)
+    // - geopolitics: OFF (Branch 3, not yet built)
+    const defaultEnabled = id === 'signal';
+    const enabled = envEnabled ? envEnabled === 'true' : defaultEnabled;
+
+    out[id] = { id, capital, riskLevel, enabled };
+  }
+  return out;
 }
 
 function envOpt(key: string, fallback: string): string {
@@ -56,10 +106,20 @@ export function loadConfig(): AppConfig {
     logger.info(`MAX_OPEN_POSITIONS overridden to ${risk.maxOpenPositions} from env`);
   }
 
+  const totalCapitalUsdc = parseFloat(envOpt('TOTAL_CAPITAL_USDC', '6300'));
+  const pipelines = buildPipelineConfigs(totalCapitalUsdc, riskLevel);
+
+  // Sanity check: pipeline allocations should not exceed total capital
+  const allocatedSum = Object.values(pipelines).reduce((s, p) => s + p.capital, 0);
+  if (allocatedSum > totalCapitalUsdc * 1.0001) {  // small epsilon for FP
+    logger.warn(`Pipeline capital allocations sum to $${allocatedSum.toFixed(2)} > total $${totalCapitalUsdc.toFixed(2)}. Capital pools overlap on the actual cash ledger.`);
+  }
+
   const config: AppConfig = {
     paperMode,
     risk,
-    totalCapitalUsdc: parseFloat(envOpt('TOTAL_CAPITAL_USDC', '6300')),
+    totalCapitalUsdc,
+    pipelines,
     supabase: {
       url: envOpt('SUPABASE_URL', ''),
       serviceKey: envOpt('SUPABASE_SERVICE_KEY', ''),
@@ -85,6 +145,9 @@ export function loadConfig(): AppConfig {
     paperMode: config.paperMode,
     riskLevel: config.risk.level,
     capital: config.totalCapitalUsdc,
+    pipelines: Object.fromEntries(
+      Object.entries(config.pipelines).map(([id, p]) => [id, `${p.enabled ? 'ON' : 'off'} $${p.capital.toFixed(0)}/${p.riskLevel}`]),
+    ),
     hasSupabase: !!config.supabase.url,
     glintEnabled: config.glint.enabled,
     leaderboardPollMs: config.leaderboard.pollIntervalMs,

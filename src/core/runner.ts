@@ -108,7 +108,12 @@ export class Runner {
       }
     } catch { /* first run or missing file */ }
 
-    this.riskManager = new RiskManager(this.riskDial, cfg.totalCapitalUsdc, {
+    // Note: this single shared RiskManager is being phased out by Option D
+    // (per-pipeline RiskManagers in `riskManagers` map). For now it remains
+    // here so existing wiring (executors, lifecycle, status log) continues to
+    // work; the next refactor steps replace it. Tagged 'signal' since the
+    // signal pipeline is the only currently-active one.
+    this.riskManager = new RiskManager('signal', this.riskDial, cfg.totalCapitalUsdc, {
       restoredPeakBalance: restoredPeak,
       onPeakBalanceChange: (peak) => {
         try { writeFileSync(PEAK_BALANCE_FILE, JSON.stringify({ peakBalance: peak, updatedAt: new Date().toISOString() })); }

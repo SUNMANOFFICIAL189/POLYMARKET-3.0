@@ -1,5 +1,21 @@
 import { z } from 'zod';
 
+// ─── Pipeline IDs (Option D — isolated capital + risk per pipeline) ─────
+export type PipelineId = 'signal' | 'copy' | 'geopolitics';
+
+export const ALL_PIPELINES: PipelineId[] = ['signal', 'copy', 'geopolitics'];
+
+export interface PipelineConfig {
+  /** Stable identifier for this pipeline */
+  id: PipelineId;
+  /** Capital allocated to this pipeline (USDC) — drives risk gates independently */
+  capital: number;
+  /** Risk preset for this pipeline */
+  riskLevel: RiskLevel;
+  /** Whether this pipeline is currently active (false = no trades will be gated through it) */
+  enabled: boolean;
+}
+
 // ─── Risk Levels ───────────────────────────────────────────────
 export type RiskLevel = 'conservative' | 'moderate' | 'aggressive' | 'paper';
 

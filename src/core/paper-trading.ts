@@ -46,7 +46,11 @@ export class PaperTradingEngine {
     this.balance = balance;
     this.initialBalance = balance;
     this.riskDial = new RiskDial(riskLevel);
-    this.riskManager = new RiskManager(this.riskDial, balance);
+    // 'global' tag: this RiskManager tracks the bot-wide cash ledger across
+    // all pipelines (pnl calc + stop-loss + balance snapshot). Per-pipeline
+    // risk gates run through the pipeline-specific RiskManagers in Runner
+    // (Option D, 2026-05-10).
+    this.riskManager = new RiskManager('global', this.riskDial, balance);
     this.currentDate = new Date().toISOString().split('T')[0];
     logger.info('PaperTradingEngine initialized', { balance: `$${balance}`, riskLevel });
   }
