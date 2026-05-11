@@ -20,6 +20,8 @@ import type { ParsedTrade } from '../monitor/match-orders-decoder.js';
 import { ConfirmationLayer } from '../confirmation/confirmation-layer.js';
 import { CopyExecutor } from '../execution/copy-executor.js';
 import { SignalExecutor } from '../execution/signal-executor.js';
+import { GeopoliticsExecutor } from '../execution/geopolitics-executor.js';
+import { TIER_1, TIER_1_ADDRESSES } from '../geopolitics/watchlist.js';
 import { NewsScanner } from '../signals/news-scanner.js';
 import { MarketCache } from '../signals/market-cache.js';
 import { SignalGenerator } from '../signals/signal-generator.js';
@@ -92,6 +94,11 @@ export class Runner {
   // Execution
   private confirmationLayer: ConfirmationLayer;
   private copyExecutor: CopyExecutor;
+  private geopoliticsExecutor: GeopoliticsExecutor;
+  // Branch 3: dedicated wallet monitor for the static geopolitics specialist
+  // watchlist (not driven by the leaderboard scraper). Always instantiated
+  // for type-stability; only started if cfg.pipelines.geopolitics.enabled.
+  private geopoliticsMonitor: WalletMonitor;
   private lifecycleManager: PositionLifecycleManager;
 
   // State
@@ -197,6 +204,21 @@ export class Runner {
 
     this.movementScanner = new MarketMovementScanner({ marketCache: this.marketCache });
 
+    // Branch 3 (geopolitics) — wired but disabled by default. Activate via
+    // GEOPOLITICS_ENABLED=true. Watches a static Tier-1 list of pre-vetted
+    // geopolitics specialists (see src/geopolitics/watchlist.ts). 30s poll
+    // cadence (rank=2 in WalletMonitor terms).
+    this.geopoliticsExecutor = new GeopoliticsExecutor({
+      paperEngine: this.paperEngine,
+      riskManager: this.getRiskManager('geopolitics'),
+      paperMode: cfg.paperMode,
+      capitalPool: cfg.pipelines.geopolitics.capital,
+      riskLevel: cfg.pipelines.geopolitics.riskLevel,
+    });
+    this.geopoliticsMonitor = new WalletMonitor({
+      pollIntervalMs: cfg.walletMonitor.pollIntervalMs,
+    });
+
     // Latency-aware paper pricing: paperEngine reads current market price from
     // cache at execution time instead of using leader entry price. Falls back
     // to leader entry on cache miss — preserves prior behavior.
@@ -205,16 +227,22 @@ export class Runner {
     // Position Lifecycle Manager — auto-closes resolved, stale, and stop-loss positions
     this.lifecycleManager = new PositionLifecycleManager({
       closePosition: async (marketId, exitPrice, reason) => {
-        // Try copy executor first, then signal executor.
-        // copyExecutor.closePosition is async — must be awaited so `if (copy)` checks
+        // Try copy executor first, then geopolitics, then signal executor.
+        // Each closePosition is async — must be awaited so `if (...)` checks
         // the resolved value, not the Promise (which is always truthy and would mask
-        // the fall-through to signalExecutor for signal-bot trades, leaving the close
-        // unpersisted — root cause of the 2026-05-07 -$943 audit gap).
+        // the fall-through to the next executor, leaving the close unpersisted —
+        // root cause of the 2026-05-07 -$943 audit gap).
         const copy = await this.copyExecutor.closePosition(marketId, exitPrice, reason);
         if (copy) return copy;
+        const geo = await this.geopoliticsExecutor.closePosition(marketId, exitPrice, reason);
+        if (geo) return geo;
         return (await this.signalExecutor.closePosition(marketId, exitPrice, reason)) as any;
       },
-      getOpenTrades: () => [...this.copyExecutor.getOpenTrades(), ...(this.signalExecutor.getOpenTrades() as any[])],
+      getOpenTrades: () => [
+        ...this.copyExecutor.getOpenTrades(),
+        ...this.geopoliticsExecutor.getOpenTrades(),
+        ...(this.signalExecutor.getOpenTrades() as any[]),
+      ],
       persistClose: async (trade) => {
         if (trade.id && cfg.supabase.url) {
           try {
@@ -261,11 +289,16 @@ export class Runner {
         .select('*')
         .in('status', ['open', 'pending']);
       if (openRows) {
-        const copyOnly = openRows.filter(r => r.leader_wallet !== 'signal-bot');
-        this.copyExecutor.hydrateOpenTrades(copyOnly);
-        const signalCount = openRows.length - copyOnly.length;
-        if (signalCount > 0) {
-          logger.info(`Hydration: ${copyOnly.length} copy trade(s) → copyExecutor, ${signalCount} signal-bot trade(s) → signalExecutor only`);
+        // Partition by pipeline so each executor gets only its own trades.
+        // Geopolitics trades land in geopoliticsExecutor; copy trades (anything
+        // else not tagged signal-bot) land in copyExecutor.
+        const geoRows = openRows.filter(r => r.pipeline === 'geopolitics');
+        const copyRows = openRows.filter(r => r.pipeline !== 'geopolitics' && r.leader_wallet !== 'signal-bot');
+        const signalCount = openRows.length - geoRows.length - copyRows.length;
+        this.copyExecutor.hydrateOpenTrades(copyRows);
+        this.geopoliticsExecutor.hydrateOpenTrades(geoRows);
+        if (geoRows.length > 0 || signalCount > 0) {
+          logger.info(`Hydration: ${copyRows.length} copy → copyExecutor, ${geoRows.length} geopolitics → geopoliticsExecutor, ${signalCount} signal-bot → signalExecutor only`);
         }
       }
 
@@ -287,6 +320,19 @@ export class Runner {
     // Start wallet monitor — will activate once we have a leader
     this.setupWalletMonitor();
     this.walletMonitor.start();
+
+    // Branch 3: Geopolitics specialist monitor — static watchlist, runs only
+    // when the geopolitics pipeline is enabled. Watches Tier-1 specialists at
+    // 30s cadence (same as copy watchers) and feeds geopoliticsExecutor.
+    if (this.config.pipelines.geopolitics.enabled) {
+      this.setupGeopoliticsMonitor();
+      const watcherList = TIER_1.map(s => ({ walletAddress: s.walletAddress, rank: 2 }));
+      this.geopoliticsMonitor.setWatchers(watcherList);
+      this.geopoliticsMonitor.start();
+      logger.info(`Geopolitics pipeline ENABLED — watching ${TIER_1.length} Tier-1 specialists: ${TIER_1.map(s => s.name).join(', ')}`);
+    } else {
+      logger.info('Geopolitics pipeline DISABLED — set GEOPOLITICS_ENABLED=true to activate');
+    }
 
     // Branch 2 shadow listener (no-op when flag is off)
     if (this.blockListener && this.divergenceLogger) {
@@ -356,6 +402,7 @@ export class Runner {
 
     this.scraper.stop();
     this.walletMonitor.stop();
+    this.geopoliticsMonitor.stop();
     this.newsScanner.stop();
     this.marketCache.stop();
     this.movementScanner.stop();
@@ -509,6 +556,66 @@ export class Runner {
         }
       }
     });
+  }
+
+  /**
+   * Branch 3: wire the geopolitics-specialist trade flow. Each new trade from a
+   * Tier-1 specialist goes through the geopoliticsExecutor (BUY-only, politics-
+   * only, flat sizing). Close events route to geopoliticsExecutor.closePosition.
+   */
+  private setupGeopoliticsMonitor(): void {
+    this.geopoliticsMonitor.on('new-trade', (trade: LeaderTrade) => {
+      this.handleGeopoliticsTrade(trade).catch(err =>
+        logger.error(`handleGeopoliticsTrade error: ${err}`),
+      );
+    });
+
+    this.geopoliticsMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string; exitPrice?: number }) => {
+      const exitPrice = typeof data.exitPrice === 'number' && data.exitPrice > 0 ? data.exitPrice : 0.5;
+      const closed = await this.geopoliticsExecutor.closePosition(data.marketId, exitPrice, 'leader_closed');
+      if (!closed) return;
+      const pnlStr = closed.pnl !== undefined ? `$${closed.pnl.toFixed(2)}` : 'n/a';
+      logger.info(`GeopoliticsExecutor: specialist closed → our position closed pnl=${pnlStr}`);
+      if (closed.id && this.config.supabase.url) {
+        try {
+          await db.updateCopyTrade(closed.id, { status: 'closed', pnl: closed.pnl, exitTime: closed.exitTime });
+        } catch (err) {
+          logger.error(`Supabase: failed to persist geopolitics close ${closed.id}: ${err}`);
+          sendTelegramAlert(`🔴 SYNC ERROR: Geopolitics close failed for ${data.marketQuestion.slice(0, 30)}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Process a single specialist trade through the geopolitics executor.
+   * No AI confirmation gate — specialists are pre-vetted by the Phase 2 v3
+   * screen (2026-05-11 sprint). Executor handles BUY/politics filters internally.
+   */
+  private async handleGeopoliticsTrade(trade: LeaderTrade): Promise<void> {
+    const result = await this.geopoliticsExecutor.execute(trade);
+    if (!result.success) {
+      logger.debug(`GeopoliticsExecutor: skipped — ${result.reason}`);
+      return;
+    }
+    // Write-through to Supabase
+    if (result.copyTrade && this.config.supabase.url) {
+      const dbId = await db.insertCopyTrade(result.copyTrade);
+      if (dbId) {
+        result.copyTrade.id = dbId;
+        const inMem = this.geopoliticsExecutor.getTradeByMarket(trade.marketId);
+        if (inMem) inMem.id = dbId;
+        logger.info(`Supabase: geopolitics trade saved ${dbId}`);
+      } else {
+        logger.warn(`Supabase insert failed — rolling back geopolitics trade for ${trade.marketId.slice(0, 20)}`);
+        this.geopoliticsExecutor.rollbackTrade(trade.marketId);
+        return;
+      }
+    }
+    const size = result.copyTrade?.ourSize?.toFixed(2) ?? '?';
+    const market = trade.marketQuestion.slice(0, 50);
+    logger.info(`GEOPOLITICS TRADE EXECUTED: $${size} on "${market}"`);
+    sendTelegramAlert(`🌍 <b>GEOPOLITICS TRADE</b>\n💰 $${size} on "${market}"\n👤 ${trade.leaderWallet.slice(0, 10)}`);
   }
 
   private setupBlockListener(): void {
@@ -834,6 +941,7 @@ export class Runner {
     const paperStats = this.paperEngine.getStats();
     const confirmStats = this.confirmationLayer.getStats();
     const copyStats = this.copyExecutor.getStats();
+    const geoStats = this.geopoliticsExecutor.getStats();
     const walletStats = this.walletMonitor.getStats();
     const selectorStats = this.selector.getStats();
 
@@ -854,6 +962,10 @@ export class Runner {
         movementScans: this.movementScanner.getStats().scansCompleted,
         movementSignals: this.movementScanner.getStats().signalsEmitted,
         marketsCached: this.marketCache.getStats().totalMarkets,
+        geopoliticsTrades: geoStats.executed,
+        geopoliticsOpen: geoStats.openPositions,
+        geopoliticsBlocked: geoStats.blocked,
+        geopoliticsEnabled: this.config.pipelines.geopolitics.enabled,
         updatedAt: new Date().toISOString(),
       }));
     } catch { /* non-fatal */ }
@@ -878,6 +990,9 @@ export class Runner {
       signalsGenerated: this.signalGenerator.getStats().signalsGenerated,
       movementScans: this.movementScanner.getStats().scansCompleted,
       movementSignals: this.movementScanner.getStats().signalsEmitted,
+      geopolitics: this.config.pipelines.geopolitics.enabled
+        ? `executed=${geoStats.executed} open=${geoStats.openPositions} blocked=${geoStats.blocked}`
+        : 'disabled',
     });
 
     // Healthchecks.io heartbeat — fire-and-forget; never block or crash on ping failure.
