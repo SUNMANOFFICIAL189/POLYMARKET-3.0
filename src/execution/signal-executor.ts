@@ -221,6 +221,7 @@ export class SignalExecutor {
         usdcSize: ourSize,
         leaderEntryPrice: entryPrice,
         riskLevel: 'paper',
+        pipelineId: 'signal',  // Option D: signal pipeline tag
       };
 
       const result: PaperTradeResult | null = this.paperEngine.executeCopyTrade(input);

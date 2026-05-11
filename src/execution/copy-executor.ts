@@ -472,6 +472,7 @@ export class CopyExecutor {
       usdcSize: ourSize,
       leaderEntryPrice: leaderTrade.entryPrice,
       riskLevel: this.riskLevel,
+      pipelineId: 'copy',  // Option D: copy pipeline tag (geopolitics will be a separate executor / pipeline)
     });
 
     if (!result) {

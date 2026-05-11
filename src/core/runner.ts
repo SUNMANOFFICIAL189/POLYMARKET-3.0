@@ -334,6 +334,7 @@ export class Runner {
             outcome: t.outcome,
             side: t.side,
             endDate: endDate ?? undefined,
+            pipelineId: 'signal',  // this hydration loop is scoped to signalTrades (leader_wallet === 'signal-bot')
           });
         }
         if (signalTrades.length > 0) {

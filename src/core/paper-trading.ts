@@ -1,7 +1,7 @@
 import { logger } from '../utils/logger.js';
 import { RiskDial } from './config.js';
 import { RiskManager } from './risk-manager.js';
-import type { Trade, DailyPerformance, RiskLevel, Side } from '../types/index.js';
+import type { Trade, DailyPerformance, PipelineId, RiskLevel, Side } from '../types/index.js';
 import type { MarketCache } from '../signals/market-cache.js';
 import { randomUUID } from 'crypto';
 import * as db from '../data/supabase.js';
@@ -16,6 +16,11 @@ export interface CopyTradeInput {
   leaderEntryPrice: number;
   riskLevel: RiskLevel;
   endDate?: string;
+  /**
+   * Pipeline that originated this trade. Threaded from each executor's RiskManager
+   * (Option D, 2026-05-10).
+   */
+  pipelineId: PipelineId;
 }
 
 export interface PaperTradeResult {
@@ -90,6 +95,8 @@ export class PaperTradingEngine {
     id?: string; marketId: string; question: string; entryPrice: number;
     usdcAmount: number; entryTime: string; outcome: string; side: Side;
     endDate?: string;
+    /** Pipeline tag — used by hydration paths (Supabase) to attribute trades. */
+    pipelineId: PipelineId;
   }): void {
     if (this.openMarketIds.has(opts.marketId)) return; // already tracked
     const trade: Trade = {
@@ -110,6 +117,7 @@ export class PaperTradingEngine {
       signalIds: [],
       entryTime: opts.entryTime,
       endDate: opts.endDate,
+      pipelineId: opts.pipelineId,
     };
     this.openTrades.set(trade.id, trade);
     this.openMarketIds.add(opts.marketId);
@@ -190,6 +198,7 @@ export class PaperTradingEngine {
       signalIds: [],
       entryTime: new Date().toISOString(),
       endDate: input.endDate,
+      pipelineId: input.pipelineId,
     };
 
     this.balance -= input.usdcSize;
@@ -331,6 +340,13 @@ export class PaperTradingEngine {
 
       if (closedErr) { logger.warn(`Hydrate: failed to load closed trades: ${closedErr.message}`); return; }
 
+      // Derive pipeline from leader_wallet for hydration until Supabase
+      // pipeline column lands (Task #10 of Option D refactor, 2026-05-11).
+      const pipelineFromRow = (row: { leader_wallet?: string | null; pipeline?: string | null }): PipelineId => {
+        if (row.pipeline === 'signal' || row.pipeline === 'copy' || row.pipeline === 'geopolitics') return row.pipeline;
+        return row.leader_wallet === 'signal-bot' ? 'signal' : 'copy';
+      };
+
       // Rebuild closed trade P&L and trade history
       let realizedPnl = 0;
       for (const row of closedRows ?? []) {
@@ -355,6 +371,7 @@ export class PaperTradingEngine {
           exitTime: row.exit_time,
           exitPrice: row.exit_price,
           pnl: row.pnl ?? 0,
+          pipelineId: pipelineFromRow(row),
         });
       }
 
@@ -377,6 +394,7 @@ export class PaperTradingEngine {
           stopLoss: this.riskDial.config.stopLossPct,
           signalIds: [],
           entryTime: row.entry_time,
+          pipelineId: pipelineFromRow(row),
         };
 
         this.openTrades.set(trade.id, trade);

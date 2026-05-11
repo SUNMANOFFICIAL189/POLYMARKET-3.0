@@ -173,6 +173,13 @@ export interface Trade {
   entryTime: string | Date;
   exitTime?: string | Date;
   endDate?: string;
+  /**
+   * Pipeline that originated this trade. Set at construction by the pipeline's
+   * executor. Used for attribution + per-pipeline P&L queries in Supabase
+   * (column added in a follow-up commit; the in-memory field is non-breaking
+   * until the column lands).  Option D, 2026-05-10.
+   */
+  pipelineId: PipelineId;
 }
 
 // ─── Wallet Types ──────────────────────────────────────────────
