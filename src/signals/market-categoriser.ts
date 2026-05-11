@@ -64,6 +64,18 @@ const KEYWORDS: Record<Exclude<MarketCategory, 'other'>, string[]> = {
     'xi jinping', 'putin', 'nato', 'ukraine', 'sanctions', 'tariff',
     'trade war', 'g7', 'g20', 'un security council', 'peace deal',
     'ceasefire', 'cabinet', 'minister', 'chancellor', 'parliament',
+    // Geopolitics flashpoints — added 2026-05-11 from sprint findings.
+    // Sports keywords run first in iteration order, so any country/region
+    // name colliding with a sports event ("China Open") wins sports.
+    'iran', 'israel', 'gaza', 'palestine', 'hamas', 'hezbollah', 'lebanon',
+    'syria', 'taiwan', 'north korea', 'jerusalem', 'west bank',
+    'middle east', 'venezuela',
+    // International leaders missing from original list
+    'netanyahu', 'zelensky', 'erdogan', 'kim jong', 'starmer',
+    // US cabinet (current admin) — drove a chunk of Polymarket 2026 politics
+    'lutnick', 'noem', 'rubio', 'hegseth',
+    // Diplomacy / treaty / scandal topics
+    'epstein', 'treaty', 'embassy', 'ambassador', 'diplomatic',
   ],
   crypto: [
     'bitcoin', 'btc', 'ethereum', 'eth', 'solana', 'sol', 'bnb', 'xrp',
