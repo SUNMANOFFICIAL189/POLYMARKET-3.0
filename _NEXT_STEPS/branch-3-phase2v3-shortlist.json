@@ -1,0 +1,2343 @@
+{
+  "fetchedAt": "2026-05-11T09:53:25.270Z",
+  "method": "union of /positions (buy-and-hold) + /trades-flow (sell-out closed). Geopolitics filter via broader keyword set matching the prod categoriser as of 2026-05-11.",
+  "filters": {
+    "minGeoPositions": 15,
+    "minWrPct": 55,
+    "minMedianSize": 10,
+    "maxMedianSize": 500,
+    "activeWithinHours": 336
+  },
+  "candidatePoolSize": 145,
+  "shortlistSize": 12,
+  "shortlist": [
+    {
+      "wallet": "0x16cbe223607a6513ae76d1e3751c78e4eabc2704",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "MRF",
+      "leaderboardBestRank": 16,
+      "leaderboardMaxPnl": 124725.18011417109,
+      "geoPositionsTotal": 43,
+      "fromPositions": 42,
+      "fromTradeFlow": 1,
+      "wins": 32,
+      "losses": 11,
+      "wrPct": 74.4,
+      "truePnlTotal": 695808.47,
+      "medianInitialValue": 70.96,
+      "minInitialValue": 18.79,
+      "maxInitialValue": 4800,
+      "newestTradeAge_h": 14.3,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0x5a218c7ad04135830a45c41aaed7294df7809318",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "balthazar",
+      "leaderboardBestRank": 11,
+      "leaderboardMaxPnl": 123154.01226901892,
+      "geoPositionsTotal": 330,
+      "fromPositions": 330,
+      "fromTradeFlow": 0,
+      "wins": 207,
+      "losses": 123,
+      "wrPct": 62.7,
+      "truePnlTotal": 236718.35,
+      "medianInitialValue": 87.9,
+      "minInitialValue": 1.66,
+      "maxInitialValue": 52153.12,
+      "newestTradeAge_h": 0.2,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0xd218e474776403a330142299f7796e8ba32eb5c9",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "cigarettes",
+      "leaderboardBestRank": 8,
+      "leaderboardMaxPnl": 491389.91834048514,
+      "geoPositionsTotal": 213,
+      "fromPositions": 213,
+      "fromTradeFlow": 0,
+      "wins": 185,
+      "losses": 28,
+      "wrPct": 86.9,
+      "truePnlTotal": 172015.94,
+      "medianInitialValue": 10.92,
+      "minInitialValue": 0.04,
+      "maxInitialValue": 15929.52,
+      "newestTradeAge_h": 2,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "debased",
+      "leaderboardBestRank": 5,
+      "leaderboardMaxPnl": 868961.8247540349,
+      "geoPositionsTotal": 149,
+      "fromPositions": 149,
+      "fromTradeFlow": 0,
+      "wins": 93,
+      "losses": 56,
+      "wrPct": 62.4,
+      "truePnlTotal": 142955.49,
+      "medianInitialValue": 182.82,
+      "minInitialValue": 0.01,
+      "maxInitialValue": 315000,
+      "newestTradeAge_h": 1.4,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0x0c0e270cf879583d6a0142fc817e05b768d0434e",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "The Spirit of Ukraine>UMA",
+      "leaderboardBestRank": 4,
+      "leaderboardMaxPnl": 431961.3833007929,
+      "geoPositionsTotal": 57,
+      "fromPositions": 52,
+      "fromTradeFlow": 5,
+      "wins": 47,
+      "losses": 10,
+      "wrPct": 82.5,
+      "truePnlTotal": 88781.96,
+      "medianInitialValue": 280.25,
+      "minInitialValue": 0.08,
+      "maxInitialValue": 58846.07,
+      "newestTradeAge_h": 7.9,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Car",
+      "leaderboardBestRank": 14,
+      "leaderboardMaxPnl": 1512.4820758607239,
+      "geoPositionsTotal": 106,
+      "fromPositions": 85,
+      "fromTradeFlow": 21,
+      "wins": 65,
+      "losses": 41,
+      "wrPct": 61.3,
+      "truePnlTotal": 62815.46,
+      "medianInitialValue": 369.66,
+      "minInitialValue": 1.01,
+      "maxInitialValue": 150000,
+      "newestTradeAge_h": 7,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0x3e5b23e9f71b2a2edcd5629d3f948f12f591073b",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "beenraping",
+      "leaderboardBestRank": 13,
+      "leaderboardMaxPnl": 149574.62838110572,
+      "geoPositionsTotal": 31,
+      "fromPositions": 25,
+      "fromTradeFlow": 6,
+      "wins": 21,
+      "losses": 10,
+      "wrPct": 67.7,
+      "truePnlTotal": 27754.65,
+      "medianInitialValue": 433.29,
+      "minInitialValue": 4.03,
+      "maxInitialValue": 62589.58,
+      "newestTradeAge_h": 11.5,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0xc21ea96be762bb55041529af6e386e7c53b80215",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "JustCrazy",
+      "leaderboardBestRank": 3,
+      "leaderboardMaxPnl": 12018.91420308745,
+      "geoPositionsTotal": 156,
+      "fromPositions": 155,
+      "fromTradeFlow": 1,
+      "wins": 117,
+      "losses": 39,
+      "wrPct": 75,
+      "truePnlTotal": 10647.22,
+      "medianInitialValue": 20.2,
+      "minInitialValue": 0,
+      "maxInitialValue": 4121.2,
+      "newestTradeAge_h": 46.3,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0xd6ddc6559313bcc819f1df1b3647f3930da998ee",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "SaintPascal",
+      "leaderboardBestRank": 12,
+      "leaderboardMaxPnl": 944.2406725452181,
+      "geoPositionsTotal": 31,
+      "fromPositions": 30,
+      "fromTradeFlow": 1,
+      "wins": 20,
+      "losses": 11,
+      "wrPct": 64.5,
+      "truePnlTotal": 2151.08,
+      "medianInitialValue": 116.23,
+      "minInitialValue": 0.69,
+      "maxInitialValue": 6000,
+      "newestTradeAge_h": 5.6,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0x4a650133a506a876352f8e8021ec3d220dab06bb",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": ".sorry",
+      "leaderboardBestRank": 2,
+      "leaderboardMaxPnl": 1455.6903823842845,
+      "geoPositionsTotal": 29,
+      "fromPositions": 28,
+      "fromTradeFlow": 1,
+      "wins": 20,
+      "losses": 9,
+      "wrPct": 69,
+      "truePnlTotal": 1066.03,
+      "medianInitialValue": 395.54,
+      "minInitialValue": 22.47,
+      "maxInitialValue": 3564.8,
+      "newestTradeAge_h": 11.7,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0x15f7ddbc6ffe08722ddeb64d51e58aef7b8ca018",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "idkwhatimdoinggg",
+      "leaderboardBestRank": 13,
+      "leaderboardMaxPnl": 870.862641198134,
+      "geoPositionsTotal": 24,
+      "fromPositions": 13,
+      "fromTradeFlow": 11,
+      "wins": 17,
+      "losses": 7,
+      "wrPct": 70.8,
+      "truePnlTotal": 753.35,
+      "medianInitialValue": 99,
+      "minInitialValue": 0.1,
+      "maxInitialValue": 11125.4,
+      "newestTradeAge_h": 0.3,
+      "passes": true,
+      "rejections": []
+    },
+    {
+      "wallet": "0x0a543bb97015206f67e1bc5ead7c2d60baf64a03",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "yyyy77777yyyyy777yyy",
+      "leaderboardBestRank": 12,
+      "leaderboardMaxPnl": 13092.757256199637,
+      "geoPositionsTotal": 20,
+      "fromPositions": 11,
+      "fromTradeFlow": 9,
+      "wins": 11,
+      "losses": 9,
+      "wrPct": 55,
+      "truePnlTotal": -13484.16,
+      "medianInitialValue": 100.61,
+      "minInitialValue": 0.09,
+      "maxInitialValue": 19762.98,
+      "newestTradeAge_h": 5.7,
+      "passes": true,
+      "rejections": []
+    }
+  ],
+  "interesting": [
+    {
+      "wallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "wan123",
+      "leaderboardBestRank": 1,
+      "leaderboardMaxPnl": 776632.5191104935,
+      "geoPositionsTotal": 137,
+      "fromPositions": 137,
+      "fromTradeFlow": 0,
+      "wins": 41,
+      "losses": 96,
+      "wrPct": 29.9,
+      "truePnlTotal": 321763.16,
+      "medianInitialValue": 1322.99,
+      "minInitialValue": 1,
+      "maxInitialValue": 128558.91,
+      "newestTradeAge_h": 5.8,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 29.9%)",
+        "medSize>$500 (got $1322.99)"
+      ]
+    },
+    {
+      "wallet": "0x7f9e2d1df78614564a70becc7fa14aa9a6623a0e",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "nojnn",
+      "leaderboardBestRank": 2,
+      "leaderboardMaxPnl": 16849.691771565704,
+      "geoPositionsTotal": 92,
+      "fromPositions": 10,
+      "fromTradeFlow": 82,
+      "wins": 67,
+      "losses": 25,
+      "wrPct": 72.8,
+      "truePnlTotal": 253701.98,
+      "medianInitialValue": 1643,
+      "minInitialValue": 3.86,
+      "maxInitialValue": 573848.83,
+      "newestTradeAge_h": 6.8,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $1643.00)"
+      ]
+    },
+    {
+      "wallet": "0x5bffcf561bcae83af680ad600cb99f1184d6ffbe",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "YatSen",
+      "leaderboardBestRank": 3,
+      "leaderboardMaxPnl": 1774213.3954779138,
+      "geoPositionsTotal": 31,
+      "fromPositions": 7,
+      "fromTradeFlow": 24,
+      "wins": 19,
+      "losses": 12,
+      "wrPct": 61.3,
+      "truePnlTotal": 164035.9,
+      "medianInitialValue": 3544.36,
+      "minInitialValue": 32.18,
+      "maxInitialValue": 971661.31,
+      "newestTradeAge_h": 2.6,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $3544.36)"
+      ]
+    },
+    {
+      "wallet": "0xbaa2bcb5439e985ce4ccf815b4700027d1b92c73",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "denizz",
+      "leaderboardBestRank": 4,
+      "leaderboardMaxPnl": 12609.013173967134,
+      "geoPositionsTotal": 63,
+      "fromPositions": 54,
+      "fromTradeFlow": 9,
+      "wins": 50,
+      "losses": 13,
+      "wrPct": 79.4,
+      "truePnlTotal": 161226.09,
+      "medianInitialValue": 3926.54,
+      "minInitialValue": 6.74,
+      "maxInitialValue": 191594.91,
+      "newestTradeAge_h": 9.4,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $3926.54)"
+      ]
+    },
+    {
+      "wallet": "0x152fdae6b14b9131a61ec77ed61dda50f68da549",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Ferwhere",
+      "leaderboardBestRank": 6,
+      "leaderboardMaxPnl": 172370.95070825444,
+      "geoPositionsTotal": 22,
+      "fromPositions": 14,
+      "fromTradeFlow": 8,
+      "wins": 4,
+      "losses": 18,
+      "wrPct": 18.2,
+      "truePnlTotal": 157459.82,
+      "medianInitialValue": 999.99,
+      "minInitialValue": 1,
+      "maxInitialValue": 11750,
+      "newestTradeAge_h": 8.3,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 18.2%)",
+        "medSize>$500 (got $999.99)"
+      ]
+    },
+    {
+      "wallet": "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Q96s3kwozynxpau",
+      "leaderboardBestRank": 7,
+      "leaderboardMaxPnl": 280727.19864323986,
+      "geoPositionsTotal": 109,
+      "fromPositions": 107,
+      "fromTradeFlow": 2,
+      "wins": 72,
+      "losses": 37,
+      "wrPct": 66.1,
+      "truePnlTotal": 146756.48,
+      "medianInitialValue": 864.94,
+      "minInitialValue": 3.62,
+      "maxInitialValue": 7042.1,
+      "newestTradeAge_h": 224.5,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $864.94)"
+      ]
+    },
+    {
+      "wallet": "0x88c4919de76e526d55a32c1f8afb439dd1f1129a",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "QuietRiskisWrong",
+      "leaderboardBestRank": 1,
+      "leaderboardMaxPnl": 18070.998846643255,
+      "geoPositionsTotal": 105,
+      "fromPositions": 9,
+      "fromTradeFlow": 96,
+      "wins": 67,
+      "losses": 38,
+      "wrPct": 63.8,
+      "truePnlTotal": 141422.66,
+      "medianInitialValue": 1170.18,
+      "minInitialValue": 10,
+      "maxInitialValue": 679957.47,
+      "newestTradeAge_h": 5.5,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $1170.18)"
+      ]
+    },
+    {
+      "wallet": "0x5d0f03cf1243a3e21262d6cf844795afd9fff0ad",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "EB99999",
+      "leaderboardBestRank": 8,
+      "leaderboardMaxPnl": 252702.71796559013,
+      "geoPositionsTotal": 5,
+      "fromPositions": 5,
+      "fromTradeFlow": 0,
+      "wins": 5,
+      "losses": 0,
+      "wrPct": 100,
+      "truePnlTotal": 133293.64,
+      "medianInitialValue": 19050.01,
+      "minInitialValue": 24.55,
+      "maxInitialValue": 456386.68,
+      "newestTradeAge_h": 1,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 5)",
+        "medSize>$500 (got $19050.01)"
+      ]
+    },
+    {
+      "wallet": "0xfd2b117412a698f322b0cd18d6827dad262b8e50",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "surf",
+      "leaderboardBestRank": 4,
+      "leaderboardMaxPnl": 271155.199757244,
+      "geoPositionsTotal": 41,
+      "fromPositions": 39,
+      "fromTradeFlow": 2,
+      "wins": 9,
+      "losses": 32,
+      "wrPct": 22,
+      "truePnlTotal": 105108.81,
+      "medianInitialValue": 1611.61,
+      "minInitialValue": 0.45,
+      "maxInitialValue": 42597.36,
+      "newestTradeAge_h": 33.2,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 22%)",
+        "medSize>$500 (got $1611.61)"
+      ]
+    },
+    {
+      "wallet": "0xf8ba34bf0e95d952d05b578bfbc0833f9242a286",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "kingfisher",
+      "leaderboardBestRank": 13,
+      "leaderboardMaxPnl": -276029.06009639264,
+      "geoPositionsTotal": 48,
+      "fromPositions": 46,
+      "fromTradeFlow": 2,
+      "wins": 32,
+      "losses": 16,
+      "wrPct": 66.7,
+      "truePnlTotal": 91047.19,
+      "medianInitialValue": 30.63,
+      "minInitialValue": 0.15,
+      "maxInitialValue": 780,
+      "newestTradeAge_h": 12349.5,
+      "passes": false,
+      "rejections": [
+        "inactive_>14d (newest 12349.5h)"
+      ]
+    },
+    {
+      "wallet": "0xa022ba0a68e11a78348382ff168601012d4d77f8",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "yungstalin",
+      "leaderboardBestRank": 18,
+      "leaderboardMaxPnl": 103726.31949116467,
+      "geoPositionsTotal": 54,
+      "fromPositions": 52,
+      "fromTradeFlow": 2,
+      "wins": 33,
+      "losses": 21,
+      "wrPct": 61.1,
+      "truePnlTotal": 90931.63,
+      "medianInitialValue": 2084.27,
+      "minInitialValue": 1.63,
+      "maxInitialValue": 170000,
+      "newestTradeAge_h": 9.5,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $2084.27)"
+      ]
+    },
+    {
+      "wallet": "0xdc03d611e5bcc9f1c87edb95edeb91671471804c",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "jocpolitic",
+      "leaderboardBestRank": 10,
+      "leaderboardMaxPnl": 5537.604820733191,
+      "geoPositionsTotal": 88,
+      "fromPositions": 87,
+      "fromTradeFlow": 1,
+      "wins": 26,
+      "losses": 62,
+      "wrPct": 29.5,
+      "truePnlTotal": 90224.65,
+      "medianInitialValue": 2187.86,
+      "minInitialValue": 4.5,
+      "maxInitialValue": 118267.41,
+      "newestTradeAge_h": 63.2,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 29.5%)",
+        "medSize>$500 (got $2187.86)"
+      ]
+    },
+    {
+      "wallet": "0x5d189e816b4149be00977c1a3c8840374aec4972",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "gloriafoster",
+      "leaderboardBestRank": 18,
+      "leaderboardMaxPnl": 85086.49274796354,
+      "geoPositionsTotal": 34,
+      "fromPositions": 34,
+      "fromTradeFlow": 0,
+      "wins": 26,
+      "losses": 8,
+      "wrPct": 76.5,
+      "truePnlTotal": 73529.08,
+      "medianInitialValue": 10314.7,
+      "minInitialValue": 6.86,
+      "maxInitialValue": 16905.57,
+      "newestTradeAge_h": 74.5,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $10314.70)"
+      ]
+    },
+    {
+      "wallet": "0xeed588bab0b0df73a9a6def7a59e512e9ede1a33",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "mohahaha",
+      "leaderboardBestRank": 12,
+      "leaderboardMaxPnl": 4732.988117301502,
+      "geoPositionsTotal": 9,
+      "fromPositions": 3,
+      "fromTradeFlow": 6,
+      "wins": 8,
+      "losses": 1,
+      "wrPct": 88.9,
+      "truePnlTotal": 69059.78,
+      "medianInitialValue": 44600,
+      "minInitialValue": 7194.75,
+      "maxInitialValue": 164970.77,
+      "newestTradeAge_h": 52,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 9)",
+        "medSize>$500 (got $44600.00)"
+      ]
+    },
+    {
+      "wallet": "0x614dc8d3542c12103d2c6a3553fd761e391d1546",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "mr.ozi",
+      "leaderboardBestRank": 6,
+      "leaderboardMaxPnl": 8031.809520952229,
+      "geoPositionsTotal": 63,
+      "fromPositions": 20,
+      "fromTradeFlow": 43,
+      "wins": 39,
+      "losses": 24,
+      "wrPct": 61.9,
+      "truePnlTotal": 65045.03,
+      "medianInitialValue": 1700,
+      "minInitialValue": 2.36,
+      "maxInitialValue": 119863.38,
+      "newestTradeAge_h": 1.5,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $1700.00)"
+      ]
+    },
+    {
+      "wallet": "0xd7f85d0eb0fe0732ca38d9107ad0d4d01b1289e4",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "tdrhrhhd",
+      "leaderboardBestRank": 2,
+      "leaderboardMaxPnl": 2368490.324575549,
+      "geoPositionsTotal": 12,
+      "fromPositions": 10,
+      "fromTradeFlow": 2,
+      "wins": 9,
+      "losses": 3,
+      "wrPct": 75,
+      "truePnlTotal": 57480.38,
+      "medianInitialValue": 2531.51,
+      "minInitialValue": 23.26,
+      "maxInitialValue": 65922.33,
+      "newestTradeAge_h": 195,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 12)",
+        "medSize>$500 (got $2531.51)"
+      ]
+    },
+    {
+      "wallet": "0xdf17f4a8dd01a4cfa6fc3da323a2baee5f8697d1",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Clear-Corridor",
+      "leaderboardBestRank": 14,
+      "leaderboardMaxPnl": 108171.750971,
+      "geoPositionsTotal": 82,
+      "fromPositions": 73,
+      "fromTradeFlow": 9,
+      "wins": 57,
+      "losses": 25,
+      "wrPct": 69.5,
+      "truePnlTotal": 44249.88,
+      "medianInitialValue": 705,
+      "minInitialValue": 0.9,
+      "maxInitialValue": 90466.14,
+      "newestTradeAge_h": 9.1,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $705.00)"
+      ]
+    },
+    {
+      "wallet": "0x59ee6c6a56d7b00223f0c30f8002c4df762b684d",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "undertaker",
+      "leaderboardBestRank": 11,
+      "leaderboardMaxPnl": 274348.052706545,
+      "geoPositionsTotal": 20,
+      "fromPositions": 20,
+      "fromTradeFlow": 0,
+      "wins": 9,
+      "losses": 11,
+      "wrPct": 45,
+      "truePnlTotal": 38059.22,
+      "medianInitialValue": 697.57,
+      "minInitialValue": 159.08,
+      "maxInitialValue": 5753.8,
+      "newestTradeAge_h": 13040,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 45%)",
+        "medSize>$500 (got $697.57)",
+        "inactive_>14d (newest 13040h)"
+      ]
+    },
+    {
+      "wallet": "0xa61ef8773ec2e821962306ca87d4b57e39ff0abd",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "risk-manager",
+      "leaderboardBestRank": 10,
+      "leaderboardMaxPnl": 208301.79066415108,
+      "geoPositionsTotal": 39,
+      "fromPositions": 36,
+      "fromTradeFlow": 3,
+      "wins": 23,
+      "losses": 16,
+      "wrPct": 59,
+      "truePnlTotal": 35164.76,
+      "medianInitialValue": 823.73,
+      "minInitialValue": 0.22,
+      "maxInitialValue": 36175.77,
+      "newestTradeAge_h": 14.8,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $823.73)"
+      ]
+    },
+    {
+      "wallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "aenews2",
+      "leaderboardBestRank": 7,
+      "leaderboardMaxPnl": 3124000.8299050005,
+      "geoPositionsTotal": 42,
+      "fromPositions": 30,
+      "fromTradeFlow": 12,
+      "wins": 23,
+      "losses": 19,
+      "wrPct": 54.8,
+      "truePnlTotal": 21656.97,
+      "medianInitialValue": 139.22,
+      "minInitialValue": 0.18,
+      "maxInitialValue": 164779.46,
+      "newestTradeAge_h": 3.9,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 54.8%)"
+      ]
+    },
+    {
+      "wallet": "0x1fee90f352fd362ea4bf13c6ed7cdd83a4d2ed5e",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "lomneivan",
+      "leaderboardBestRank": 18,
+      "leaderboardMaxPnl": 3978.6311946715578,
+      "geoPositionsTotal": 16,
+      "fromPositions": 16,
+      "fromTradeFlow": 0,
+      "wins": 8,
+      "losses": 8,
+      "wrPct": 50,
+      "truePnlTotal": 20159.93,
+      "medianInitialValue": 1072.54,
+      "minInitialValue": 38.94,
+      "maxInitialValue": 93617.88,
+      "newestTradeAge_h": 128.4,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 50%)",
+        "medSize>$500 (got $1072.54)"
+      ]
+    },
+    {
+      "wallet": "0xddb1ecc4ddf67d6732630d5eea099f9ffa53ea72",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Reckless9",
+      "leaderboardBestRank": 11,
+      "leaderboardMaxPnl": 4840.186966027599,
+      "geoPositionsTotal": 5,
+      "fromPositions": 5,
+      "fromTradeFlow": 0,
+      "wins": 4,
+      "losses": 1,
+      "wrPct": 80,
+      "truePnlTotal": 11906.41,
+      "medianInitialValue": 767.95,
+      "minInitialValue": 4.37,
+      "maxInitialValue": 19410.71,
+      "newestTradeAge_h": 7.9,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 5)",
+        "medSize>$500 (got $767.95)"
+      ]
+    },
+    {
+      "wallet": "0xdbf16bcffa41bd95faec2640daa2c95ab2bd86b5",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "UnderperformingForALiving",
+      "leaderboardBestRank": 19,
+      "leaderboardMaxPnl": 621.9304395004729,
+      "geoPositionsTotal": 8,
+      "fromPositions": 4,
+      "fromTradeFlow": 4,
+      "wins": 6,
+      "losses": 2,
+      "wrPct": 75,
+      "truePnlTotal": 11593.85,
+      "medianInitialValue": 100844.48,
+      "minInitialValue": 2075.07,
+      "maxInitialValue": 100844.48,
+      "newestTradeAge_h": 11.9,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 8)",
+        "medSize>$500 (got $100844.48)"
+      ]
+    },
+    {
+      "wallet": "0xa58d4f278d7953cd38eeb929f7e242bfc7c0b9b8",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "AiBird",
+      "leaderboardBestRank": 15,
+      "leaderboardMaxPnl": 67048.57840867832,
+      "geoPositionsTotal": 213,
+      "fromPositions": 167,
+      "fromTradeFlow": 46,
+      "wins": 94,
+      "losses": 119,
+      "wrPct": 44.1,
+      "truePnlTotal": 7326.56,
+      "medianInitialValue": 18.87,
+      "minInitialValue": 0.08,
+      "maxInitialValue": 6291.16,
+      "newestTradeAge_h": 0.2,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 44.1%)"
+      ]
+    },
+    {
+      "wallet": "0x3c918a8ef8c379304f744592120cbb4d76149af7",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Vilgefortz",
+      "leaderboardBestRank": 19,
+      "leaderboardMaxPnl": 3924.9502543130056,
+      "geoPositionsTotal": 24,
+      "fromPositions": 6,
+      "fromTradeFlow": 18,
+      "wins": 20,
+      "losses": 4,
+      "wrPct": 83.3,
+      "truePnlTotal": 6249.28,
+      "medianInitialValue": 1919.9,
+      "minInitialValue": 78.77,
+      "maxInitialValue": 64529.93,
+      "newestTradeAge_h": 14.7,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $1919.90)"
+      ]
+    },
+    {
+      "wallet": "0x801ba46b0e7ba3f82e6a3cfcedb436318e43e036",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "pizzaallosqualo",
+      "leaderboardBestRank": 10,
+      "leaderboardMaxPnl": 71.4500549442464,
+      "geoPositionsTotal": 13,
+      "fromPositions": 13,
+      "fromTradeFlow": 0,
+      "wins": 12,
+      "losses": 1,
+      "wrPct": 92.3,
+      "truePnlTotal": 5847.88,
+      "medianInitialValue": 1271.15,
+      "minInitialValue": 15.99,
+      "maxInitialValue": 5687.33,
+      "newestTradeAge_h": 140.7,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 13)",
+        "medSize>$500 (got $1271.15)"
+      ]
+    },
+    {
+      "wallet": "0xac4a1fabdac2438d6afa2a9e8e83845310a0bf1e",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "HerrieDavis",
+      "leaderboardBestRank": 20,
+      "leaderboardMaxPnl": 591.3199715226041,
+      "geoPositionsTotal": 285,
+      "fromPositions": 284,
+      "fromTradeFlow": 1,
+      "wins": 116,
+      "losses": 169,
+      "wrPct": 40.7,
+      "truePnlTotal": 5108.18,
+      "medianInitialValue": 17.89,
+      "minInitialValue": 0.05,
+      "maxInitialValue": 4025.09,
+      "newestTradeAge_h": 51.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 40.7%)"
+      ]
+    },
+    {
+      "wallet": "0x188e84eb9a9ecd72f90f55b9d9cc11a7de8770d8",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "fwfwefweg",
+      "leaderboardBestRank": 10,
+      "leaderboardMaxPnl": 1342.042238,
+      "geoPositionsTotal": 11,
+      "fromPositions": 1,
+      "fromTradeFlow": 10,
+      "wins": 7,
+      "losses": 4,
+      "wrPct": 63.6,
+      "truePnlTotal": 4625.22,
+      "medianInitialValue": 1976.03,
+      "minInitialValue": 304.04,
+      "maxInitialValue": 39057.33,
+      "newestTradeAge_h": 108,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 11)",
+        "medSize>$500 (got $1976.03)"
+      ]
+    },
+    {
+      "wallet": "0x8db5bfb848ee6745c475df375bd0c983468bfa3e",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "0x8DB5bfb848ee6745c475DF375bd0c983468BFA3E-1774575335053",
+      "leaderboardBestRank": 18,
+      "leaderboardMaxPnl": 655.822738,
+      "geoPositionsTotal": 47,
+      "fromPositions": 5,
+      "fromTradeFlow": 42,
+      "wins": 25,
+      "losses": 22,
+      "wrPct": 53.2,
+      "truePnlTotal": 2169.44,
+      "medianInitialValue": 38.8,
+      "minInitialValue": 0.13,
+      "maxInitialValue": 7245.83,
+      "newestTradeAge_h": 4.7,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 53.2%)"
+      ]
+    },
+    {
+      "wallet": "0x02e7f29f3e612a95a9ccca7131ce7dd5d56b59e5",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "CAR-GangVersion",
+      "leaderboardBestRank": 3,
+      "leaderboardMaxPnl": 1860.8304914909531,
+      "geoPositionsTotal": 6,
+      "fromPositions": 6,
+      "fromTradeFlow": 0,
+      "wins": 5,
+      "losses": 1,
+      "wrPct": 83.3,
+      "truePnlTotal": 1890.69,
+      "medianInitialValue": 249094.72,
+      "minInitialValue": 9526.97,
+      "maxInitialValue": 500000,
+      "newestTradeAge_h": 1.5,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 6)",
+        "medSize>$500 (got $249094.72)"
+      ]
+    },
+    {
+      "wallet": "0xc6dd722558dbfbd8fa780efcbe819ed8c6604b9f",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "tourists",
+      "leaderboardBestRank": 14,
+      "leaderboardMaxPnl": 46141.178661788,
+      "geoPositionsTotal": 24,
+      "fromPositions": 3,
+      "fromTradeFlow": 21,
+      "wins": 14,
+      "losses": 10,
+      "wrPct": 58.3,
+      "truePnlTotal": 1283.96,
+      "medianInitialValue": 667.29,
+      "minInitialValue": 4.05,
+      "maxInitialValue": 37797.05,
+      "newestTradeAge_h": 5.9,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $667.29)"
+      ]
+    },
+    {
+      "wallet": "0x88b59d79b6e1659c95a0043028e5bb7a26e6205c",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "almost-never",
+      "leaderboardBestRank": 14,
+      "leaderboardMaxPnl": 116484.444061,
+      "geoPositionsTotal": 8,
+      "fromPositions": 3,
+      "fromTradeFlow": 5,
+      "wins": 2,
+      "losses": 6,
+      "wrPct": 25,
+      "truePnlTotal": 1274.01,
+      "medianInitialValue": 810,
+      "minInitialValue": 5.5,
+      "maxInitialValue": 25000,
+      "newestTradeAge_h": 565,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 8)",
+        "WR<55% (got 25%)",
+        "medSize>$500 (got $810.00)",
+        "inactive_>14d (newest 565h)"
+      ]
+    },
+    {
+      "wallet": "0x5bb0de4e97698184ead80c80cb17a26cd6f6814b",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "bobe2.1",
+      "leaderboardBestRank": 19,
+      "leaderboardMaxPnl": 555.8639756732664,
+      "geoPositionsTotal": 5,
+      "fromPositions": 5,
+      "fromTradeFlow": 0,
+      "wins": 4,
+      "losses": 1,
+      "wrPct": 80,
+      "truePnlTotal": 680.1,
+      "medianInitialValue": 98953.02,
+      "minInitialValue": 59389.32,
+      "maxInitialValue": 250000,
+      "newestTradeAge_h": 7,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 5)",
+        "medSize>$500 (got $98953.02)"
+      ]
+    },
+    {
+      "wallet": "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "influenz.eth",
+      "leaderboardBestRank": 3,
+      "leaderboardMaxPnl": 109514.95572170001,
+      "geoPositionsTotal": 7,
+      "fromPositions": 7,
+      "fromTradeFlow": 0,
+      "wins": 7,
+      "losses": 0,
+      "wrPct": 100,
+      "truePnlTotal": 61.69,
+      "medianInitialValue": 2.99,
+      "minInitialValue": 2.99,
+      "maxInitialValue": 2.99,
+      "newestTradeAge_h": 147.5,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 7)",
+        "medSize<$10 (got $2.99)"
+      ]
+    },
+    {
+      "wallet": "0x482bf5accdecfaffa67c14d4d4fbb59f428a3266",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Winry",
+      "leaderboardBestRank": 16,
+      "leaderboardMaxPnl": 45685.04718960589,
+      "geoPositionsTotal": 17,
+      "fromPositions": 10,
+      "fromTradeFlow": 7,
+      "wins": 5,
+      "losses": 12,
+      "wrPct": 29.4,
+      "truePnlTotal": 59.83,
+      "medianInitialValue": 24.8,
+      "minInitialValue": 0.01,
+      "maxInitialValue": 4749.2,
+      "newestTradeAge_h": 8,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 29.4%)"
+      ]
+    },
+    {
+      "wallet": "0x3cf3e8d5427aed066a7a5926980600f6c3cf87b3",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "50Whence",
+      "leaderboardBestRank": 17,
+      "leaderboardMaxPnl": 761386.6783714058,
+      "geoPositionsTotal": 5,
+      "fromPositions": 0,
+      "fromTradeFlow": 5,
+      "wins": 4,
+      "losses": 1,
+      "wrPct": 80,
+      "truePnlTotal": 56.22,
+      "medianInitialValue": 531.08,
+      "minInitialValue": 399.2,
+      "maxInitialValue": 531.08,
+      "newestTradeAge_h": 7353.5,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 5)",
+        "medSize>$500 (got $531.08)",
+        "inactive_>14d (newest 7353.5h)"
+      ]
+    },
+    {
+      "wallet": "0x6480542954b70a674a74bd1a6015dec362dc8dc5",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "tripping",
+      "leaderboardBestRank": 2,
+      "leaderboardMaxPnl": 40114.353692629964,
+      "geoPositionsTotal": 12,
+      "fromPositions": 9,
+      "fromTradeFlow": 3,
+      "wins": 5,
+      "losses": 7,
+      "wrPct": 41.7,
+      "truePnlTotal": 15.74,
+      "medianInitialValue": 165.74,
+      "minInitialValue": 28.66,
+      "maxInitialValue": 3447.77,
+      "newestTradeAge_h": 25.1,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 12)",
+        "WR<55% (got 41.7%)"
+      ]
+    },
+    {
+      "wallet": "0xda9126becc96be3598ddd05c4fc06f4093759ffd",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "98Ddd05C98Ddd05C4fC06f4093759FFdhotking012",
+      "leaderboardBestRank": 14,
+      "leaderboardMaxPnl": 836.225267552292,
+      "geoPositionsTotal": 90,
+      "fromPositions": 83,
+      "fromTradeFlow": 7,
+      "wins": 48,
+      "losses": 42,
+      "wrPct": 53.3,
+      "truePnlTotal": -89.01,
+      "medianInitialValue": 0.04,
+      "minInitialValue": 0.04,
+      "maxInitialValue": 435.96,
+      "newestTradeAge_h": 3.8,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 53.3%)",
+        "medSize<$10 (got $0.04)"
+      ]
+    },
+    {
+      "wallet": "0xce1ee0c8de79ed12902869b67afcddb5456f851f",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Thailand-palyboy",
+      "leaderboardBestRank": 8,
+      "leaderboardMaxPnl": -154.26935719230292,
+      "geoPositionsTotal": 5,
+      "fromPositions": 4,
+      "fromTradeFlow": 1,
+      "wins": 2,
+      "losses": 3,
+      "wrPct": 40,
+      "truePnlTotal": -148.46,
+      "medianInitialValue": 298.93,
+      "minInitialValue": 137.89,
+      "maxInitialValue": 156881.92,
+      "newestTradeAge_h": 1,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 5)",
+        "WR<55% (got 40%)"
+      ]
+    },
+    {
+      "wallet": "0x5011224f4848cb2cf2d87cf2b823551dfd0e220e",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "GCNO1",
+      "leaderboardBestRank": 17,
+      "leaderboardMaxPnl": 3988.4284875744124,
+      "geoPositionsTotal": 36,
+      "fromPositions": 36,
+      "fromTradeFlow": 0,
+      "wins": 19,
+      "losses": 17,
+      "wrPct": 52.8,
+      "truePnlTotal": -168.8,
+      "medianInitialValue": 922.75,
+      "minInitialValue": 0.5,
+      "maxInitialValue": 24450.24,
+      "newestTradeAge_h": 2.5,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 52.8%)",
+        "medSize>$500 (got $922.75)"
+      ]
+    },
+    {
+      "wallet": "0x5297f1e1d0f0584537af763652a0a5f874037b99",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "adasol",
+      "leaderboardBestRank": 6,
+      "leaderboardMaxPnl": -32.20469538095185,
+      "geoPositionsTotal": 9,
+      "fromPositions": 9,
+      "fromTradeFlow": 0,
+      "wins": 6,
+      "losses": 3,
+      "wrPct": 66.7,
+      "truePnlTotal": -188.23,
+      "medianInitialValue": 326.39,
+      "minInitialValue": 0.5,
+      "maxInitialValue": 1235.54,
+      "newestTradeAge_h": 1.3,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 9)"
+      ]
+    },
+    {
+      "wallet": "0xa1d75a199ef084ee3ec9ae60dc986b439fe6e17e",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "TimeQuestion",
+      "leaderboardBestRank": 14,
+      "leaderboardMaxPnl": 169926.2654519476,
+      "geoPositionsTotal": 11,
+      "fromPositions": 1,
+      "fromTradeFlow": 10,
+      "wins": 1,
+      "losses": 10,
+      "wrPct": 9.1,
+      "truePnlTotal": -310.77,
+      "medianInitialValue": 69.37,
+      "minInitialValue": 0.49,
+      "maxInitialValue": 2030.74,
+      "newestTradeAge_h": 13374.3,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 11)",
+        "WR<55% (got 9.1%)",
+        "inactive_>14d (newest 13374.3h)"
+      ]
+    },
+    {
+      "wallet": "0x3dd2db2d398ff72c2c71c9ad6473368b941e9ab1",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "paspor",
+      "leaderboardBestRank": 16,
+      "leaderboardMaxPnl": 761.3005012167321,
+      "geoPositionsTotal": 91,
+      "fromPositions": 91,
+      "fromTradeFlow": 0,
+      "wins": 39,
+      "losses": 52,
+      "wrPct": 42.9,
+      "truePnlTotal": -444.72,
+      "medianInitialValue": 1.58,
+      "minInitialValue": 0.09,
+      "maxInitialValue": 114.89,
+      "newestTradeAge_h": 7,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 42.9%)",
+        "medSize<$10 (got $1.58)"
+      ]
+    },
+    {
+      "wallet": "0xa53e8fc4c2f9910e584de69d8b40a502a638218d",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "VladimirPooper",
+      "leaderboardBestRank": 5,
+      "leaderboardMaxPnl": 305194.1868414831,
+      "geoPositionsTotal": 5,
+      "fromPositions": 0,
+      "fromTradeFlow": 5,
+      "wins": 0,
+      "losses": 5,
+      "wrPct": 0,
+      "truePnlTotal": -452.82,
+      "medianInitialValue": 100,
+      "minInitialValue": 100,
+      "maxInitialValue": 1000,
+      "newestTradeAge_h": 39,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 5)",
+        "WR<55% (got 0%)"
+      ]
+    },
+    {
+      "wallet": "0x5b8f191a4a3e66fe9b7348891f21021399762c14",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "DistortedReality",
+      "leaderboardBestRank": 15,
+      "leaderboardMaxPnl": 4472.685930933898,
+      "geoPositionsTotal": 56,
+      "fromPositions": 1,
+      "fromTradeFlow": 55,
+      "wins": 14,
+      "losses": 42,
+      "wrPct": 25,
+      "truePnlTotal": -847.21,
+      "medianInitialValue": 100,
+      "minInitialValue": 0.28,
+      "maxInitialValue": 3534.13,
+      "newestTradeAge_h": 4.1,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 25%)"
+      ]
+    },
+    {
+      "wallet": "0x204f72f35326db932158cba6adff0b9a1da95e14",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositionsTotal": 5,
+      "fromPositions": 5,
+      "fromTradeFlow": 0,
+      "wins": 3,
+      "losses": 2,
+      "wrPct": 60,
+      "truePnlTotal": -1210.12,
+      "medianInitialValue": 122.91,
+      "minInitialValue": 54,
+      "maxInitialValue": 7820.67,
+      "newestTradeAge_h": -0.1,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 5)"
+      ]
+    },
+    {
+      "wallet": "0x5d05b1f588780423488a09d9aefeb64df54d6320",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositionsTotal": 36,
+      "fromPositions": 28,
+      "fromTradeFlow": 8,
+      "wins": 18,
+      "losses": 18,
+      "wrPct": 50,
+      "truePnlTotal": -2429.19,
+      "medianInitialValue": 6.51,
+      "minInitialValue": 0.88,
+      "maxInitialValue": 5274.8,
+      "newestTradeAge_h": 8.2,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 50%)",
+        "medSize<$10 (got $6.51)"
+      ]
+    },
+    {
+      "wallet": "0x662a00b70022c45ee80f6f753baa60f1c85f77b7",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "redlioneye",
+      "leaderboardBestRank": 4,
+      "leaderboardMaxPnl": 2900.51381814579,
+      "geoPositionsTotal": 13,
+      "fromPositions": 6,
+      "fromTradeFlow": 7,
+      "wins": 5,
+      "losses": 8,
+      "wrPct": 38.5,
+      "truePnlTotal": -2441.08,
+      "medianInitialValue": 675.55,
+      "minInitialValue": 25.05,
+      "maxInitialValue": 2500,
+      "newestTradeAge_h": 84.3,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 13)",
+        "WR<55% (got 38.5%)",
+        "medSize>$500 (got $675.55)"
+      ]
+    },
+    {
+      "wallet": "0x2974bd0059e48f215c391882976e0f1b4c8c9c23",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "65765757",
+      "leaderboardBestRank": 3,
+      "leaderboardMaxPnl": 13271.39627810201,
+      "geoPositionsTotal": 54,
+      "fromPositions": 9,
+      "fromTradeFlow": 45,
+      "wins": 41,
+      "losses": 13,
+      "wrPct": 75.9,
+      "truePnlTotal": -3558.97,
+      "medianInitialValue": 4556.1,
+      "minInitialValue": 1.7,
+      "maxInitialValue": 392810.26,
+      "newestTradeAge_h": 12.7,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $4556.10)"
+      ]
+    },
+    {
+      "wallet": "0x70d94a4ff67ed919a8480885cf0808afefe7a684",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "naiiiiiii",
+      "leaderboardBestRank": 9,
+      "leaderboardMaxPnl": 5618.8857174149925,
+      "geoPositionsTotal": 182,
+      "fromPositions": 182,
+      "fromTradeFlow": 0,
+      "wins": 19,
+      "losses": 163,
+      "wrPct": 10.4,
+      "truePnlTotal": -3828.08,
+      "medianInitialValue": 30.2,
+      "minInitialValue": 4.61,
+      "maxInitialValue": 3027.5,
+      "newestTradeAge_h": 0,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 10.4%)"
+      ]
+    },
+    {
+      "wallet": "0xa3282d3e882501229c75d0caf134e62e3afb4977",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "korda77",
+      "leaderboardBestRank": 8,
+      "leaderboardMaxPnl": 1861.46370817526,
+      "geoPositionsTotal": 113,
+      "fromPositions": 112,
+      "fromTradeFlow": 1,
+      "wins": 11,
+      "losses": 102,
+      "wrPct": 9.7,
+      "truePnlTotal": -3868.13,
+      "medianInitialValue": 10.63,
+      "minInitialValue": 0.23,
+      "maxInitialValue": 205.22,
+      "newestTradeAge_h": -0.1,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 9.7%)"
+      ]
+    },
+    {
+      "wallet": "0x9d736920e486176e7df7a76fa218f1ebd853216b",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "AlAhmeda",
+      "leaderboardBestRank": 20,
+      "leaderboardMaxPnl": 472.13995658783824,
+      "geoPositionsTotal": 123,
+      "fromPositions": 92,
+      "fromTradeFlow": 31,
+      "wins": 52,
+      "losses": 71,
+      "wrPct": 42.3,
+      "truePnlTotal": -4852.58,
+      "medianInitialValue": 254.4,
+      "minInitialValue": 0.05,
+      "maxInitialValue": 17522.74,
+      "newestTradeAge_h": -0.1,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 42.3%)"
+      ]
+    },
+    {
+      "wallet": "0xc6587b11a2209e46dfe3928b31c5514a8e33b784",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Erasmus.",
+      "leaderboardBestRank": 7,
+      "leaderboardMaxPnl": 255726.46152372274,
+      "geoPositionsTotal": 83,
+      "fromPositions": 38,
+      "fromTradeFlow": 45,
+      "wins": 23,
+      "losses": 60,
+      "wrPct": 27.7,
+      "truePnlTotal": -5885.75,
+      "medianInitialValue": 1319.83,
+      "minInitialValue": 1.45,
+      "maxInitialValue": 212409.66,
+      "newestTradeAge_h": 12.7,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 27.7%)",
+        "medSize>$500 (got $1319.83)"
+      ]
+    },
+    {
+      "wallet": "0x058f48b0fe2901214215aa53edf2ead7505c4883",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "0x058f48b0FE2901214215aA53eDF2EAd7505c4883-1777603428724",
+      "leaderboardBestRank": 9,
+      "leaderboardMaxPnl": -2218.8785810992104,
+      "geoPositionsTotal": 25,
+      "fromPositions": 2,
+      "fromTradeFlow": 23,
+      "wins": 6,
+      "losses": 19,
+      "wrPct": 24,
+      "truePnlTotal": -6139.54,
+      "medianInitialValue": 1850,
+      "minInitialValue": 1,
+      "maxInitialValue": 85089.85,
+      "newestTradeAge_h": 1,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 24%)",
+        "medSize>$500 (got $1850.00)"
+      ]
+    },
+    {
+      "wallet": "0x629bc4a1e53e1d475beb7ea3d388791e96dd995a",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "lava-lava",
+      "leaderboardBestRank": 20,
+      "leaderboardMaxPnl": 101339.44909730082,
+      "geoPositionsTotal": 183,
+      "fromPositions": 178,
+      "fromTradeFlow": 5,
+      "wins": 43,
+      "losses": 140,
+      "wrPct": 23.5,
+      "truePnlTotal": -7234.57,
+      "medianInitialValue": 278.33,
+      "minInitialValue": 0.29,
+      "maxInitialValue": 72888.86,
+      "newestTradeAge_h": 17.4,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 23.5%)"
+      ]
+    },
+    {
+      "wallet": "0xf769c6390f6d564fe4859effbddb682c62660114",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "MrMarket",
+      "leaderboardBestRank": 13,
+      "leaderboardMaxPnl": 4285.827054607472,
+      "geoPositionsTotal": 208,
+      "fromPositions": 204,
+      "fromTradeFlow": 4,
+      "wins": 64,
+      "losses": 144,
+      "wrPct": 30.8,
+      "truePnlTotal": -7385.03,
+      "medianInitialValue": 45,
+      "minInitialValue": 0.21,
+      "maxInitialValue": 17225.99,
+      "newestTradeAge_h": 7.8,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 30.8%)"
+      ]
+    },
+    {
+      "wallet": "0x1e82e3eb816aaf755ac9b44bc9d98f01b08aaf92",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "0x1E82E3Eb816aAf755AC9b44BC9d98F01b08AAF92-1772042958755",
+      "leaderboardBestRank": 9,
+      "leaderboardMaxPnl": 1417.7518022760657,
+      "geoPositionsTotal": 125,
+      "fromPositions": 124,
+      "fromTradeFlow": 1,
+      "wins": 34,
+      "losses": 91,
+      "wrPct": 27.2,
+      "truePnlTotal": -11392.93,
+      "medianInitialValue": 102.44,
+      "minInitialValue": 0.64,
+      "maxInitialValue": 423.86,
+      "newestTradeAge_h": 0.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 27.2%)"
+      ]
+    },
+    {
+      "wallet": "0x2005d16a84ceefa912d4e380cd32e7ff827875ea",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositionsTotal": 7,
+      "fromPositions": 7,
+      "fromTradeFlow": 0,
+      "wins": 2,
+      "losses": 5,
+      "wrPct": 28.6,
+      "truePnlTotal": -19540.42,
+      "medianInitialValue": 1773.93,
+      "minInitialValue": 996.12,
+      "maxInitialValue": 13375.74,
+      "newestTradeAge_h": 0,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 7)",
+        "WR<55% (got 28.6%)",
+        "medSize>$500 (got $1773.93)"
+      ]
+    },
+    {
+      "wallet": "0x23d81ba9371e576015c1e562db09c689f56b0288",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "flawfence",
+      "leaderboardBestRank": 6,
+      "leaderboardMaxPnl": 1915.1440529999998,
+      "geoPositionsTotal": 55,
+      "fromPositions": 55,
+      "fromTradeFlow": 0,
+      "wins": 22,
+      "losses": 33,
+      "wrPct": 40,
+      "truePnlTotal": -19663.74,
+      "medianInitialValue": 224.49,
+      "minInitialValue": 17.41,
+      "maxInitialValue": 19949.8,
+      "newestTradeAge_h": 18.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 40%)"
+      ]
+    },
+    {
+      "wallet": "0xb886580698ede4b18de3e446b2d8da8bcedd81b3",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "0xB886580698eDE4b18DE3E446b2D8Da8bCEdd81B3-1767532547794",
+      "leaderboardBestRank": 1,
+      "leaderboardMaxPnl": -4657.780122030039,
+      "geoPositionsTotal": 196,
+      "fromPositions": 168,
+      "fromTradeFlow": 28,
+      "wins": 104,
+      "losses": 92,
+      "wrPct": 53.1,
+      "truePnlTotal": -19676.98,
+      "medianInitialValue": 42.57,
+      "minInitialValue": 0.04,
+      "maxInitialValue": 34313.35,
+      "newestTradeAge_h": 5.9,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 53.1%)"
+      ]
+    },
+    {
+      "wallet": "0xdfe3fedc5c7679be42c3d393e99d4b55247b73c4",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "cqs",
+      "leaderboardBestRank": 13,
+      "leaderboardMaxPnl": -2589.79269401927,
+      "geoPositionsTotal": 41,
+      "fromPositions": 27,
+      "fromTradeFlow": 14,
+      "wins": 25,
+      "losses": 16,
+      "wrPct": 61,
+      "truePnlTotal": -21738.02,
+      "medianInitialValue": 1040,
+      "minInitialValue": 9.61,
+      "maxInitialValue": 125045.68,
+      "newestTradeAge_h": 7.2,
+      "passes": false,
+      "rejections": [
+        "medSize>$500 (got $1040.00)"
+      ]
+    },
+    {
+      "wallet": "0x9ca119b8cd7bdb890aecf1ff3b0f6e3a45cc13b5",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "JoeBlack01",
+      "leaderboardBestRank": 2,
+      "leaderboardMaxPnl": 5476.224813,
+      "geoPositionsTotal": 97,
+      "fromPositions": 80,
+      "fromTradeFlow": 17,
+      "wins": 40,
+      "losses": 57,
+      "wrPct": 41.2,
+      "truePnlTotal": -21814.54,
+      "medianInitialValue": 500,
+      "minInitialValue": 2.26,
+      "maxInitialValue": 11366.64,
+      "newestTradeAge_h": 15.4,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 41.2%)"
+      ]
+    },
+    {
+      "wallet": "0x2a2c53bd278c04da9962fcf96490e17f3dfb9bc1",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositionsTotal": 6,
+      "fromPositions": 6,
+      "fromTradeFlow": 0,
+      "wins": 2,
+      "losses": 4,
+      "wrPct": 33.3,
+      "truePnlTotal": -22633.58,
+      "medianInitialValue": 380,
+      "minInitialValue": 44.69,
+      "maxInitialValue": 21966.83,
+      "newestTradeAge_h": 7.7,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 6)",
+        "WR<55% (got 33.3%)"
+      ]
+    },
+    {
+      "wallet": "0x4478d7bd8a295691ac84f60a5ec2b47e122102a4",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Warren-Buffett",
+      "leaderboardBestRank": 12,
+      "leaderboardMaxPnl": 1079.9355216461554,
+      "geoPositionsTotal": 92,
+      "fromPositions": 22,
+      "fromTradeFlow": 70,
+      "wins": 42,
+      "losses": 50,
+      "wrPct": 45.7,
+      "truePnlTotal": -25589.49,
+      "medianInitialValue": 239.47,
+      "minInitialValue": 1.4,
+      "maxInitialValue": 15000,
+      "newestTradeAge_h": 1.9,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 45.7%)"
+      ]
+    },
+    {
+      "wallet": "0xe7cb6e31f033e0e9f5940e46d84166c7d7ded447",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "mindeirs",
+      "leaderboardBestRank": 1,
+      "leaderboardMaxPnl": 15817.504071171852,
+      "geoPositionsTotal": 8,
+      "fromPositions": 7,
+      "fromTradeFlow": 1,
+      "wins": 1,
+      "losses": 7,
+      "wrPct": 12.5,
+      "truePnlTotal": -33452.37,
+      "medianInitialValue": 2946.86,
+      "minInitialValue": 5.4,
+      "maxInitialValue": 33748.66,
+      "newestTradeAge_h": 42.4,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 8)",
+        "WR<55% (got 12.5%)",
+        "medSize>$500 (got $2946.86)"
+      ]
+    },
+    {
+      "wallet": "0x162f6fff88a52864f2ecc9833e58089d5254798d",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Valen9",
+      "leaderboardBestRank": 5,
+      "leaderboardMaxPnl": 8203.843746795494,
+      "geoPositionsTotal": 35,
+      "fromPositions": 34,
+      "fromTradeFlow": 1,
+      "wins": 14,
+      "losses": 21,
+      "wrPct": 40,
+      "truePnlTotal": -49085.97,
+      "medianInitialValue": 5399.93,
+      "minInitialValue": 1.49,
+      "maxInitialValue": 80705.82,
+      "newestTradeAge_h": 11.7,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 40%)",
+        "medSize>$500 (got $5399.93)"
+      ]
+    },
+    {
+      "wallet": "0xb1a279adb096d316b1b168993e8ed976d3cd372a",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "TwoEyes",
+      "leaderboardBestRank": 14,
+      "leaderboardMaxPnl": 147104.87720297658,
+      "geoPositionsTotal": 37,
+      "fromPositions": 20,
+      "fromTradeFlow": 17,
+      "wins": 12,
+      "losses": 25,
+      "wrPct": 32.4,
+      "truePnlTotal": -50502.72,
+      "medianInitialValue": 1080,
+      "minInitialValue": 10.2,
+      "maxInitialValue": 57892,
+      "newestTradeAge_h": 7,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 32.4%)",
+        "medSize>$500 (got $1080.00)"
+      ]
+    },
+    {
+      "wallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "ArmageddonRewardsBilly",
+      "leaderboardBestRank": 1,
+      "leaderboardMaxPnl": 234554.51117358476,
+      "geoPositionsTotal": 209,
+      "fromPositions": 201,
+      "fromTradeFlow": 8,
+      "wins": 104,
+      "losses": 105,
+      "wrPct": 49.8,
+      "truePnlTotal": -58426.69,
+      "medianInitialValue": 543.6,
+      "minInitialValue": 0.5,
+      "maxInitialValue": 100860.87,
+      "newestTradeAge_h": 6.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 49.8%)",
+        "medSize>$500 (got $543.60)"
+      ]
+    },
+    {
+      "wallet": "0x94a428cfa4f84b264e01f70d93d02bc96cb36356",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "GCottrell93",
+      "leaderboardBestRank": 8,
+      "leaderboardMaxPnl": 4460260.419508,
+      "geoPositionsTotal": 5,
+      "fromPositions": 4,
+      "fromTradeFlow": 1,
+      "wins": 1,
+      "losses": 4,
+      "wrPct": 20,
+      "truePnlTotal": -64041.24,
+      "medianInitialValue": 39206.26,
+      "minInitialValue": 1229.93,
+      "maxInitialValue": 71538.02,
+      "newestTradeAge_h": 228.5,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 5)",
+        "WR<55% (got 20%)",
+        "medSize>$500 (got $39206.26)"
+      ]
+    },
+    {
+      "wallet": "0x5188fa0e8a77e87bc6a58e6781fdfc4e165cc804",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "AllByMyseIf",
+      "leaderboardBestRank": 17,
+      "leaderboardMaxPnl": 1271.6371665468905,
+      "geoPositionsTotal": 164,
+      "fromPositions": 150,
+      "fromTradeFlow": 14,
+      "wins": 36,
+      "losses": 128,
+      "wrPct": 22,
+      "truePnlTotal": -69065.9,
+      "medianInitialValue": 135.73,
+      "minInitialValue": 0.48,
+      "maxInitialValue": 44121.8,
+      "newestTradeAge_h": 1.5,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 22%)"
+      ]
+    },
+    {
+      "wallet": "0xfe787d2da716d60e8acff57fb87eb13cd4d10319",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositionsTotal": 7,
+      "fromPositions": 7,
+      "fromTradeFlow": 0,
+      "wins": 0,
+      "losses": 7,
+      "wrPct": 0,
+      "truePnlTotal": -80568.57,
+      "medianInitialValue": 11421.97,
+      "minInitialValue": 4925.84,
+      "maxInitialValue": 20909.77,
+      "newestTradeAge_h": 0.5,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 7)",
+        "WR<55% (got 0%)",
+        "medSize>$500 (got $11421.97)"
+      ]
+    },
+    {
+      "wallet": "0x93fb8127a1b21a112b11af936361225df0563e4a",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "LlamaLoco0000",
+      "leaderboardBestRank": 9,
+      "leaderboardMaxPnl": 231519.52783185785,
+      "geoPositionsTotal": 38,
+      "fromPositions": 32,
+      "fromTradeFlow": 6,
+      "wins": 8,
+      "losses": 30,
+      "wrPct": 21.1,
+      "truePnlTotal": -96777.89,
+      "medianInitialValue": 1998.18,
+      "minInitialValue": 9.32,
+      "maxInitialValue": 86819.57,
+      "newestTradeAge_h": 8.2,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 21.1%)",
+        "medSize>$500 (got $1998.18)"
+      ]
+    },
+    {
+      "wallet": "0x9a817c446ca66b8859e77f4716a785dc7e76d324",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Pedro1414",
+      "leaderboardBestRank": 18,
+      "leaderboardMaxPnl": -80753.51292749142,
+      "geoPositionsTotal": 56,
+      "fromPositions": 7,
+      "fromTradeFlow": 49,
+      "wins": 10,
+      "losses": 46,
+      "wrPct": 17.9,
+      "truePnlTotal": -105383.51,
+      "medianInitialValue": 200,
+      "minInitialValue": 0.92,
+      "maxInitialValue": 103432.37,
+      "newestTradeAge_h": 250.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 17.9%)"
+      ]
+    },
+    {
+      "wallet": "0xecaa8806a9a05049d7d5260a33dc924220e377a9",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Melody626",
+      "leaderboardBestRank": 17,
+      "leaderboardMaxPnl": 733.75630276722,
+      "geoPositionsTotal": 71,
+      "fromPositions": 70,
+      "fromTradeFlow": 1,
+      "wins": 22,
+      "losses": 49,
+      "wrPct": 31,
+      "truePnlTotal": -118023.97,
+      "medianInitialValue": 2536.28,
+      "minInitialValue": 2.75,
+      "maxInitialValue": 112148.73,
+      "newestTradeAge_h": 6.3,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 31%)",
+        "medSize>$500 (got $2536.28)"
+      ]
+    },
+    {
+      "wallet": "0xd49b42bce7ea10bac53e2901c188cae20ea4bdf9",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "i18z",
+      "leaderboardBestRank": 7,
+      "leaderboardMaxPnl": 4060.5519077791614,
+      "geoPositionsTotal": 300,
+      "fromPositions": 300,
+      "fromTradeFlow": 0,
+      "wins": 133,
+      "losses": 167,
+      "wrPct": 44.3,
+      "truePnlTotal": -128825.87,
+      "medianInitialValue": 113.45,
+      "minInitialValue": 7.74,
+      "maxInitialValue": 6350.4,
+      "newestTradeAge_h": 0,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 44.3%)"
+      ]
+    },
+    {
+      "wallet": "0x9b979a065641e8cfde3022a30ed2d9415cf55e12",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "LlamaEnjoyer",
+      "leaderboardBestRank": 11,
+      "leaderboardMaxPnl": 2995111.3995009996,
+      "geoPositionsTotal": 58,
+      "fromPositions": 58,
+      "fromTradeFlow": 0,
+      "wins": 3,
+      "losses": 55,
+      "wrPct": 5.2,
+      "truePnlTotal": -146438.88,
+      "medianInitialValue": 3414.19,
+      "minInitialValue": 0.02,
+      "maxInitialValue": 10398.66,
+      "newestTradeAge_h": 38.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 5.2%)",
+        "medSize>$500 (got $3414.19)"
+      ]
+    },
+    {
+      "wallet": "0x74471a007ddcc488f6d57b5e86dfb35a8d48a16d",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "tetrose",
+      "leaderboardBestRank": 9,
+      "leaderboardMaxPnl": 448.81579781673645,
+      "geoPositionsTotal": 97,
+      "fromPositions": 83,
+      "fromTradeFlow": 14,
+      "wins": 18,
+      "losses": 79,
+      "wrPct": 18.6,
+      "truePnlTotal": -171407.44,
+      "medianInitialValue": 670.7,
+      "minInitialValue": 0.5,
+      "maxInitialValue": 34065.26,
+      "newestTradeAge_h": 7.7,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 18.6%)",
+        "medSize>$500 (got $670.70)"
+      ]
+    },
+    {
+      "wallet": "0xe3726a1b9c6ba2f06585d1c9e01d00afaedaeb38",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "cry.eth2",
+      "leaderboardBestRank": 19,
+      "leaderboardMaxPnl": 614.0102988223011,
+      "geoPositionsTotal": 147,
+      "fromPositions": 96,
+      "fromTradeFlow": 51,
+      "wins": 52,
+      "losses": 95,
+      "wrPct": 35.4,
+      "truePnlTotal": -228309.09,
+      "medianInitialValue": 448.74,
+      "minInitialValue": 148.77,
+      "maxInitialValue": 31690.06,
+      "newestTradeAge_h": 0.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 35.4%)"
+      ]
+    },
+    {
+      "wallet": "0xfc2f4f50ce2f6045d35558a5e2d8d4b2ac6610c7",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "0xFc2F4f50ce2F6045d35558A5E2D8d4b2aC6610c7-1769097007451",
+      "leaderboardBestRank": 11,
+      "leaderboardMaxPnl": -3937.218821874947,
+      "geoPositionsTotal": 308,
+      "fromPositions": 307,
+      "fromTradeFlow": 1,
+      "wins": 80,
+      "losses": 228,
+      "wrPct": 26,
+      "truePnlTotal": -329876.27,
+      "medianInitialValue": 525.74,
+      "minInitialValue": 1.13,
+      "maxInitialValue": 53298.65,
+      "newestTradeAge_h": 6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 26%)",
+        "medSize>$500 (got $525.74)"
+      ]
+    },
+    {
+      "wallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "anoin123",
+      "leaderboardBestRank": 1,
+      "leaderboardMaxPnl": 714968.1401604982,
+      "geoPositionsTotal": 121,
+      "fromPositions": 121,
+      "fromTradeFlow": 0,
+      "wins": 41,
+      "losses": 80,
+      "wrPct": 33.9,
+      "truePnlTotal": -417690.58,
+      "medianInitialValue": 3702.69,
+      "minInitialValue": 0.5,
+      "maxInitialValue": 410603.69,
+      "newestTradeAge_h": 12.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 33.9%)",
+        "medSize>$500 (got $3702.69)"
+      ]
+    },
+    {
+      "wallet": "0x37c1874a60d348903594a96703e0507c518fc53a",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositionsTotal": 14,
+      "fromPositions": 14,
+      "fromTradeFlow": 0,
+      "wins": 0,
+      "losses": 14,
+      "wrPct": 0,
+      "truePnlTotal": -613179.83,
+      "medianInitialValue": 27235.83,
+      "minInitialValue": 4078.71,
+      "maxInitialValue": 236754.59,
+      "newestTradeAge_h": 424.5,
+      "passes": false,
+      "rejections": [
+        "geo<15 (got 14)",
+        "WR<55% (got 0%)",
+        "medSize>$500 (got $27235.83)",
+        "inactive_>14d (newest 424.5h)"
+      ]
+    },
+    {
+      "wallet": "0x9d84ce0306f8551e02efef1680475fc0f1dc1344",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "ImJustKen",
+      "leaderboardBestRank": 2,
+      "leaderboardMaxPnl": 1250892.6825142186,
+      "geoPositionsTotal": 287,
+      "fromPositions": 282,
+      "fromTradeFlow": 5,
+      "wins": 106,
+      "losses": 181,
+      "wrPct": 36.9,
+      "truePnlTotal": -670433.7,
+      "medianInitialValue": 709.28,
+      "minInitialValue": 0.43,
+      "maxInitialValue": 98426.98,
+      "newestTradeAge_h": 1.6,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 36.9%)",
+        "medSize>$500 (got $709.28)"
+      ]
+    },
+    {
+      "wallet": "0xfbfd14dd4bb607373119de95f1d4b21c3b6c0029",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "XAE12Archangel",
+      "leaderboardBestRank": 9,
+      "leaderboardMaxPnl": 124095.7690644644,
+      "geoPositionsTotal": 117,
+      "fromPositions": 64,
+      "fromTradeFlow": 53,
+      "wins": 42,
+      "losses": 75,
+      "wrPct": 35.9,
+      "truePnlTotal": -6433244.33,
+      "medianInitialValue": 351.63,
+      "minInitialValue": 19.53,
+      "maxInitialValue": 418311.78,
+      "newestTradeAge_h": 0.2,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 35.9%)"
+      ]
+    },
+    {
+      "wallet": "0x4ce73141dbfce41e65db3723e31059a730f0abad",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "qrpenc",
+      "leaderboardBestRank": 6,
+      "leaderboardMaxPnl": 311160.15781454765,
+      "geoPositionsTotal": 207,
+      "fromPositions": 207,
+      "fromTradeFlow": 0,
+      "wins": 48,
+      "losses": 159,
+      "wrPct": 23.2,
+      "truePnlTotal": -7318448.72,
+      "medianInitialValue": 151.05,
+      "minInitialValue": 7,
+      "maxInitialValue": 902533.17,
+      "newestTradeAge_h": 12960.5,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 23.2%)",
+        "inactive_>14d (newest 12960.5h)"
+      ]
+    }
+  ],
+  "sleeping": 49,
+  "summary": {
+    "passing": 12,
+    "interestingCount": 84,
+    "sleepingCount": 49
+  }
+}

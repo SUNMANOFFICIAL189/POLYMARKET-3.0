@@ -1,0 +1,4608 @@
+{
+  "fetchedAt": "2026-05-11T09:43:41.744Z",
+  "buildId": "build-TfctsWXpff2fKS",
+  "windows": [
+    "today",
+    "weekly",
+    "monthly",
+    "all"
+  ],
+  "rankings": [
+    {
+      "window": "today",
+      "sort": "volume",
+      "count": 20,
+      "results": [
+        {
+          "rank": 1,
+          "proxyWallet": "0xb886580698ede4b18de3e446b2d8da8bcedd81b3",
+          "name": "0xB886580698eDE4b18DE3E446b2D8Da8bCEdd81B3-1767532547794",
+          "pseudonym": "0xB886580698eDE4b18DE3E446b2D8Da8bCEdd81B3-1767532547794",
+          "amount": 769332.9094139999,
+          "pnl": -4657.780122030112,
+          "volume": 769332.9094139999,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 2,
+          "proxyWallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+          "name": "ArmageddonRewardsBilly",
+          "pseudonym": "ArmageddonRewardsBilly",
+          "amount": 534351.0588,
+          "pnl": 4054.9915743450692,
+          "volume": 534351.0588,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "xUsername": "Eltonma"
+        },
+        {
+          "rank": 3,
+          "proxyWallet": "0x02e7f29f3e612a95a9ccca7131ce7dd5d56b59e5",
+          "name": "CAR-GangVersion",
+          "pseudonym": "CAR-GangVersion",
+          "amount": 388785.347485,
+          "pnl": 1860.8304914909531,
+          "volume": 388785.347485,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-7079183-ebb14413-d636-4d18-a720-9afebbefae0f.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-7079183-ebb14413-d636-4d18-a720-9afebbefae0f.webp"
+        },
+        {
+          "rank": 4,
+          "proxyWallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+          "name": "anoin123",
+          "pseudonym": "anoin123",
+          "amount": 352632.261225,
+          "pnl": -10110.741668787785,
+          "volume": 352632.261225,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 5,
+          "proxyWallet": "0xc21ea96be762bb55041529af6e386e7c53b80215",
+          "name": "JustCrazy",
+          "pseudonym": "JustCrazy",
+          "amount": 314138.00310100004,
+          "pnl": 180.94279048714088,
+          "volume": 314138.00310100004,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-4165649-7b446c7e-48c6-4add-8bc9-dc02a69a17d2.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-4165649-7b446c7e-48c6-4add-8bc9-dc02a69a17d2.png",
+          "xUsername": "SkewDealer"
+        },
+        {
+          "rank": 6,
+          "proxyWallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+          "name": "debased",
+          "pseudonym": "debased",
+          "amount": 259907.36663499998,
+          "pnl": 169.60901741613634,
+          "volume": 259907.36663499998,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/trump_farmer_b64c6dcd-13e2-4dda-b1c2-0fb46389fb22_1743074825403.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/trump_farmer_b64c6dcd-13e2-4dda-b1c2-0fb46389fb22_1743074825403.png",
+          "xUsername": "debased_PM"
+        },
+        {
+          "rank": 7,
+          "proxyWallet": "0x5297f1e1d0f0584537af763652a0a5f874037b99",
+          "name": "adasol",
+          "pseudonym": "adasol",
+          "amount": 230921.796633,
+          "pnl": -32.204695380951875,
+          "volume": 230921.796633,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 8,
+          "proxyWallet": "0xce1ee0c8de79ed12902869b67afcddb5456f851f",
+          "name": "Thailand-palyboy",
+          "pseudonym": "Thailand-palyboy",
+          "amount": 204342.59796199997,
+          "pnl": -154.26935719230292,
+          "volume": 204342.59796199997,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-7762833-2f4d9b52-cc69-47e3-a8e5-d95bcdcebcd7.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-7762833-2f4d9b52-cc69-47e3-a8e5-d95bcdcebcd7.png",
+          "xUsername": "Aini678129900"
+        },
+        {
+          "rank": 9,
+          "proxyWallet": "0x058f48b0fe2901214215aa53edf2ead7505c4883",
+          "name": "0x058f48b0FE2901214215aA53eDF2EAd7505c4883-1777603428724",
+          "pseudonym": "0x058f48b0FE2901214215aA53eDF2EAd7505c4883-1777603428724",
+          "amount": 187002.93624999997,
+          "pnl": -2218.8785810992104,
+          "volume": 187002.93624999997,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 10,
+          "proxyWallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+          "name": "aenews2",
+          "pseudonym": "aenews2",
+          "amount": 185479.474947,
+          "pnl": 6224.946498832665,
+          "volume": 185479.474947,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-154436-a84dabd0-06ee-40d3-be95-e454283cdfc0.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-154436-a84dabd0-06ee-40d3-be95-e454283cdfc0.jpg",
+          "xUsername": "aenews"
+        },
+        {
+          "rank": 11,
+          "proxyWallet": "0x57dedd62596dd4f85c7ebe5317e07d22795ecd90",
+          "name": "largeleeks888",
+          "pseudonym": "largeleeks888",
+          "amount": 185329.60234500002,
+          "pnl": 232.82894809221034,
+          "volume": 185329.60234500002,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3464461-2563e887-2712-45cb-b29b-68be71f6e380.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3464461-2563e887-2712-45cb-b29b-68be71f6e380.webp"
+        },
+        {
+          "rank": 12,
+          "proxyWallet": "0x97f937e0ec5068121db4a4b900140544b09f4e4f",
+          "name": "Mark001-",
+          "pseudonym": "Mark001-",
+          "amount": 173551.12263199998,
+          "pnl": 555.3110915777652,
+          "volume": 173551.12263199998,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 13,
+          "proxyWallet": "0xdfe3fedc5c7679be42c3d393e99d4b55247b73c4",
+          "name": "cqs",
+          "pseudonym": "cqs",
+          "amount": 172050.126918,
+          "pnl": -2589.79269401927,
+          "volume": 172050.126918,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 14,
+          "proxyWallet": "0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b",
+          "name": "Car",
+          "pseudonym": "Car",
+          "amount": 170907.09538900002,
+          "pnl": 1512.4820758607239,
+          "volume": 170907.09538900002,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-501613-aa434e55-7732-41b1-9650-83a9d1d716ef.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-501613-aa434e55-7732-41b1-9650-83a9d1d716ef.png",
+          "xUsername": "CarOnPolymarket",
+          "verifiedBadge": true
+        },
+        {
+          "rank": 15,
+          "proxyWallet": "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f",
+          "name": "Q96s3kwozynxpau",
+          "pseudonym": "Q96s3kwozynxpau",
+          "amount": 160988.590488,
+          "pnl": 4.126458306622226,
+          "volume": 160988.590488,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 16,
+          "proxyWallet": "0x78c2894cca670265cf7e0d8682c9f2f8e8d18f4b",
+          "name": "Arron-",
+          "pseudonym": "Arron-",
+          "amount": 155148.58362800002,
+          "pnl": 616.1382508873794,
+          "volume": 155148.58362800002,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 17,
+          "proxyWallet": "0x5188fa0e8a77e87bc6a58e6781fdfc4e165cc804",
+          "name": "AllByMyseIf",
+          "pseudonym": "AllByMyseIf",
+          "amount": 149847.72,
+          "pnl": 1271.6371665468905,
+          "volume": 149847.72,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3063734-5d789c1c-92ea-4bf2-a4f6-9ecc42977b56.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3063734-5d789c1c-92ea-4bf2-a4f6-9ecc42977b56.png"
+        },
+        {
+          "rank": 18,
+          "proxyWallet": "0xfc2f4f50ce2f6045d35558a5e2d8d4b2ac6610c7",
+          "name": "0xFc2F4f50ce2F6045d35558A5E2D8d4b2aC6610c7-1769097007451",
+          "pseudonym": "0xFc2F4f50ce2F6045d35558A5E2D8d4b2aC6610c7-1769097007451",
+          "amount": 147577.56655599998,
+          "pnl": -3937.218821875076,
+          "volume": 147577.56655599998,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 19,
+          "proxyWallet": "0x5bb0de4e97698184ead80c80cb17a26cd6f6814b",
+          "name": "bobe2.1",
+          "pseudonym": "bobe2.1",
+          "amount": 144587.312376,
+          "pnl": 555.8639756732664,
+          "volume": 144587.312376,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 20,
+          "proxyWallet": "0x88edd092d799556111e57ff3b2107e24dd406cfb",
+          "name": "cooler-",
+          "pseudonym": "cooler-",
+          "amount": 142623.454074,
+          "pnl": 388.24032665636514,
+          "volume": 142623.454074,
+          "realized": 0,
+          "unrealized": 0
+        }
+      ]
+    },
+    {
+      "window": "today",
+      "sort": "profit",
+      "count": 20,
+      "results": [
+        {
+          "rank": 1,
+          "proxyWallet": "0x88c4919de76e526d55a32c1f8afb439dd1f1129a",
+          "name": "QuietRiskisWrong",
+          "pseudonym": "QuietRiskisWrong",
+          "amount": 18070.998846643255,
+          "pnl": 18070.998846643255,
+          "volume": 125487.27583000001,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 2,
+          "proxyWallet": "0x7f9e2d1df78614564a70becc7fa14aa9a6623a0e",
+          "name": "nojnn",
+          "pseudonym": "nojnn",
+          "amount": 16849.691771565704,
+          "pnl": 16849.691771565704,
+          "volume": 212.903224,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 3,
+          "proxyWallet": "0x2974bd0059e48f215c391882976e0f1b4c8c9c23",
+          "name": "65765757",
+          "pseudonym": "65765757",
+          "amount": 13271.39627810201,
+          "pnl": 13271.39627810201,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 4,
+          "proxyWallet": "0xbaa2bcb5439e985ce4ccf815b4700027d1b92c73",
+          "name": "denizz",
+          "pseudonym": "denizz",
+          "amount": 12609.013173966436,
+          "pnl": 12609.013173966436,
+          "volume": 80401.738013,
+          "realized": 0,
+          "unrealized": 0,
+          "xUsername": "denizz_poly"
+        },
+        {
+          "rank": 5,
+          "proxyWallet": "0x162f6fff88a52864f2ecc9833e58089d5254798d",
+          "name": "Valen9",
+          "pseudonym": "Valen9",
+          "amount": 8203.843746795494,
+          "pnl": 8203.843746795494,
+          "volume": 1187.93832,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-5572855-7eff0907-10c0-4fae-8f10-8a2c733813a1.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-5572855-7eff0907-10c0-4fae-8f10-8a2c733813a1.png"
+        },
+        {
+          "rank": 6,
+          "proxyWallet": "0x614dc8d3542c12103d2c6a3553fd761e391d1546",
+          "name": "mr.ozi",
+          "pseudonym": "mr.ozi",
+          "amount": 8031.809520952229,
+          "pnl": 8031.809520952229,
+          "volume": 12055.14,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Capture_2c5e68de-e9d9-41e8-b25d-2dcc67eefc45_1721219990648.PNG",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Capture_2c5e68de-e9d9-41e8-b25d-2dcc67eefc45_1721219990648.PNG",
+          "xUsername": "MrOziPM",
+          "verifiedBadge": true
+        },
+        {
+          "rank": 7,
+          "proxyWallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+          "name": "aenews2",
+          "pseudonym": "aenews2",
+          "amount": 6224.946498832665,
+          "pnl": 6224.946498832665,
+          "volume": 185479.474947,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-154436-a84dabd0-06ee-40d3-be95-e454283cdfc0.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-154436-a84dabd0-06ee-40d3-be95-e454283cdfc0.jpg",
+          "xUsername": "aenews"
+        },
+        {
+          "rank": 8,
+          "proxyWallet": "0x9d84ce0306f8551e02efef1680475fc0f1dc1344",
+          "name": "ImJustKen",
+          "pseudonym": "ImJustKen",
+          "amount": 5792.6650859816,
+          "pnl": 5792.6650859816,
+          "volume": 1322.133247,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-82662-8ddbc8e8-0500-44b7-bb13-c0b32a40a45d.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-82662-8ddbc8e8-0500-44b7-bb13-c0b32a40a45d.jpg",
+          "xUsername": "Domahhhh",
+          "verifiedBadge": true
+        },
+        {
+          "rank": 9,
+          "proxyWallet": "0x70d94a4ff67ed919a8480885cf0808afefe7a684",
+          "name": "naiiiiiii",
+          "pseudonym": "naiiiiiii",
+          "amount": 5618.8857174149925,
+          "pnl": 5618.8857174149925,
+          "volume": 33648.117625,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 10,
+          "proxyWallet": "0xdc03d611e5bcc9f1c87edb95edeb91671471804c",
+          "name": "jocpolitic",
+          "pseudonym": "jocpolitic",
+          "amount": 5537.604820733017,
+          "pnl": 5537.604820733017,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 11,
+          "proxyWallet": "0xddb1ecc4ddf67d6732630d5eea099f9ffa53ea72",
+          "name": "Reckless9",
+          "pseudonym": "Reckless9",
+          "amount": 4840.186966027599,
+          "pnl": 4840.186966027599,
+          "volume": 849.3399999999999,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 12,
+          "proxyWallet": "0xeed588bab0b0df73a9a6def7a59e512e9ede1a33",
+          "name": "mohahaha",
+          "pseudonym": "mohahaha",
+          "amount": 4732.988117301502,
+          "pnl": 4732.988117301502,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 13,
+          "proxyWallet": "0xf769c6390f6d564fe4859effbddb682c62660114",
+          "name": "MrMarket",
+          "pseudonym": "MrMarket",
+          "amount": 4285.827054607466,
+          "pnl": 4285.827054607466,
+          "volume": 952.5,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 14,
+          "proxyWallet": "0xdf17f4a8dd01a4cfa6fc3da323a2baee5f8697d1",
+          "name": "Clear-Corridor",
+          "pseudonym": "Clear-Corridor",
+          "amount": 4148.961247953586,
+          "pnl": 4148.961247953586,
+          "volume": 4930.913332,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-1545882-15d139d0-737b-43d4-9165-a6cb5e0d39a1.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-1545882-15d139d0-737b-43d4-9165-a6cb5e0d39a1.webp"
+        },
+        {
+          "rank": 15,
+          "proxyWallet": "0xd49b42bce7ea10bac53e2901c188cae20ea4bdf9",
+          "name": "i18z",
+          "pseudonym": "i18z",
+          "amount": 4060.5519077791614,
+          "pnl": 4060.5519077791614,
+          "volume": 123454.93234099999,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 16,
+          "proxyWallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+          "name": "ArmageddonRewardsBilly",
+          "pseudonym": "ArmageddonRewardsBilly",
+          "amount": 4054.9915743450692,
+          "pnl": 4054.9915743450692,
+          "volume": 534351.0588,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "xUsername": "Eltonma"
+        },
+        {
+          "rank": 17,
+          "proxyWallet": "0x5011224f4848cb2cf2d87cf2b823551dfd0e220e",
+          "name": "GCNO1",
+          "pseudonym": "GCNO1",
+          "amount": 3988.4284875744124,
+          "pnl": 3988.4284875744124,
+          "volume": 42016.390993,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 18,
+          "proxyWallet": "0x1fee90f352fd362ea4bf13c6ed7cdd83a4d2ed5e",
+          "name": "lomneivan",
+          "pseudonym": "lomneivan",
+          "amount": 3978.6311946715578,
+          "pnl": 3978.6311946715578,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 19,
+          "proxyWallet": "0x3c918a8ef8c379304f744592120cbb4d76149af7",
+          "name": "Vilgefortz",
+          "pseudonym": "Vilgefortz",
+          "amount": 3924.9502543130056,
+          "pnl": 3924.9502543130056,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 20,
+          "proxyWallet": "0xfa87a158110370eb6dbe678843c055a6b144c2a0",
+          "name": "asdfadfasdf1",
+          "pseudonym": "asdfadfasdf1",
+          "amount": 3707.6884906050036,
+          "pnl": 3707.6884906050036,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        }
+      ]
+    },
+    {
+      "window": "weekly",
+      "sort": "volume",
+      "count": 20,
+      "results": [
+        {
+          "rank": 1,
+          "proxyWallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+          "name": "ArmageddonRewardsBilly",
+          "pseudonym": "ArmageddonRewardsBilly",
+          "amount": 2770196.5950449994,
+          "pnl": 4054.991574345302,
+          "volume": 2770196.5950449994,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "xUsername": "Eltonma"
+        },
+        {
+          "rank": 2,
+          "proxyWallet": "0x4a650133a506a876352f8e8021ec3d220dab06bb",
+          "name": ".sorry",
+          "pseudonym": ".sorry",
+          "amount": 1643324.223684,
+          "pnl": 104.1301438393391,
+          "volume": 1643324.223684,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-151765-e25ce513-085a-4c94-9794-666f21f266f7.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-151765-e25ce513-085a-4c94-9794-666f21f266f7.png",
+          "xUsername": "sorryblessed"
+        },
+        {
+          "rank": 3,
+          "proxyWallet": "0xc21ea96be762bb55041529af6e386e7c53b80215",
+          "name": "JustCrazy",
+          "pseudonym": "JustCrazy",
+          "amount": 1510508.5279500005,
+          "pnl": 180.94279048714088,
+          "volume": 1510508.5279500005,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-4165649-7b446c7e-48c6-4add-8bc9-dc02a69a17d2.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-4165649-7b446c7e-48c6-4add-8bc9-dc02a69a17d2.png",
+          "xUsername": "SkewDealer"
+        },
+        {
+          "rank": 4,
+          "proxyWallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+          "name": "anoin123",
+          "pseudonym": "anoin123",
+          "amount": 1239513.172066,
+          "pnl": -10110.741668787785,
+          "volume": 1239513.172066,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 5,
+          "proxyWallet": "0xb886580698ede4b18de3e446b2d8da8bcedd81b3",
+          "name": "0xB886580698eDE4b18DE3E446b2D8Da8bCEdd81B3-1767532547794",
+          "pseudonym": "0xB886580698eDE4b18DE3E446b2D8Da8bCEdd81B3-1767532547794",
+          "amount": 1185704.330385,
+          "pnl": -4657.780122030039,
+          "volume": 1185704.330385,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 6,
+          "proxyWallet": "0x5297f1e1d0f0584537af763652a0a5f874037b99",
+          "name": "adasol",
+          "pseudonym": "adasol",
+          "amount": 961270.7837370001,
+          "pnl": -32.20469538095185,
+          "volume": 961270.7837370001,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 7,
+          "proxyWallet": "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f",
+          "name": "Q96s3kwozynxpau",
+          "pseudonym": "Q96s3kwozynxpau",
+          "amount": 890904.1945319999,
+          "pnl": 4.126458306622226,
+          "volume": 890904.1945319999,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 8,
+          "proxyWallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+          "name": "wan123",
+          "pseudonym": "wan123",
+          "amount": 784803.4555769999,
+          "pnl": 1652.9710597041994,
+          "volume": 784803.4555769999,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 9,
+          "proxyWallet": "0x74471a007ddcc488f6d57b5e86dfb35a8d48a16d",
+          "name": "tetrose",
+          "pseudonym": "tetrose",
+          "amount": 737055.118601,
+          "pnl": 448.81579781673645,
+          "volume": 737055.118601,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-2739522-d03810e0-d01b-4e53-bef5-827a096c0446.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-2739522-d03810e0-d01b-4e53-bef5-827a096c0446.webp"
+        },
+        {
+          "rank": 10,
+          "proxyWallet": "0x801ba46b0e7ba3f82e6a3cfcedb436318e43e036",
+          "name": "pizzaallosqualo",
+          "pseudonym": "pizzaallosqualo",
+          "amount": 719365.365982,
+          "pnl": 71.4500549442464,
+          "volume": 719365.365982,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 11,
+          "proxyWallet": "0xfc2f4f50ce2f6045d35558a5e2d8d4b2ac6610c7",
+          "name": "0xFc2F4f50ce2F6045d35558A5E2D8d4b2aC6610c7-1769097007451",
+          "pseudonym": "0xFc2F4f50ce2F6045d35558A5E2D8d4b2aC6610c7-1769097007451",
+          "amount": 661850.829948,
+          "pnl": -3937.218821874947,
+          "volume": 661850.829948,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 12,
+          "proxyWallet": "0x4478d7bd8a295691ac84f60a5ec2b47e122102a4",
+          "name": "Warren-Buffett",
+          "pseudonym": "Warren-Buffett",
+          "amount": 588332.11241,
+          "pnl": 1079.9355216461554,
+          "volume": 588332.11241,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3416479-d3d86a2e-e805-4958-9ddb-29768f8a9601.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3416479-d3d86a2e-e805-4958-9ddb-29768f8a9601.webp"
+        },
+        {
+          "rank": 13,
+          "proxyWallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+          "name": "debased",
+          "pseudonym": "debased",
+          "amount": 536203.8908749999,
+          "pnl": 169.6090174159035,
+          "volume": 536203.8908749999,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/trump_farmer_b64c6dcd-13e2-4dda-b1c2-0fb46389fb22_1743074825403.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/trump_farmer_b64c6dcd-13e2-4dda-b1c2-0fb46389fb22_1743074825403.png",
+          "xUsername": "debased_PM"
+        },
+        {
+          "rank": 14,
+          "proxyWallet": "0xc6587b11a2209e46dfe3928b31c5514a8e33b784",
+          "name": "Erasmus.",
+          "pseudonym": "Erasmus.",
+          "amount": 520594.382768,
+          "pnl": 2852.044499369862,
+          "volume": 520594.382768,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-642445-92826f3c-3576-4719-880c-027883552860.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-642445-92826f3c-3576-4719-880c-027883552860.png"
+        },
+        {
+          "rank": 15,
+          "proxyWallet": "0xc1dc8e2dce9dffbc7de3b3020a5090b7bdd40a9e",
+          "name": "0xc1dc8e2dce9dffbc7de3b3020a5090b7bdd40a9e",
+          "pseudonym": "0xc1dc8e2dce9dffbc7de3b3020a5090b7bdd40a9e",
+          "amount": 510176.54792100005,
+          "pnl": -0.6037425840022479,
+          "volume": 510176.54792100005,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 16,
+          "proxyWallet": "0xbaa2bcb5439e985ce4ccf815b4700027d1b92c73",
+          "name": "denizz",
+          "pseudonym": "denizz",
+          "amount": 487411.245648,
+          "pnl": 12609.013173967134,
+          "volume": 487411.245648,
+          "realized": 0,
+          "unrealized": 0,
+          "xUsername": "denizz_poly"
+        },
+        {
+          "rank": 17,
+          "proxyWallet": "0xbdc8abf39513839ef3c1eb2aa98789f5a78edc1e",
+          "name": "ztrrtt",
+          "pseudonym": "ztrrtt",
+          "amount": 480838.70999999996,
+          "pnl": -12.606978839998575,
+          "volume": 480838.70999999996,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 18,
+          "proxyWallet": "0x31f80487ffa111abb53c73b0de92c9279c22a6da",
+          "name": "zterrertzu",
+          "pseudonym": "zterrertzu",
+          "amount": 477946.52,
+          "pnl": 9.399999999999636,
+          "volume": 477946.52,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 19,
+          "proxyWallet": "0xdbf16bcffa41bd95faec2640daa2c95ab2bd86b5",
+          "name": "UnderperformingForALiving",
+          "pseudonym": "UnderperformingForALiving",
+          "amount": 476507.45975000004,
+          "pnl": 621.9304395004729,
+          "volume": 476507.45975000004,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-6077424-0a1adcfa-d1c5-4ac4-991a-a6feb9623d0a.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-6077424-0a1adcfa-d1c5-4ac4-991a-a6feb9623d0a.webp"
+        },
+        {
+          "rank": 20,
+          "proxyWallet": "0x9d736920e486176e7df7a76fa218f1ebd853216b",
+          "name": "AlAhmeda",
+          "pseudonym": "AlAhmeda",
+          "amount": 470725.259003,
+          "pnl": 472.13995658783824,
+          "volume": 470725.259003,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3245071-29401d8a-019c-47b7-a3b9-992d285d1b70.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3245071-29401d8a-019c-47b7-a3b9-992d285d1b70.webp",
+          "xUsername": "AlAhmedaPM"
+        }
+      ]
+    },
+    {
+      "window": "weekly",
+      "sort": "profit",
+      "count": 20,
+      "results": [
+        {
+          "rank": 1,
+          "proxyWallet": "0x88c4919de76e526d55a32c1f8afb439dd1f1129a",
+          "name": "QuietRiskisWrong",
+          "pseudonym": "QuietRiskisWrong",
+          "amount": 18070.998846643255,
+          "pnl": 18070.998846643255,
+          "volume": 142805.62788000001,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 2,
+          "proxyWallet": "0x7f9e2d1df78614564a70becc7fa14aa9a6623a0e",
+          "name": "nojnn",
+          "pseudonym": "nojnn",
+          "amount": 16849.691771565704,
+          "pnl": 16849.691771565704,
+          "volume": 212.903224,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 3,
+          "proxyWallet": "0x2974bd0059e48f215c391882976e0f1b4c8c9c23",
+          "name": "65765757",
+          "pseudonym": "65765757",
+          "amount": 13271.39627810201,
+          "pnl": 13271.39627810201,
+          "volume": 96139.55373400002,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 4,
+          "proxyWallet": "0xbaa2bcb5439e985ce4ccf815b4700027d1b92c73",
+          "name": "denizz",
+          "pseudonym": "denizz",
+          "amount": 12609.013173967134,
+          "pnl": 12609.013173967134,
+          "volume": 487411.245648,
+          "realized": 0,
+          "unrealized": 0,
+          "xUsername": "denizz_poly"
+        },
+        {
+          "rank": 5,
+          "proxyWallet": "0x162f6fff88a52864f2ecc9833e58089d5254798d",
+          "name": "Valen9",
+          "pseudonym": "Valen9",
+          "amount": 8203.843746795494,
+          "pnl": 8203.843746795494,
+          "volume": 21322.390099000004,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-5572855-7eff0907-10c0-4fae-8f10-8a2c733813a1.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-5572855-7eff0907-10c0-4fae-8f10-8a2c733813a1.png"
+        },
+        {
+          "rank": 6,
+          "proxyWallet": "0x614dc8d3542c12103d2c6a3553fd761e391d1546",
+          "name": "mr.ozi",
+          "pseudonym": "mr.ozi",
+          "amount": 8031.809520952171,
+          "pnl": 8031.809520952171,
+          "volume": 22222.956664999998,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Capture_2c5e68de-e9d9-41e8-b25d-2dcc67eefc45_1721219990648.PNG",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Capture_2c5e68de-e9d9-41e8-b25d-2dcc67eefc45_1721219990648.PNG",
+          "xUsername": "MrOziPM",
+          "verifiedBadge": true
+        },
+        {
+          "rank": 7,
+          "proxyWallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+          "name": "aenews2",
+          "pseudonym": "aenews2",
+          "amount": 6224.946498834179,
+          "pnl": 6224.946498834179,
+          "volume": 238847.224947,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-154436-a84dabd0-06ee-40d3-be95-e454283cdfc0.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-154436-a84dabd0-06ee-40d3-be95-e454283cdfc0.jpg",
+          "xUsername": "aenews"
+        },
+        {
+          "rank": 8,
+          "proxyWallet": "0x9d84ce0306f8551e02efef1680475fc0f1dc1344",
+          "name": "ImJustKen",
+          "pseudonym": "ImJustKen",
+          "amount": 5792.665085976478,
+          "pnl": 5792.665085976478,
+          "volume": 25430.745947,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-82662-8ddbc8e8-0500-44b7-bb13-c0b32a40a45d.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-82662-8ddbc8e8-0500-44b7-bb13-c0b32a40a45d.jpg",
+          "xUsername": "Domahhhh",
+          "verifiedBadge": true
+        },
+        {
+          "rank": 9,
+          "proxyWallet": "0x70d94a4ff67ed919a8480885cf0808afefe7a684",
+          "name": "naiiiiiii",
+          "pseudonym": "naiiiiiii",
+          "amount": 5618.885717414967,
+          "pnl": 5618.885717414967,
+          "volume": 95809.379498,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 10,
+          "proxyWallet": "0xdc03d611e5bcc9f1c87edb95edeb91671471804c",
+          "name": "jocpolitic",
+          "pseudonym": "jocpolitic",
+          "amount": 5537.604820733191,
+          "pnl": 5537.604820733191,
+          "volume": 1766.332588,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 11,
+          "proxyWallet": "0xddb1ecc4ddf67d6732630d5eea099f9ffa53ea72",
+          "name": "Reckless9",
+          "pseudonym": "Reckless9",
+          "amount": 4840.186966027599,
+          "pnl": 4840.186966027599,
+          "volume": 4777.899515,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 12,
+          "proxyWallet": "0xeed588bab0b0df73a9a6def7a59e512e9ede1a33",
+          "name": "mohahaha",
+          "pseudonym": "mohahaha",
+          "amount": 4732.988117301502,
+          "pnl": 4732.988117301502,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 13,
+          "proxyWallet": "0xf769c6390f6d564fe4859effbddb682c62660114",
+          "name": "MrMarket",
+          "pseudonym": "MrMarket",
+          "amount": 4285.827054607472,
+          "pnl": 4285.827054607472,
+          "volume": 5280.989997,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 14,
+          "proxyWallet": "0xdf17f4a8dd01a4cfa6fc3da323a2baee5f8697d1",
+          "name": "Clear-Corridor",
+          "pseudonym": "Clear-Corridor",
+          "amount": 4148.961247953412,
+          "pnl": 4148.961247953412,
+          "volume": 76917.93657100001,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-1545882-15d139d0-737b-43d4-9165-a6cb5e0d39a1.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-1545882-15d139d0-737b-43d4-9165-a6cb5e0d39a1.webp"
+        },
+        {
+          "rank": 15,
+          "proxyWallet": "0xd49b42bce7ea10bac53e2901c188cae20ea4bdf9",
+          "name": "i18z",
+          "pseudonym": "i18z",
+          "amount": 4060.551907779103,
+          "pnl": 4060.551907779103,
+          "volume": 319931.524517,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 16,
+          "proxyWallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+          "name": "ArmageddonRewardsBilly",
+          "pseudonym": "ArmageddonRewardsBilly",
+          "amount": 4054.991574345302,
+          "pnl": 4054.991574345302,
+          "volume": 2770196.5950449994,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "xUsername": "Eltonma"
+        },
+        {
+          "rank": 17,
+          "proxyWallet": "0x5011224f4848cb2cf2d87cf2b823551dfd0e220e",
+          "name": "GCNO1",
+          "pseudonym": "GCNO1",
+          "amount": 3988.428487574405,
+          "pnl": 3988.428487574405,
+          "volume": 81554.038283,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 18,
+          "proxyWallet": "0x1fee90f352fd362ea4bf13c6ed7cdd83a4d2ed5e",
+          "name": "lomneivan",
+          "pseudonym": "lomneivan",
+          "amount": 3978.6311946715578,
+          "pnl": 3978.6311946715578,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 19,
+          "proxyWallet": "0x3c918a8ef8c379304f744592120cbb4d76149af7",
+          "name": "Vilgefortz",
+          "pseudonym": "Vilgefortz",
+          "amount": 3924.9502543130056,
+          "pnl": 3924.9502543130056,
+          "volume": 9040,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 20,
+          "proxyWallet": "0xfa87a158110370eb6dbe678843c055a6b144c2a0",
+          "name": "asdfadfasdf1",
+          "pseudonym": "asdfadfasdf1",
+          "amount": 3707.6884906050036,
+          "pnl": 3707.6884906050036,
+          "volume": 0,
+          "realized": 0,
+          "unrealized": 0
+        }
+      ]
+    },
+    {
+      "window": "weekly",
+      "sort": "biggestWins",
+      "count": 20,
+      "results": [
+        {
+          "winRank": "1",
+          "proxyWallet": "0xe7cb6e31f033e0e9f5940e46d84166c7d7ded447",
+          "userName": "mindeirs",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 33008.198537685385,
+          "finalValue": 48825.70260885724,
+          "pnl": 15817.504071171852,
+          "profileImage": ""
+        },
+        {
+          "winRank": "2",
+          "proxyWallet": "0x9ca119b8cd7bdb890aecf1ff3b0f6e3a45cc13b5",
+          "userName": "JoeBlack01",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 5627.33958800907,
+          "finalValue": 11103.56440100907,
+          "pnl": 5476.224813,
+          "profileImage": ""
+        },
+        {
+          "winRank": "3",
+          "proxyWallet": "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86",
+          "userName": "influenz.eth",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 14643.256006163934,
+          "finalValue": 17787.6908718603,
+          "pnl": 3144.434865696367,
+          "profileImage": ""
+        },
+        {
+          "winRank": "4",
+          "proxyWallet": "0x662a00b70022c45ee80f6f753baa60f1c85f77b7",
+          "userName": "redlioneye",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 1620.872946631675,
+          "finalValue": 4521.386764777465,
+          "pnl": 2900.51381814579,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-29380-0201b9f5-3c3e-4447-9e16-d202507b41bc.jpg"
+        },
+        {
+          "winRank": "5",
+          "proxyWallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+          "userName": "ArmageddonRewardsBilly",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 207516.12511718587,
+          "finalValue": 209781.96206611165,
+          "pnl": 2265.836948925782,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png"
+        },
+        {
+          "winRank": "6",
+          "proxyWallet": "0x23d81ba9371e576015c1e562db09c689f56b0288",
+          "userName": "flawfence",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 17391.2717841,
+          "finalValue": 19306.4158371,
+          "pnl": 1915.1440529999998,
+          "profileImage": ""
+        },
+        {
+          "winRank": "7",
+          "proxyWallet": "0xd49b42bce7ea10bac53e2901c188cae20ea4bdf9",
+          "userName": "i18z",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 9798.592352742318,
+          "finalValue": 11707.439411442318,
+          "pnl": 1908.8470587,
+          "profileImage": ""
+        },
+        {
+          "winRank": "8",
+          "proxyWallet": "0xa3282d3e882501229c75d0caf134e62e3afb4977",
+          "userName": "korda77",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 8594.85269777474,
+          "finalValue": 10456.316405950001,
+          "pnl": 1861.46370817526,
+          "profileImage": ""
+        },
+        {
+          "winRank": "9",
+          "proxyWallet": "0x1e82e3eb816aaf755ac9b44bc9d98f01b08aaf92",
+          "userName": "0x1E82E3Eb816aAf755AC9b44BC9d98F01b08AAF92-1772042958755",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 6724.055526341522,
+          "finalValue": 8141.807328617588,
+          "pnl": 1417.7518022760657,
+          "profileImage": ""
+        },
+        {
+          "winRank": "10",
+          "proxyWallet": "0x188e84eb9a9ecd72f90f55b9d9cc11a7de8770d8",
+          "userName": "fwfwefweg",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 1779.5272324403838,
+          "finalValue": 3121.569470440384,
+          "pnl": 1342.042238,
+          "profileImage": ""
+        },
+        {
+          "winRank": "11",
+          "proxyWallet": "0x5a218c7ad04135830a45c41aaed7294df7809318",
+          "userName": "balthazar",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 5782.859973035279,
+          "finalValue": 7080.189583035279,
+          "pnl": 1297.32961,
+          "profileImage": ""
+        },
+        {
+          "winRank": "12",
+          "proxyWallet": "0xd6ddc6559313bcc819f1df1b3647f3930da998ee",
+          "userName": "SaintPascal",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 6317.334657067205,
+          "finalValue": 7261.575329612423,
+          "pnl": 944.2406725452181,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-3247251-3df8d87d-0040-40bc-94e6-df0fddd2f622.png"
+        },
+        {
+          "winRank": "13",
+          "proxyWallet": "0x15f7ddbc6ffe08722ddeb64d51e58aef7b8ca018",
+          "userName": "idkwhatimdoinggg",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 20133.735652550407,
+          "finalValue": 21004.598293748542,
+          "pnl": 870.862641198134,
+          "profileImage": ""
+        },
+        {
+          "winRank": "14",
+          "proxyWallet": "0xda9126becc96be3598ddd05c4fc06f4093759ffd",
+          "userName": "98Ddd05C98Ddd05C4fC06f4093759FFdhotking012",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 1110.672599466504,
+          "finalValue": 1946.897867018796,
+          "pnl": 836.225267552292,
+          "profileImage": ""
+        },
+        {
+          "winRank": "15",
+          "proxyWallet": "0x33287eae7e55b86c9b4cf4c53444f062d2dbe6b8",
+          "userName": "0x33287EaE7e55B86c9B4Cf4c53444F062D2Dbe6b8-1756297889537",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 3695.8751052199996,
+          "finalValue": 4461.450862899999,
+          "pnl": 765.5757576800002,
+          "profileImage": ""
+        },
+        {
+          "winRank": "16",
+          "proxyWallet": "0x3dd2db2d398ff72c2c71c9ad6473368b941e9ab1",
+          "userName": "paspor",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 2580.530623126668,
+          "finalValue": 3341.8311243434,
+          "pnl": 761.3005012167321,
+          "profileImage": ""
+        },
+        {
+          "winRank": "17",
+          "proxyWallet": "0xecaa8806a9a05049d7d5260a33dc924220e377a9",
+          "userName": "Melody626",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 3620.2603522327804,
+          "finalValue": 4354.016655,
+          "pnl": 733.75630276722,
+          "profileImage": ""
+        },
+        {
+          "winRank": "18",
+          "proxyWallet": "0x8db5bfb848ee6745c475df375bd0c983468bfa3e",
+          "userName": "0x8DB5bfb848ee6745c475DF375bd0c983468BFA3E-1774575335053",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 8609.99598354025,
+          "finalValue": 9265.81872154025,
+          "pnl": 655.822738,
+          "profileImage": ""
+        },
+        {
+          "winRank": "19",
+          "proxyWallet": "0xe3726a1b9c6ba2f06585d1c9e01d00afaedaeb38",
+          "userName": "cry.eth2",
+          "eventSlug": "which-party-wins-control-of-the-most-london-borough-councils",
+          "eventTitle": "Which party wins control of the most London borough councils?",
+          "initialValue": 885.2221079999999,
+          "finalValue": 1499.232406822301,
+          "pnl": 614.0102988223011,
+          "profileImage": ""
+        },
+        {
+          "winRank": "20",
+          "proxyWallet": "0xac4a1fabdac2438d6afa2a9e8e83845310a0bf1e",
+          "userName": "HerrieDavis",
+          "eventSlug": "next-us-x-iran-diplomatic-meeting-on",
+          "eventTitle": "Next US x Iran diplomatic meeting on...?",
+          "initialValue": 5255.217173410457,
+          "finalValue": 5846.5371449330605,
+          "pnl": 591.3199715226041,
+          "profileImage": ""
+        }
+      ]
+    },
+    {
+      "window": "monthly",
+      "sort": "volume",
+      "count": 20,
+      "results": [
+        {
+          "rank": 1,
+          "proxyWallet": "0x2785e7022dc20757108204b13c08cea8613b70ae",
+          "name": "poorsob",
+          "pseudonym": "poorsob",
+          "amount": 67519297.139997,
+          "pnl": 89270.81266383982,
+          "volume": 67519297.139997,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 2,
+          "proxyWallet": "0x6480542954b70a674a74bd1a6015dec362dc8dc5",
+          "name": "tripping",
+          "pseudonym": "tripping",
+          "amount": 42005449.315000005,
+          "pnl": 2879.841309706375,
+          "volume": 42005449.315000005,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-2136195-6a15a210-77e7-4450-bf86-06670c61864d.jpeg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-2136195-6a15a210-77e7-4450-bf86-06670c61864d.jpeg"
+        },
+        {
+          "rank": 3,
+          "proxyWallet": "0x4662492a083f518d87c91044227d97ef1d90bdf6",
+          "name": "xibr",
+          "pseudonym": "xibr",
+          "amount": 26744227.846836,
+          "pnl": -39795.411036091966,
+          "volume": 26744227.846836,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 4,
+          "proxyWallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+          "name": "ArmageddonRewardsBilly",
+          "pseudonym": "ArmageddonRewardsBilly",
+          "amount": 18371156.058132,
+          "pnl": -36601.77689233856,
+          "volume": 18371156.058132,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "xUsername": "Eltonma"
+        },
+        {
+          "rank": 5,
+          "proxyWallet": "0xfdc07e182e6f959256295567e450a8727272fa79",
+          "name": "FedWillWin",
+          "pseudonym": "FedWillWin",
+          "amount": 17832091.82,
+          "pnl": 25608.369796950275,
+          "volume": 17832091.82,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 6,
+          "proxyWallet": "0xc21ea96be762bb55041529af6e386e7c53b80215",
+          "name": "JustCrazy",
+          "pseudonym": "JustCrazy",
+          "amount": 17563462.580728,
+          "pnl": 12018.91420308745,
+          "volume": 17563462.580728,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-4165649-7b446c7e-48c6-4add-8bc9-dc02a69a17d2.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-4165649-7b446c7e-48c6-4add-8bc9-dc02a69a17d2.png",
+          "xUsername": "SkewDealer"
+        },
+        {
+          "rank": 7,
+          "proxyWallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+          "name": "debased",
+          "pseudonym": "debased",
+          "amount": 14473814.284634998,
+          "pnl": 32457.624471992953,
+          "volume": 14473814.284634998,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/trump_farmer_b64c6dcd-13e2-4dda-b1c2-0fb46389fb22_1743074825403.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/trump_farmer_b64c6dcd-13e2-4dda-b1c2-0fb46389fb22_1743074825403.png",
+          "xUsername": "debased_PM"
+        },
+        {
+          "rank": 8,
+          "proxyWallet": "0x558ee6a05f51e7e8d89fc07b154e78a865202ee7",
+          "name": "perseusplus",
+          "pseudonym": "perseusplus",
+          "amount": 14006695.154,
+          "pnl": -692.7258770164999,
+          "volume": 14006695.154,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 9,
+          "proxyWallet": "0x5e717d49744bef6dcd1b7764d07c2934a1e4ba82",
+          "name": "G.V",
+          "pseudonym": "G.V",
+          "amount": 11913658.146050999,
+          "pnl": -78589.54587991748,
+          "volume": 11913658.146050999,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/1000000438_40fb54f6-fdd9-4eb0-bbca-ace9b2179fdf_1729623688342.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/1000000438_40fb54f6-fdd9-4eb0-bbca-ace9b2179fdf_1729623688342.jpg"
+        },
+        {
+          "rank": 10,
+          "proxyWallet": "0x79c510469bd1bb14616dda7cf8625d920d10e7da",
+          "name": "0x79c510469bD1BB14616DDA7cf8625d920d10e7da-1778352690557",
+          "pseudonym": "0x79c510469bD1BB14616DDA7cf8625d920d10e7da-1778352690557",
+          "amount": 10267123.525,
+          "pnl": -10534.06873665,
+          "volume": 10267123.525,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-7981384-7360cc86-8320-45a2-8054-11cd1e3e5115.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-7981384-7360cc86-8320-45a2-8054-11cd1e3e5115.webp"
+        },
+        {
+          "rank": 11,
+          "proxyWallet": "0x9b979a065641e8cfde3022a30ed2d9415cf55e12",
+          "name": "LlamaEnjoyer",
+          "pseudonym": "LlamaEnjoyer",
+          "amount": 9323780.133868003,
+          "pnl": 8883.599578125577,
+          "volume": 9323780.133868003,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Screenshot_2023_08_29_18_21_41_521_com_twitter_android_edit_Verrissimus_1701414267756.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Screenshot_2023_08_29_18_21_41_521_com_twitter_android_edit_Verrissimus_1701414267756.jpg",
+          "xUsername": "verrissimus"
+        },
+        {
+          "rank": 12,
+          "proxyWallet": "0x0a543bb97015206f67e1bc5ead7c2d60baf64a03",
+          "name": "yyyy77777yyyyy777yyy",
+          "pseudonym": "yyyy77777yyyyy777yyy",
+          "amount": 8818561.344673999,
+          "pnl": 13092.757256199637,
+          "volume": 8818561.344673999,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-6996845-72b4ff1b-1859-4295-97bd-e34ec426702a.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-6996845-72b4ff1b-1859-4295-97bd-e34ec426702a.png"
+        },
+        {
+          "rank": 13,
+          "proxyWallet": "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f",
+          "name": "Q96s3kwozynxpau",
+          "pseudonym": "Q96s3kwozynxpau",
+          "amount": 8749724.568843,
+          "pnl": 96775.46670728864,
+          "volume": 8749724.568843,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 14,
+          "proxyWallet": "0xc6dd722558dbfbd8fa780efcbe819ed8c6604b9f",
+          "name": "tourists",
+          "pseudonym": "tourists",
+          "amount": 7926392.4559229985,
+          "pnl": 46141.178661788,
+          "volume": 7926392.4559229985,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-2909538-0895d69a-234c-409a-b0f4-ca4253ab5cb6.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-2909538-0895d69a-234c-409a-b0f4-ca4253ab5cb6.jpg"
+        },
+        {
+          "rank": 15,
+          "proxyWallet": "0x5b8f191a4a3e66fe9b7348891f21021399762c14",
+          "name": "DistortedReality",
+          "pseudonym": "DistortedReality",
+          "amount": 7820581.533482002,
+          "pnl": 4472.685930933898,
+          "volume": 7820581.533482002,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-4650180-86af2745-cad2-495a-bd59-598b89703cda.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-4650180-86af2745-cad2-495a-bd59-598b89703cda.webp"
+        },
+        {
+          "rank": 16,
+          "proxyWallet": "0xe339bba7fba043520d83516ce22add16beb6e01b",
+          "name": "12Alexander12",
+          "pseudonym": "12Alexander12",
+          "amount": 7493500,
+          "pnl": -7493.5,
+          "volume": 7493500,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 17,
+          "proxyWallet": "0x4a650133a506a876352f8e8021ec3d220dab06bb",
+          "name": ".sorry",
+          "pseudonym": ".sorry",
+          "amount": 6562977.431706,
+          "pnl": 1455.6903823842845,
+          "volume": 6562977.431706,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-151765-e25ce513-085a-4c94-9794-666f21f266f7.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-151765-e25ce513-085a-4c94-9794-666f21f266f7.png",
+          "xUsername": "sorryblessed"
+        },
+        {
+          "rank": 18,
+          "proxyWallet": "0x9a817c446ca66b8859e77f4716a785dc7e76d324",
+          "name": "Pedro1414",
+          "pseudonym": "Pedro1414",
+          "amount": 5928229.334000001,
+          "pnl": -80753.51292749142,
+          "volume": 5928229.334000001,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-7526377-c552f4e8-1489-4d93-9d07-268ae8ed7acc.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-7526377-c552f4e8-1489-4d93-9d07-268ae8ed7acc.png"
+        },
+        {
+          "rank": 19,
+          "proxyWallet": "0x02abb585dc6cdd74b005c5f2583dadadfe76cc08",
+          "name": "0x02ABB585DC6cdD74B005C5F2583dAdaDfe76Cc08-1778348522700",
+          "pseudonym": "0x02ABB585DC6cdD74B005C5F2583dAdaDfe76Cc08-1778348522700",
+          "amount": 5372863.11056,
+          "pnl": -39872.017143,
+          "volume": 5372863.11056,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 20,
+          "proxyWallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+          "name": "anoin123",
+          "pseudonym": "anoin123",
+          "amount": 4586756.005969,
+          "pnl": 714968.1401604982,
+          "volume": 4586756.005969,
+          "realized": 0,
+          "unrealized": 0
+        }
+      ]
+    },
+    {
+      "window": "monthly",
+      "sort": "profit",
+      "count": 20,
+      "results": [
+        {
+          "rank": 1,
+          "proxyWallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+          "name": "wan123",
+          "pseudonym": "wan123",
+          "amount": 776632.5191104935,
+          "pnl": 776632.5191104935,
+          "volume": 3209117.1716439994,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 2,
+          "proxyWallet": "0xd7f85d0eb0fe0732ca38d9107ad0d4d01b1289e4",
+          "name": "tdrhrhhd",
+          "pseudonym": "tdrhrhhd",
+          "amount": 765537.7015414073,
+          "pnl": 765537.7015414073,
+          "volume": 98920.27669000001,
+          "realized": 0,
+          "unrealized": 0,
+          "xUsername": "fortaellinger"
+        },
+        {
+          "rank": 3,
+          "proxyWallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+          "name": "anoin123",
+          "pseudonym": "anoin123",
+          "amount": 714968.1401604982,
+          "pnl": 714968.1401604982,
+          "volume": 4586756.005969,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 4,
+          "proxyWallet": "0x0c0e270cf879583d6a0142fc817e05b768d0434e",
+          "name": "The Spirit of Ukraine>UMA",
+          "pseudonym": "The Spirit of Ukraine>UMA",
+          "amount": 431961.3833007929,
+          "pnl": 431961.3833007929,
+          "volume": 573123.3957539999,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 5,
+          "proxyWallet": "0xa53e8fc4c2f9910e584de69d8b40a502a638218d",
+          "name": "VladimirPooper",
+          "pseudonym": "VladimirPooper",
+          "amount": 305194.1868414831,
+          "pnl": 305194.1868414831,
+          "volume": 811769.920834,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-5920240-8c5323bc-886d-40b3-b55b-0bdff02a4736.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-5920240-8c5323bc-886d-40b3-b55b-0bdff02a4736.webp"
+        },
+        {
+          "rank": 6,
+          "proxyWallet": "0xfd2b117412a698f322b0cd18d6827dad262b8e50",
+          "name": "surf",
+          "pseudonym": "surf",
+          "amount": 271155.199757244,
+          "pnl": 271155.199757244,
+          "volume": 318418.658766,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 7,
+          "proxyWallet": "0xc6587b11a2209e46dfe3928b31c5514a8e33b784",
+          "name": "Erasmus.",
+          "pseudonym": "Erasmus.",
+          "amount": 255726.46152372274,
+          "pnl": 255726.46152372274,
+          "volume": 1831399.0652680001,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-642445-92826f3c-3576-4719-880c-027883552860.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-642445-92826f3c-3576-4719-880c-027883552860.png"
+        },
+        {
+          "rank": 8,
+          "proxyWallet": "0x5d0f03cf1243a3e21262d6cf844795afd9fff0ad",
+          "name": "EB99999",
+          "pseudonym": "EB99999",
+          "amount": 252702.71796559013,
+          "pnl": 252702.71796559013,
+          "volume": 2696549.39194,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 9,
+          "proxyWallet": "0x93fb8127a1b21a112b11af936361225df0563e4a",
+          "name": "LlamaLoco0000",
+          "pseudonym": "LlamaLoco0000",
+          "amount": 231519.52783185785,
+          "pnl": 231519.52783185785,
+          "volume": 242919.335409,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-103509-04c51064-4c6c-46f3-892a-bcc7025f43e4.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-103509-04c51064-4c6c-46f3-892a-bcc7025f43e4.png",
+          "xUsername": "LlamaLoco0000"
+        },
+        {
+          "rank": 10,
+          "proxyWallet": "0xd93cea39533c6146e0b2e8361afeed930a12689c",
+          "name": "tm92391",
+          "pseudonym": "tm92391",
+          "amount": 213519.02079613975,
+          "pnl": 213519.02079613975,
+          "volume": 506223.99095700006,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 11,
+          "proxyWallet": "0x152fdae6b14b9131a61ec77ed61dda50f68da549",
+          "name": "Ferwhere",
+          "pseudonym": "Ferwhere",
+          "amount": 165487.7439972362,
+          "pnl": 165487.7439972362,
+          "volume": 1149002.2377479998,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 12,
+          "proxyWallet": "0x9d84ce0306f8551e02efef1680475fc0f1dc1344",
+          "name": "ImJustKen",
+          "pseudonym": "ImJustKen",
+          "amount": 157421.8082183511,
+          "pnl": 157421.8082183511,
+          "volume": 1127230.7492049998,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-82662-8ddbc8e8-0500-44b7-bb13-c0b32a40a45d.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-82662-8ddbc8e8-0500-44b7-bb13-c0b32a40a45d.jpg",
+          "xUsername": "Domahhhh",
+          "verifiedBadge": true
+        },
+        {
+          "rank": 13,
+          "proxyWallet": "0x3e5b23e9f71b2a2edcd5629d3f948f12f591073b",
+          "name": "beenraping",
+          "pseudonym": "beenraping",
+          "amount": 149574.62838110572,
+          "pnl": 149574.62838110572,
+          "volume": 3719337.527248,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-110893-a602433b-e536-4d68-a24c-aea69b03bc4e.gif",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-110893-a602433b-e536-4d68-a24c-aea69b03bc4e.gif",
+          "xUsername": "keccakdog"
+        },
+        {
+          "rank": 14,
+          "proxyWallet": "0xb1a279adb096d316b1b168993e8ed976d3cd372a",
+          "name": "TwoEyes",
+          "pseudonym": "TwoEyes",
+          "amount": 147104.87720297658,
+          "pnl": 147104.87720297658,
+          "volume": 12520.269334999999,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-559978-31183245-1c87-49cb-b225-7f93936df2ba.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-559978-31183245-1c87-49cb-b225-7f93936df2ba.png",
+          "xUsername": "two_gifts_"
+        },
+        {
+          "rank": 15,
+          "proxyWallet": "0x73e237f9363d5397f47f3d5c6719bec5602613c3",
+          "name": "night7ucker",
+          "pseudonym": "night7ucker",
+          "amount": 126128.3060109363,
+          "pnl": 126128.3060109363,
+          "volume": 80282.486092,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 16,
+          "proxyWallet": "0x16cbe223607a6513ae76d1e3751c78e4eabc2704",
+          "name": "MRF",
+          "pseudonym": "MRF",
+          "amount": 124725.18011417109,
+          "pnl": 124725.18011417109,
+          "volume": 218069.71274600003,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 17,
+          "proxyWallet": "0x5a218c7ad04135830a45c41aaed7294df7809318",
+          "name": "balthazar",
+          "pseudonym": "balthazar",
+          "amount": 123154.01226901892,
+          "pnl": 123154.01226901892,
+          "volume": 929444.4192530001,
+          "realized": 0,
+          "unrealized": 0,
+          "xUsername": "balthazarpoly"
+        },
+        {
+          "rank": 18,
+          "proxyWallet": "0xa022ba0a68e11a78348382ff168601012d4d77f8",
+          "name": "yungstalin",
+          "pseudonym": "yungstalin",
+          "amount": 103726.31949116467,
+          "pnl": 103726.31949116467,
+          "volume": 3993833.4836299997,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-6756952-77c4b700-1a4c-4d36-970a-91b881f9bb77.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-6756952-77c4b700-1a4c-4d36-970a-91b881f9bb77.webp"
+        },
+        {
+          "rank": 19,
+          "proxyWallet": "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f",
+          "name": "Q96s3kwozynxpau",
+          "pseudonym": "Q96s3kwozynxpau",
+          "amount": 96775.46670728864,
+          "pnl": 96775.46670728864,
+          "volume": 8749724.568843,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 20,
+          "proxyWallet": "0x160771e1041ea85cb780f6f9216de8e56259121e",
+          "name": "orangexyz",
+          "pseudonym": "orangexyz",
+          "amount": 94836.05186059489,
+          "pnl": 94836.05186059489,
+          "volume": 21668.297410000006,
+          "realized": 0,
+          "unrealized": 0
+        }
+      ]
+    },
+    {
+      "window": "monthly",
+      "sort": "biggestWins",
+      "count": 20,
+      "results": [
+        {
+          "winRank": "1",
+          "proxyWallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+          "userName": "anoin123",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-june-30-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by June 30, 2026?",
+          "initialValue": 92371.22190057032,
+          "finalValue": 433483.1344455703,
+          "pnl": 341111.91254499997,
+          "profileImage": ""
+        },
+        {
+          "winRank": "2",
+          "proxyWallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+          "userName": "wan123",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-may-31-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+          "initialValue": 51611.36359106923,
+          "finalValue": 376646.0832162933,
+          "pnl": 325034.71962522407,
+          "profileImage": ""
+        },
+        {
+          "winRank": "3",
+          "proxyWallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+          "userName": "wan123",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-june-30-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by June 30, 2026?",
+          "initialValue": 27724.769874148034,
+          "finalValue": 306940.913144,
+          "pnl": 279216.143269852,
+          "profileImage": ""
+        },
+        {
+          "winRank": "4",
+          "proxyWallet": "0xfd2b117412a698f322b0cd18d6827dad262b8e50",
+          "userName": "surf",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-may-31-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+          "initialValue": 22369.785841093748,
+          "finalValue": 286333.258766,
+          "pnl": 263963.47292490624,
+          "profileImage": ""
+        },
+        {
+          "winRank": "5",
+          "proxyWallet": "0xffe9858781cc1f053e7f3a5fd02a0cf6ee0f1599",
+          "userName": "tanar2007",
+          "eventSlug": "next-prime-minister-of-hungary",
+          "eventTitle": "Next Prime Minister of Hungary",
+          "initialValue": 236373.73299985702,
+          "finalValue": 420437.0233907737,
+          "pnl": 184063.29039091666,
+          "profileImage": ""
+        },
+        {
+          "winRank": "6",
+          "proxyWallet": "0x152fdae6b14b9131a61ec77ed61dda50f68da549",
+          "userName": "Ferwhere",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-may-31-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+          "initialValue": 11749.04147874555,
+          "finalValue": 184119.992187,
+          "pnl": 172370.95070825444,
+          "profileImage": ""
+        },
+        {
+          "winRank": "7",
+          "proxyWallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+          "userName": "anoin123",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-may-31-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+          "initialValue": 35288.14869455584,
+          "finalValue": 188872.19838355586,
+          "pnl": 153584.049689,
+          "profileImage": ""
+        },
+        {
+          "winRank": "8",
+          "proxyWallet": "0x0a59efd30de508bd0e7e197d4975f7ab49e107dd",
+          "userName": "0x0A59eFd30de508Bd0E7E197D4975F7aB49E107dD-1768830597495",
+          "eventSlug": "next-prime-minister-of-hungary",
+          "eventTitle": "Next Prime Minister of Hungary",
+          "initialValue": 209826.43687835458,
+          "finalValue": 357940.03922320704,
+          "pnl": 148113.6023448525,
+          "profileImage": ""
+        },
+        {
+          "winRank": "9",
+          "proxyWallet": "0xc6587b11a2209e46dfe3928b31c5514a8e33b784",
+          "userName": "Erasmus.",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-june-30-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by June 30, 2026?",
+          "initialValue": 43982.104861989996,
+          "finalValue": 183751.06999999,
+          "pnl": 139768.965138,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-642445-92826f3c-3576-4719-880c-027883552860.png"
+        },
+        {
+          "winRank": "10",
+          "proxyWallet": "0x4b28a660415bf1d58f358b32fc729dc6b396d19a",
+          "userName": "schutzprem",
+          "eventSlug": "next-prime-minister-of-hungary",
+          "eventTitle": "Next Prime Minister of Hungary",
+          "initialValue": 220607.72781130753,
+          "finalValue": 357228.21653325146,
+          "pnl": 136620.48872194393,
+          "profileImage": ""
+        },
+        {
+          "winRank": "11",
+          "proxyWallet": "0x5d0f03cf1243a3e21262d6cf844795afd9fff0ad",
+          "userName": "EB99999",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-may-31-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+          "initialValue": 24209.24399141608,
+          "finalValue": 158076.34485414205,
+          "pnl": 133867.100862726,
+          "profileImage": ""
+        },
+        {
+          "winRank": "12",
+          "proxyWallet": "0x73e237f9363d5397f47f3d5c6719bec5602613c3",
+          "userName": "night7ucker",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-may-31-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+          "initialValue": 10055.687147154462,
+          "finalValue": 136217.16242115447,
+          "pnl": 126161.475274,
+          "profileImage": ""
+        },
+        {
+          "winRank": "13",
+          "proxyWallet": "0xdfdcd929644e720a472e246d257dfa4bbcf8c7c7",
+          "userName": "pcpc",
+          "eventSlug": "next-prime-minister-of-hungary",
+          "eventTitle": "Next Prime Minister of Hungary",
+          "initialValue": 280946.6620243787,
+          "finalValue": 399105.22505521774,
+          "pnl": 118158.56303083905,
+          "profileImage": ""
+        },
+        {
+          "winRank": "14",
+          "proxyWallet": "0x88b59d79b6e1659c95a0043028e5bb7a26e6205c",
+          "userName": "almost-never",
+          "eventSlug": "next-prime-minister-of-hungary",
+          "eventTitle": "Next Prime Minister of Hungary",
+          "initialValue": 289378.57460233924,
+          "finalValue": 405863.01866333926,
+          "pnl": 116484.444061,
+          "profileImage": ""
+        },
+        {
+          "winRank": "15",
+          "proxyWallet": "0xb1a279adb096d316b1b168993e8ed976d3cd372a",
+          "userName": "TwoEyes",
+          "eventSlug": "russia-x-ukraine-ceasefire-by-june-30-2026",
+          "eventTitle": "Russia x Ukraine ceasefire by June 30, 2026?",
+          "initialValue": 13491.7015123,
+          "finalValue": 129516.1899993,
+          "pnl": 116024.488487,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-559978-31183245-1c87-49cb-b225-7f93936df2ba.png"
+        },
+        {
+          "winRank": "16",
+          "proxyWallet": "0xa61ef8773ec2e821962306ca87d4b57e39ff0abd",
+          "userName": "risk-manager",
+          "eventSlug": "next-prime-minister-of-hungary",
+          "eventTitle": "Next Prime Minister of Hungary",
+          "initialValue": 170767.85145641223,
+          "finalValue": 280692.0406926503,
+          "pnl": 109924.18923623806,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-910447-e4276f18-6c7b-4e99-8a46-2177423035a0.PNG"
+        },
+        {
+          "winRank": "17",
+          "proxyWallet": "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86",
+          "userName": "influenz.eth",
+          "eventSlug": "tamil-nadu-legislative-assembly-election-winner",
+          "eventTitle": "Tamil Nadu Legislative Assembly Election Winner",
+          "initialValue": 403659.95673575543,
+          "finalValue": 513174.9124574554,
+          "pnl": 109514.95572170001,
+          "profileImage": ""
+        },
+        {
+          "winRank": "18",
+          "proxyWallet": "0xdf17f4a8dd01a4cfa6fc3da323a2baee5f8697d1",
+          "userName": "Clear-Corridor",
+          "eventSlug": "israel-x-hezbollah-ceasefire-extended-by",
+          "eventTitle": "Israel x Hezbollah Ceasefire extended by...?",
+          "initialValue": 238484.77363908154,
+          "finalValue": 346656.5246100816,
+          "pnl": 108171.750971,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-1545882-15d139d0-737b-43d4-9165-a6cb5e0d39a1.webp"
+        },
+        {
+          "winRank": "19",
+          "proxyWallet": "0x94a428cfa4f84b264e01f70d93d02bc96cb36356",
+          "userName": "GCottrell93",
+          "eventSlug": "next-prime-minister-of-hungary",
+          "eventTitle": "Next Prime Minister of Hungary",
+          "initialValue": 245852.94606343086,
+          "finalValue": 350219.04494512,
+          "pnl": 104366.09888168916,
+          "profileImage": ""
+        },
+        {
+          "winRank": "20",
+          "proxyWallet": "0x629bc4a1e53e1d475beb7ea3d388791e96dd995a",
+          "userName": "lava-lava",
+          "eventSlug": "next-prime-minister-of-hungary",
+          "eventTitle": "Next Prime Minister of Hungary",
+          "initialValue": 503272.808007808,
+          "finalValue": 604612.2571051088,
+          "pnl": 101339.44909730082,
+          "profileImage": ""
+        }
+      ]
+    },
+    {
+      "window": "all",
+      "sort": "volume",
+      "count": 20,
+      "results": [
+        {
+          "rank": 1,
+          "proxyWallet": "0x9f47f1fcb1701bf9eaf31236ad39875e5d60af93",
+          "name": "TheGuru-791",
+          "pseudonym": "TheGuru-791",
+          "amount": 383707155.61132216,
+          "pnl": 491362.27594110556,
+          "volume": 383707155.61132216,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/view_ancient_greek_bust_figure_23_2151616992_e46bd428-7fec-4b3b-95b1-210f906105d8_1725465460772.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/view_ancient_greek_bust_figure_23_2151616992_e46bd428-7fec-4b3b-95b1-210f906105d8_1725465460772.jpg"
+        },
+        {
+          "rank": 2,
+          "proxyWallet": "0x9d84ce0306f8551e02efef1680475fc0f1dc1344",
+          "name": "ImJustKen",
+          "pseudonym": "ImJustKen",
+          "amount": 324716997.118917,
+          "pnl": 1250892.6825142186,
+          "volume": 324716997.118917,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-82662-8ddbc8e8-0500-44b7-bb13-c0b32a40a45d.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-82662-8ddbc8e8-0500-44b7-bb13-c0b32a40a45d.jpg",
+          "xUsername": "Domahhhh",
+          "verifiedBadge": true
+        },
+        {
+          "rank": 3,
+          "proxyWallet": "0x5bffcf561bcae83af680ad600cb99f1184d6ffbe",
+          "name": "YatSen",
+          "pseudonym": "YatSen",
+          "amount": 285518870.93956804,
+          "pnl": 1774213.3954779138,
+          "volume": 285518870.93956804,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-547319-56f15c24-45ba-4517-9c74-b6d47dc061cb.jpeg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-547319-56f15c24-45ba-4517-9c74-b6d47dc061cb.jpeg",
+          "xUsername": "HarveyMackinto2"
+        },
+        {
+          "rank": 4,
+          "proxyWallet": "0x6480542954b70a674a74bd1a6015dec362dc8dc5",
+          "name": "tripping",
+          "pseudonym": "tripping",
+          "amount": 278117905.0273631,
+          "pnl": 40114.353692629964,
+          "volume": 278117905.0273631,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-2136195-6a15a210-77e7-4450-bf86-06670c61864d.jpeg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-2136195-6a15a210-77e7-4450-bf86-06670c61864d.jpeg"
+        },
+        {
+          "rank": 5,
+          "proxyWallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+          "name": "debased",
+          "pseudonym": "debased",
+          "amount": 215166497.78193906,
+          "pnl": 868961.8247540349,
+          "volume": 215166497.78193906,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/trump_farmer_b64c6dcd-13e2-4dda-b1c2-0fb46389fb22_1743074825403.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/trump_farmer_b64c6dcd-13e2-4dda-b1c2-0fb46389fb22_1743074825403.png",
+          "xUsername": "debased_PM"
+        },
+        {
+          "rank": 6,
+          "proxyWallet": "0x4ce73141dbfce41e65db3723e31059a730f0abad",
+          "name": "qrpenc",
+          "pseudonym": "qrpenc",
+          "amount": 200897943.77312693,
+          "pnl": 311160.15781454765,
+          "volume": 200897943.77312693,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile_picture_8f4c1c8a-e267-4b86-ae1c-1a04b7edec09_1727918817361.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile_picture_8f4c1c8a-e267-4b86-ae1c-1a04b7edec09_1727918817361.png"
+        },
+        {
+          "rank": 7,
+          "proxyWallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+          "name": "ArmageddonRewardsBilly",
+          "pseudonym": "ArmageddonRewardsBilly",
+          "amount": 194928821.76169,
+          "pnl": 234554.51117358476,
+          "volume": 194928821.76169,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rewardsiconbilly_637fb65a-1112-49bc-9376-3fb6d377cde0_1738970845400.png",
+          "xUsername": "Eltonma"
+        },
+        {
+          "rank": 8,
+          "proxyWallet": "0xd218e474776403a330142299f7796e8ba32eb5c9",
+          "name": "cigarettes",
+          "pseudonym": "cigarettes",
+          "amount": 188305805.44926095,
+          "pnl": 491389.91834048514,
+          "volume": 188305805.44926095,
+          "realized": 0,
+          "unrealized": 0,
+          "xUsername": "friendlyping"
+        },
+        {
+          "rank": 9,
+          "proxyWallet": "0xfbfd14dd4bb607373119de95f1d4b21c3b6c0029",
+          "name": "XAE12Archangel",
+          "pseudonym": "XAE12Archangel",
+          "amount": 187040007.41019794,
+          "pnl": 124095.7690644644,
+          "volume": 187040007.41019794,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-127727-a3eee658-ea31-4924-8f10-fbc2bb5dc071.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-127727-a3eee658-ea31-4924-8f10-fbc2bb5dc071.webp",
+          "xUsername": "polymarketbet"
+        },
+        {
+          "rank": 10,
+          "proxyWallet": "0xa61ef8773ec2e821962306ca87d4b57e39ff0abd",
+          "name": "risk-manager",
+          "pseudonym": "risk-manager",
+          "amount": 185048625.25234902,
+          "pnl": 208301.79066415108,
+          "volume": 185048625.25234902,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-910447-e4276f18-6c7b-4e99-8a46-2177423035a0.PNG",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-910447-e4276f18-6c7b-4e99-8a46-2177423035a0.PNG"
+        },
+        {
+          "rank": 11,
+          "proxyWallet": "0x59ee6c6a56d7b00223f0c30f8002c4df762b684d",
+          "name": "undertaker",
+          "pseudonym": "undertaker",
+          "amount": 179289796.01723105,
+          "pnl": 274348.052706545,
+          "volume": 179289796.01723105,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 12,
+          "proxyWallet": "0x2785e7022dc20757108204b13c08cea8613b70ae",
+          "name": "poorsob",
+          "pseudonym": "poorsob",
+          "amount": 173688235.56612298,
+          "pnl": 165126.6824875766,
+          "volume": 173688235.56612298,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 13,
+          "proxyWallet": "0xf8ba34bf0e95d952d05b578bfbc0833f9242a286",
+          "name": "kingfisher",
+          "pseudonym": "kingfisher",
+          "amount": 172347071.21163687,
+          "pnl": -276029.06009639264,
+          "volume": 172347071.21163687,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 14,
+          "proxyWallet": "0xa1d75a199ef084ee3ec9ae60dc986b439fe6e17e",
+          "name": "TimeQuestion",
+          "pseudonym": "TimeQuestion",
+          "amount": 153338641.96985996,
+          "pnl": 169926.2654519476,
+          "volume": 153338641.96985996,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/test_63bb3a31-1c40-48bc-8852-8271d96f27bf_1728370604605.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/test_63bb3a31-1c40-48bc-8852-8271d96f27bf_1728370604605.jpg"
+        },
+        {
+          "rank": 15,
+          "proxyWallet": "0xa58d4f278d7953cd38eeb929f7e242bfc7c0b9b8",
+          "name": "AiBird",
+          "pseudonym": "AiBird",
+          "amount": 152420260.86604503,
+          "pnl": 67048.57840867832,
+          "volume": 152420260.86604503,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 16,
+          "proxyWallet": "0x482bf5accdecfaffa67c14d4d4fbb59f428a3266",
+          "name": "Winry",
+          "pseudonym": "Winry",
+          "amount": 140817097.5434531,
+          "pnl": 45685.04718960589,
+          "volume": 140817097.5434531,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Winry_Rockbell_527826ed-6bef-45ea-a5a2-6d6aea870904_1726911776523.webp",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Winry_Rockbell_527826ed-6bef-45ea-a5a2-6d6aea870904_1726911776523.webp",
+          "xUsername": "vonzz6"
+        },
+        {
+          "rank": 17,
+          "proxyWallet": "0x3cf3e8d5427aed066a7a5926980600f6c3cf87b3",
+          "name": "50Whence",
+          "pseudonym": "50Whence",
+          "amount": 139850458.376255,
+          "pnl": 761386.6783714058,
+          "volume": 139850458.376255,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/50Pence_fdf95e07-b30d-48af-af3a-19df35d66c05_1741996492104.jpg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/50Pence_fdf95e07-b30d-48af-af3a-19df35d66c05_1741996492104.jpg"
+        },
+        {
+          "rank": 18,
+          "proxyWallet": "0x5d189e816b4149be00977c1a3c8840374aec4972",
+          "name": "gloriafoster",
+          "pseudonym": "gloriafoster",
+          "amount": 137570124.02881405,
+          "pnl": 85086.49274796354,
+          "volume": 137570124.02881405,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 19,
+          "proxyWallet": "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f",
+          "name": "Q96s3kwozynxpau",
+          "pseudonym": "Q96s3kwozynxpau",
+          "amount": 133128223.61498694,
+          "pnl": 280727.19864323986,
+          "volume": 133128223.61498694,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 20,
+          "proxyWallet": "0x971f91a412236cc942a6f4485d3d88aa8dcb5929",
+          "name": "0x971f91a412236cc942a6f4485d3d88aa8dcb5929",
+          "pseudonym": "0x971f91a412236cc942a6f4485d3d88aa8dcb5929",
+          "amount": 131480378.89705303,
+          "pnl": -21280.358848004256,
+          "volume": 131480378.89705303,
+          "realized": 0,
+          "unrealized": 0
+        }
+      ]
+    },
+    {
+      "window": "all",
+      "sort": "profit",
+      "count": 20,
+      "results": [
+        {
+          "rank": 1,
+          "proxyWallet": "0x56687bf447db6ffa42ffe2204a05edaa20f55839",
+          "name": "Theo4",
+          "pseudonym": "Theo4",
+          "amount": 22053952.526606,
+          "pnl": 22053952.526606,
+          "volume": 43012710.74511701,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 2,
+          "proxyWallet": "0x1f2dd6d473f3e824cd2f8a89d9c69fb96f6ad0cf",
+          "name": "Fredi9999",
+          "pseudonym": "Fredi9999",
+          "amount": 16660338.662791152,
+          "pnl": 16660338.662791152,
+          "volume": 76276297.80875301,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 3,
+          "proxyWallet": "0xd235973291b2b75ff4070e9c0b01728c520b0f29",
+          "name": "zxgngl",
+          "pseudonym": "zxgngl",
+          "amount": 11447932.086431,
+          "pnl": 11447932.086431,
+          "volume": 29473479.549040988,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 4,
+          "proxyWallet": "0x78b9ac44a6d7d7a076c14e0ad518b301b63c6b76",
+          "name": "Len9311238",
+          "pseudonym": "Len9311238",
+          "amount": 8709972.988069998,
+          "pnl": 8709972.988069998,
+          "volume": 16402744.764626998,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 5,
+          "proxyWallet": "0x863134d00841b2e200492805a01e1e2f5defaa53",
+          "name": "RepTrump",
+          "pseudonym": "RepTrump",
+          "amount": 7532409.671579,
+          "pnl": 7532409.671579,
+          "volume": 13983231.103425,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 6,
+          "proxyWallet": "0x8119010a6e589062aa03583bb3f39ca632d9f887",
+          "name": "PrincessCaro",
+          "pseudonym": "PrincessCaro",
+          "amount": 6083643.099591745,
+          "pnl": 6083643.099591745,
+          "volume": 23520809.952867005,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 7,
+          "proxyWallet": "0xe9ad918c7678cd38b12603a762e638a5d1ee7091",
+          "name": "walletmobile",
+          "pseudonym": "walletmobile",
+          "amount": 5942685.45339684,
+          "pnl": 5942685.45339684,
+          "volume": 32196692.075936034,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 8,
+          "proxyWallet": "0x885783760858e1bd5dd09a3c3f916cfa251ac270",
+          "name": "BetTom42",
+          "pseudonym": "BetTom42",
+          "amount": 5642135.735356,
+          "pnl": 5642135.735356,
+          "volume": 11212839.523403,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 9,
+          "proxyWallet": "0x23786fdad0073692157c6d7dc81f281843a35fcb",
+          "name": "mikatrade77",
+          "pseudonym": "mikatrade77",
+          "amount": 5147998.544602999,
+          "pnl": 5147998.544602999,
+          "volume": 10884765.388775,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 10,
+          "proxyWallet": "0xd0c042c08f755ff940249f62745e82d356345565",
+          "name": "alexmulti",
+          "pseudonym": "alexmulti",
+          "amount": 4804855.613376001,
+          "pnl": 4804855.613376001,
+          "volume": 9949068.653841998,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 11,
+          "proxyWallet": "0x16f91db2592924cfed6e03b7e5cb5bb1e32299e3",
+          "name": "Jenzigo",
+          "pseudonym": "Jenzigo",
+          "amount": 4049827.0941029997,
+          "pnl": 4049827.0941029997,
+          "volume": 9457725.034338009,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 12,
+          "proxyWallet": "0x94a428cfa4f84b264e01f70d93d02bc96cb36356",
+          "name": "GCottrell93",
+          "pseudonym": "GCottrell93",
+          "amount": 3742132.805988251,
+          "pnl": 3742132.805988251,
+          "volume": 16806556.585626952,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 13,
+          "proxyWallet": "0x033a07b3de5947eab4306676ad74eb546da30d50",
+          "name": "RandomGenius-190",
+          "pseudonym": "RandomGenius-190",
+          "amount": 3115550.407118868,
+          "pnl": 3115550.407118868,
+          "volume": 8794464.960355,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 14,
+          "proxyWallet": "0xed2239a9150c3920000d0094d28fa51c7db03dd0",
+          "name": "Michie",
+          "pseudonym": "Michie",
+          "amount": 3095007.670859059,
+          "pnl": 3095007.670859059,
+          "volume": 8450962.774299005,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 15,
+          "proxyWallet": "0xd7f85d0eb0fe0732ca38d9107ad0d4d01b1289e4",
+          "name": "tdrhrhhd",
+          "pseudonym": "tdrhrhhd",
+          "amount": 2368490.324575549,
+          "pnl": 2368490.324575549,
+          "volume": 13371252.749786997,
+          "realized": 0,
+          "unrealized": 0,
+          "xUsername": "fortaellinger"
+        },
+        {
+          "rank": 16,
+          "proxyWallet": "0x2bf64b86b64c315d879571b07a3b76629e467cd0",
+          "name": "BabaTrump",
+          "pseudonym": "BabaTrump",
+          "amount": 2093362.982851,
+          "pnl": 2093362.982851,
+          "volume": 3655046.6027250034,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 17,
+          "proxyWallet": "0x0562c423912e325f83fa79df55085979e1f5594f",
+          "name": "trezorisbest",
+          "pseudonym": "trezorisbest",
+          "amount": 1901365.986484077,
+          "pnl": 1901365.986484077,
+          "volume": 5173700.434507998,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 18,
+          "proxyWallet": "0x3d1ecf16942939b3603c2539a406514a40b504d0",
+          "name": "edenmoon",
+          "pseudonym": "edenmoon",
+          "amount": 1850872.0246252252,
+          "pnl": 1850872.0246252252,
+          "volume": 5072720.228143,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 19,
+          "proxyWallet": "0x7058c8a7cec79010b1927d05837dcf25f1a53505",
+          "name": "deetown",
+          "pseudonym": "deetown",
+          "amount": 1849974.955234,
+          "pnl": 1849974.955234,
+          "volume": 7016597.407319001,
+          "realized": 0,
+          "unrealized": 0
+        },
+        {
+          "rank": 20,
+          "proxyWallet": "0x5bffcf561bcae83af680ad600cb99f1184d6ffbe",
+          "name": "YatSen",
+          "pseudonym": "YatSen",
+          "amount": 1774213.3954779138,
+          "pnl": 1774213.3954779138,
+          "volume": 285518870.93956804,
+          "realized": 0,
+          "unrealized": 0,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-547319-56f15c24-45ba-4517-9c74-b6d47dc061cb.jpeg",
+          "profileImageOptimized": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-547319-56f15c24-45ba-4517-9c74-b6d47dc061cb.jpeg",
+          "xUsername": "HarveyMackinto2"
+        }
+      ]
+    },
+    {
+      "window": "all",
+      "sort": "biggestWins",
+      "count": 20,
+      "results": [
+        {
+          "winRank": "1",
+          "proxyWallet": "0x56687bf447db6ffa42ffe2204a05edaa20f55839",
+          "userName": "Theo4",
+          "eventSlug": "presidential-election-popular-vote-winner-2024",
+          "eventTitle": "Popular Vote Winner 2024",
+          "initialValue": 8499002.081268013,
+          "finalValue": 22862193.88337501,
+          "pnl": 14363191.802107,
+          "profileImage": ""
+        },
+        {
+          "winRank": "2",
+          "proxyWallet": "0xd235973291b2b75ff4070e9c0b01728c520b0f29",
+          "userName": "zxgngl",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 18025141.912885506,
+          "finalValue": 29473072.881528504,
+          "pnl": 11447930.968643,
+          "profileImage": ""
+        },
+        {
+          "winRank": "3",
+          "proxyWallet": "0x1f2dd6d473f3e824cd2f8a89d9c69fb96f6ad0cf",
+          "userName": "Fredi9999",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 20206669.838453315,
+          "finalValue": 29902673.940970317,
+          "pnl": 9696004.102517003,
+          "profileImage": ""
+        },
+        {
+          "winRank": "4",
+          "proxyWallet": "0x56687bf447db6ffa42ffe2204a05edaa20f55839",
+          "userName": "Theo4",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 10504511.228089835,
+          "finalValue": 16793948.484555837,
+          "pnl": 6289437.256466,
+          "profileImage": ""
+        },
+        {
+          "winRank": "5",
+          "proxyWallet": "0x78b9ac44a6d7d7a076c14e0ad518b301b63c6b76",
+          "userName": "Len9311238",
+          "eventSlug": "presidential-election-popular-vote-winner-2024",
+          "eventTitle": "Popular Vote Winner 2024",
+          "initialValue": 4236668.573979264,
+          "finalValue": 10435283.070245264,
+          "pnl": 6198614.496266,
+          "profileImage": ""
+        },
+        {
+          "winRank": "6",
+          "proxyWallet": "0xe9ad918c7678cd38b12603a762e638a5d1ee7091",
+          "userName": "walletmobile",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 9949808.148477234,
+          "finalValue": 15892493.601874074,
+          "pnl": 5942685.45339684,
+          "profileImage": ""
+        },
+        {
+          "winRank": "7",
+          "proxyWallet": "0x863134d00841b2e200492805a01e1e2f5defaa53",
+          "userName": "RepTrump",
+          "eventSlug": "presidential-election-popular-vote-winner-2024",
+          "eventTitle": "Popular Vote Winner 2024",
+          "initialValue": 3581786.5681595,
+          "finalValue": 9220048.6962435,
+          "pnl": 5638262.128084,
+          "profileImage": ""
+        },
+        {
+          "winRank": "8",
+          "proxyWallet": "0x94a428cfa4f84b264e01f70d93d02bc96cb36356",
+          "userName": "GCottrell93",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 8822032.636010442,
+          "finalValue": 13282293.05551844,
+          "pnl": 4460260.419508,
+          "profileImage": ""
+        },
+        {
+          "winRank": "9",
+          "proxyWallet": "0x1f2dd6d473f3e824cd2f8a89d9c69fb96f6ad0cf",
+          "userName": "Fredi9999",
+          "eventSlug": "presidential-election-popular-vote-winner-2024",
+          "eventTitle": "Popular Vote Winner 2024",
+          "initialValue": 5381862.192413821,
+          "finalValue": 9715242.54668482,
+          "pnl": 4333380.354271,
+          "profileImage": ""
+        },
+        {
+          "winRank": "10",
+          "proxyWallet": "0x8119010a6e589062aa03583bb3f39ca632d9f887",
+          "userName": "PrincessCaro",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 9308009.311283762,
+          "finalValue": 12571937.214359762,
+          "pnl": 3263927.9030760005,
+          "profileImage": ""
+        },
+        {
+          "winRank": "11",
+          "proxyWallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+          "userName": "aenews2",
+          "eventSlug": "people-power-party-ppp-presidential-candidate",
+          "eventTitle": "People Power Party (PPP) Presidential Candidate",
+          "initialValue": 15350940.014994808,
+          "finalValue": 18474940.844899807,
+          "pnl": 3124000.8299050005,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/profile-image-154436-a84dabd0-06ee-40d3-be95-e454283cdfc0.jpg"
+        },
+        {
+          "winRank": "12",
+          "proxyWallet": "0x033a07b3de5947eab4306676ad74eb546da30d50",
+          "userName": "RandomGenius-190",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 4574058.372709525,
+          "finalValue": 7689598.094918393,
+          "pnl": 3115539.7222088682,
+          "profileImage": ""
+        },
+        {
+          "winRank": "13",
+          "proxyWallet": "0x9b979a065641e8cfde3022a30ed2d9415cf55e12",
+          "userName": "LlamaEnjoyer",
+          "eventSlug": "people-power-party-ppp-presidential-candidate",
+          "eventTitle": "People Power Party (PPP) Presidential Candidate",
+          "initialValue": 15876333.906795,
+          "finalValue": 18871445.306296,
+          "pnl": 2995111.3995009996,
+          "profileImage": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Screenshot_2023_08_29_18_21_41_521_com_twitter_android_edit_Verrissimus_1701414267756.jpg"
+        },
+        {
+          "winRank": "14",
+          "proxyWallet": "0xed2239a9150c3920000d0094d28fa51c7db03dd0",
+          "userName": "Michie",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 4105347.5116378437,
+          "finalValue": 6733251.746255844,
+          "pnl": 2627904.234618,
+          "profileImage": ""
+        },
+        {
+          "winRank": "15",
+          "proxyWallet": "0x23786fdad0073692157c6d7dc81f281843a35fcb",
+          "userName": "mikatrade77",
+          "eventSlug": "presidential-election-popular-vote-winner-2024",
+          "eventTitle": "Popular Vote Winner 2024",
+          "initialValue": 1482998.305607595,
+          "finalValue": 4052453.6666625952,
+          "pnl": 2569455.361055,
+          "profileImage": ""
+        },
+        {
+          "winRank": "16",
+          "proxyWallet": "0x885783760858e1bd5dd09a3c3f916cfa251ac270",
+          "userName": "BetTom42",
+          "eventSlug": "presidential-election-popular-vote-winner-2024",
+          "eventTitle": "Popular Vote Winner 2024",
+          "initialValue": 1376261.112900692,
+          "finalValue": 3845869.4317546925,
+          "pnl": 2469608.3188540004,
+          "profileImage": ""
+        },
+        {
+          "winRank": "17",
+          "proxyWallet": "0xd0c042c08f755ff940249f62745e82d356345565",
+          "userName": "alexmulti",
+          "eventSlug": "presidential-election-popular-vote-winner-2024",
+          "eventTitle": "Popular Vote Winner 2024",
+          "initialValue": 1361691.6804125232,
+          "finalValue": 3630278.2812285237,
+          "pnl": 2268586.6008160003,
+          "profileImage": ""
+        },
+        {
+          "winRank": "18",
+          "proxyWallet": "0xd0c042c08f755ff940249f62745e82d356345565",
+          "userName": "alexmulti",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 3546457.639072561,
+          "finalValue": 5714866.628538562,
+          "pnl": 2168408.9894660003,
+          "profileImage": ""
+        },
+        {
+          "winRank": "19",
+          "proxyWallet": "0x16f91db2592924cfed6e03b7e5cb5bb1e32299e3",
+          "userName": "Jenzigo",
+          "eventSlug": "presidential-election-winner-2024",
+          "eventTitle": "Presidential Election Winner 2024",
+          "initialValue": 3569540.993654538,
+          "finalValue": 5708686.095914538,
+          "pnl": 2139145.10226,
+          "profileImage": ""
+        },
+        {
+          "winRank": "20",
+          "proxyWallet": "0x18ba5145fba0fd51e68972268f5773175763e68f",
+          "userName": "FoldingNuts272",
+          "eventSlug": "people-power-party-ppp-presidential-candidate",
+          "eventTitle": "People Power Party (PPP) Presidential Candidate",
+          "initialValue": 9563755.960012399,
+          "finalValue": 11586660.813168399,
+          "pnl": 2022904.8531560004,
+          "profileImage": ""
+        }
+      ]
+    }
+  ],
+  "uniqueWallets": [
+    "0x56687bf447db6ffa42ffe2204a05edaa20f55839",
+    "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+    "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+    "0x9f47f1fcb1701bf9eaf31236ad39875e5d60af93",
+    "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+    "0x2785e7022dc20757108204b13c08cea8613b70ae",
+    "0x88c4919de76e526d55a32c1f8afb439dd1f1129a",
+    "0xe7cb6e31f033e0e9f5940e46d84166c7d7ded447",
+    "0xb886580698ede4b18de3e446b2d8da8bcedd81b3",
+    "0x1f2dd6d473f3e824cd2f8a89d9c69fb96f6ad0cf",
+    "0xd235973291b2b75ff4070e9c0b01728c520b0f29",
+    "0xd7f85d0eb0fe0732ca38d9107ad0d4d01b1289e4",
+    "0x9d84ce0306f8551e02efef1680475fc0f1dc1344",
+    "0x6480542954b70a674a74bd1a6015dec362dc8dc5",
+    "0x7f9e2d1df78614564a70becc7fa14aa9a6623a0e",
+    "0x9ca119b8cd7bdb890aecf1ff3b0f6e3a45cc13b5",
+    "0x4a650133a506a876352f8e8021ec3d220dab06bb",
+    "0x5bffcf561bcae83af680ad600cb99f1184d6ffbe",
+    "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86",
+    "0x2974bd0059e48f215c391882976e0f1b4c8c9c23",
+    "0xc21ea96be762bb55041529af6e386e7c53b80215",
+    "0x02e7f29f3e612a95a9ccca7131ce7dd5d56b59e5",
+    "0x4662492a083f518d87c91044227d97ef1d90bdf6",
+    "0x78b9ac44a6d7d7a076c14e0ad518b301b63c6b76",
+    "0x0c0e270cf879583d6a0142fc817e05b768d0434e",
+    "0xfd2b117412a698f322b0cd18d6827dad262b8e50",
+    "0xbaa2bcb5439e985ce4ccf815b4700027d1b92c73",
+    "0x662a00b70022c45ee80f6f753baa60f1c85f77b7",
+    "0x863134d00841b2e200492805a01e1e2f5defaa53",
+    "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+    "0xa53e8fc4c2f9910e584de69d8b40a502a638218d",
+    "0xffe9858781cc1f053e7f3a5fd02a0cf6ee0f1599",
+    "0xfdc07e182e6f959256295567e450a8727272fa79",
+    "0x162f6fff88a52864f2ecc9833e58089d5254798d",
+    "0x8119010a6e589062aa03583bb3f39ca632d9f887",
+    "0xe9ad918c7678cd38b12603a762e638a5d1ee7091",
+    "0x4ce73141dbfce41e65db3723e31059a730f0abad",
+    "0x152fdae6b14b9131a61ec77ed61dda50f68da549",
+    "0x614dc8d3542c12103d2c6a3553fd761e391d1546",
+    "0x23d81ba9371e576015c1e562db09c689f56b0288",
+    "0x5297f1e1d0f0584537af763652a0a5f874037b99",
+    "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+    "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f",
+    "0xc6587b11a2209e46dfe3928b31c5514a8e33b784",
+    "0xd49b42bce7ea10bac53e2901c188cae20ea4bdf9",
+    "0x885783760858e1bd5dd09a3c3f916cfa251ac270",
+    "0x94a428cfa4f84b264e01f70d93d02bc96cb36356",
+    "0xd218e474776403a330142299f7796e8ba32eb5c9",
+    "0x5d0f03cf1243a3e21262d6cf844795afd9fff0ad",
+    "0x0a59efd30de508bd0e7e197d4975f7ab49e107dd",
+    "0xa3282d3e882501229c75d0caf134e62e3afb4977",
+    "0xce1ee0c8de79ed12902869b67afcddb5456f851f",
+    "0x558ee6a05f51e7e8d89fc07b154e78a865202ee7",
+    "0x23786fdad0073692157c6d7dc81f281843a35fcb",
+    "0x93fb8127a1b21a112b11af936361225df0563e4a",
+    "0xfbfd14dd4bb607373119de95f1d4b21c3b6c0029",
+    "0x70d94a4ff67ed919a8480885cf0808afefe7a684",
+    "0x1e82e3eb816aaf755ac9b44bc9d98f01b08aaf92",
+    "0x74471a007ddcc488f6d57b5e86dfb35a8d48a16d",
+    "0x058f48b0fe2901214215aa53edf2ead7505c4883",
+    "0x5e717d49744bef6dcd1b7764d07c2934a1e4ba82",
+    "0xd0c042c08f755ff940249f62745e82d356345565",
+    "0xd93cea39533c6146e0b2e8361afeed930a12689c",
+    "0xa61ef8773ec2e821962306ca87d4b57e39ff0abd",
+    "0x4b28a660415bf1d58f358b32fc729dc6b396d19a",
+    "0xdc03d611e5bcc9f1c87edb95edeb91671471804c",
+    "0x188e84eb9a9ecd72f90f55b9d9cc11a7de8770d8",
+    "0x801ba46b0e7ba3f82e6a3cfcedb436318e43e036",
+    "0x79c510469bd1bb14616dda7cf8625d920d10e7da",
+    "0x16f91db2592924cfed6e03b7e5cb5bb1e32299e3",
+    "0x9b979a065641e8cfde3022a30ed2d9415cf55e12",
+    "0x59ee6c6a56d7b00223f0c30f8002c4df762b684d",
+    "0x5a218c7ad04135830a45c41aaed7294df7809318",
+    "0xddb1ecc4ddf67d6732630d5eea099f9ffa53ea72",
+    "0x57dedd62596dd4f85c7ebe5317e07d22795ecd90",
+    "0xfc2f4f50ce2f6045d35558a5e2d8d4b2ac6610c7",
+    "0x033a07b3de5947eab4306676ad74eb546da30d50",
+    "0x73e237f9363d5397f47f3d5c6719bec5602613c3",
+    "0x0a543bb97015206f67e1bc5ead7c2d60baf64a03",
+    "0xeed588bab0b0df73a9a6def7a59e512e9ede1a33",
+    "0x4478d7bd8a295691ac84f60a5ec2b47e122102a4",
+    "0xd6ddc6559313bcc819f1df1b3647f3930da998ee",
+    "0x97f937e0ec5068121db4a4b900140544b09f4e4f",
+    "0x3e5b23e9f71b2a2edcd5629d3f948f12f591073b",
+    "0xdfdcd929644e720a472e246d257dfa4bbcf8c7c7",
+    "0xf769c6390f6d564fe4859effbddb682c62660114",
+    "0x15f7ddbc6ffe08722ddeb64d51e58aef7b8ca018",
+    "0xdfe3fedc5c7679be42c3d393e99d4b55247b73c4",
+    "0xf8ba34bf0e95d952d05b578bfbc0833f9242a286",
+    "0xed2239a9150c3920000d0094d28fa51c7db03dd0",
+    "0xa1d75a199ef084ee3ec9ae60dc986b439fe6e17e",
+    "0xb1a279adb096d316b1b168993e8ed976d3cd372a",
+    "0x88b59d79b6e1659c95a0043028e5bb7a26e6205c",
+    "0xdf17f4a8dd01a4cfa6fc3da323a2baee5f8697d1",
+    "0xc6dd722558dbfbd8fa780efcbe819ed8c6604b9f",
+    "0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b",
+    "0xda9126becc96be3598ddd05c4fc06f4093759ffd",
+    "0xa58d4f278d7953cd38eeb929f7e242bfc7c0b9b8",
+    "0x5b8f191a4a3e66fe9b7348891f21021399762c14",
+    "0x33287eae7e55b86c9b4cf4c53444f062d2dbe6b8",
+    "0xc1dc8e2dce9dffbc7de3b3020a5090b7bdd40a9e",
+    "0x2bf64b86b64c315d879571b07a3b76629e467cd0",
+    "0x16cbe223607a6513ae76d1e3751c78e4eabc2704",
+    "0x482bf5accdecfaffa67c14d4d4fbb59f428a3266",
+    "0x3dd2db2d398ff72c2c71c9ad6473368b941e9ab1",
+    "0x78c2894cca670265cf7e0d8682c9f2f8e8d18f4b",
+    "0xe339bba7fba043520d83516ce22add16beb6e01b",
+    "0x0562c423912e325f83fa79df55085979e1f5594f",
+    "0x3cf3e8d5427aed066a7a5926980600f6c3cf87b3",
+    "0x5011224f4848cb2cf2d87cf2b823551dfd0e220e",
+    "0x5188fa0e8a77e87bc6a58e6781fdfc4e165cc804",
+    "0xecaa8806a9a05049d7d5260a33dc924220e377a9",
+    "0xbdc8abf39513839ef3c1eb2aa98789f5a78edc1e",
+    "0x3d1ecf16942939b3603c2539a406514a40b504d0",
+    "0xa022ba0a68e11a78348382ff168601012d4d77f8",
+    "0x5d189e816b4149be00977c1a3c8840374aec4972",
+    "0x1fee90f352fd362ea4bf13c6ed7cdd83a4d2ed5e",
+    "0x8db5bfb848ee6745c475df375bd0c983468bfa3e",
+    "0x31f80487ffa111abb53c73b0de92c9279c22a6da",
+    "0x9a817c446ca66b8859e77f4716a785dc7e76d324",
+    "0x7058c8a7cec79010b1927d05837dcf25f1a53505",
+    "0x3c918a8ef8c379304f744592120cbb4d76149af7",
+    "0xdbf16bcffa41bd95faec2640daa2c95ab2bd86b5",
+    "0xe3726a1b9c6ba2f06585d1c9e01d00afaedaeb38",
+    "0x5bb0de4e97698184ead80c80cb17a26cd6f6814b",
+    "0x02abb585dc6cdd74b005c5f2583dadadfe76cc08",
+    "0x18ba5145fba0fd51e68972268f5773175763e68f",
+    "0x629bc4a1e53e1d475beb7ea3d388791e96dd995a",
+    "0x160771e1041ea85cb780f6f9216de8e56259121e",
+    "0xfa87a158110370eb6dbe678843c055a6b144c2a0",
+    "0xac4a1fabdac2438d6afa2a9e8e83845310a0bf1e",
+    "0x9d736920e486176e7df7a76fa218f1ebd853216b",
+    "0x88edd092d799556111e57ff3b2107e24dd406cfb",
+    "0x971f91a412236cc942a6f4485d3d88aa8dcb5929"
+  ],
+  "walletMeta": {
+    "0xb886580698ede4b18de3e446b2d8da8bcedd81b3": {
+      "wallet": "0xb886580698ede4b18de3e446b2d8da8bcedd81b3",
+      "name": "0xB886580698eDE4b18DE3E446b2D8Da8bCEdd81B3-1767532547794",
+      "pseudonym": "0xB886580698eDE4b18DE3E446b2D8Da8bCEdd81B3-1767532547794",
+      "appearsIn": [
+        "politics-today-volume:rank=1",
+        "politics-weekly-volume:rank=5"
+      ],
+      "bestRank": 1,
+      "maxPnl": -4657.780122030039,
+      "maxVolume": 1185704.330385
+    },
+    "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418": {
+      "wallet": "0xc8ab97a9089a9ff7e6ef0688e6e591a066946418",
+      "name": "ArmageddonRewardsBilly",
+      "pseudonym": "ArmageddonRewardsBilly",
+      "appearsIn": [
+        "politics-today-volume:rank=2",
+        "politics-today-profit:rank=16",
+        "politics-weekly-volume:rank=1",
+        "politics-weekly-profit:rank=16",
+        "politics-weekly-biggestWins:rank=5",
+        "politics-monthly-volume:rank=4",
+        "politics-all-volume:rank=7"
+      ],
+      "bestRank": 1,
+      "maxPnl": 234554.51117358476,
+      "maxVolume": 194928821.76169,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 2265.836948925782
+      }
+    },
+    "0x02e7f29f3e612a95a9ccca7131ce7dd5d56b59e5": {
+      "wallet": "0x02e7f29f3e612a95a9ccca7131ce7dd5d56b59e5",
+      "name": "CAR-GangVersion",
+      "pseudonym": "CAR-GangVersion",
+      "appearsIn": [
+        "politics-today-volume:rank=3"
+      ],
+      "bestRank": 3,
+      "maxPnl": 1860.8304914909531,
+      "maxVolume": 388785.347485
+    },
+    "0x96489abcb9f583d6835c8ef95ffc923d05a86825": {
+      "wallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+      "name": "anoin123",
+      "pseudonym": "anoin123",
+      "appearsIn": [
+        "politics-today-volume:rank=4",
+        "politics-weekly-volume:rank=4",
+        "politics-monthly-volume:rank=20",
+        "politics-monthly-profit:rank=3",
+        "politics-monthly-biggestWins:rank=1",
+        "politics-monthly-biggestWins:rank=7"
+      ],
+      "bestRank": 1,
+      "maxPnl": 714968.1401604982,
+      "maxVolume": 4586756.005969,
+      "topBiggestWin": {
+        "eventTitle": "Russia x Ukraine ceasefire by June 30, 2026?",
+        "pnl": 341111.91254499997
+      }
+    },
+    "0xc21ea96be762bb55041529af6e386e7c53b80215": {
+      "wallet": "0xc21ea96be762bb55041529af6e386e7c53b80215",
+      "name": "JustCrazy",
+      "pseudonym": "JustCrazy",
+      "appearsIn": [
+        "politics-today-volume:rank=5",
+        "politics-weekly-volume:rank=3",
+        "politics-monthly-volume:rank=6"
+      ],
+      "bestRank": 3,
+      "maxPnl": 12018.91420308745,
+      "maxVolume": 17563462.580728
+    },
+    "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1": {
+      "wallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+      "name": "debased",
+      "pseudonym": "debased",
+      "appearsIn": [
+        "politics-today-volume:rank=6",
+        "politics-weekly-volume:rank=13",
+        "politics-monthly-volume:rank=7",
+        "politics-all-volume:rank=5"
+      ],
+      "bestRank": 5,
+      "maxPnl": 868961.8247540349,
+      "maxVolume": 215166497.78193906
+    },
+    "0x5297f1e1d0f0584537af763652a0a5f874037b99": {
+      "wallet": "0x5297f1e1d0f0584537af763652a0a5f874037b99",
+      "name": "adasol",
+      "pseudonym": "adasol",
+      "appearsIn": [
+        "politics-today-volume:rank=7",
+        "politics-weekly-volume:rank=6"
+      ],
+      "bestRank": 6,
+      "maxPnl": -32.20469538095185,
+      "maxVolume": 961270.7837370001
+    },
+    "0xce1ee0c8de79ed12902869b67afcddb5456f851f": {
+      "wallet": "0xce1ee0c8de79ed12902869b67afcddb5456f851f",
+      "name": "Thailand-palyboy",
+      "pseudonym": "Thailand-palyboy",
+      "appearsIn": [
+        "politics-today-volume:rank=8"
+      ],
+      "bestRank": 8,
+      "maxPnl": -154.26935719230292,
+      "maxVolume": 204342.59796199997
+    },
+    "0x058f48b0fe2901214215aa53edf2ead7505c4883": {
+      "wallet": "0x058f48b0fe2901214215aa53edf2ead7505c4883",
+      "name": "0x058f48b0FE2901214215aA53eDF2EAd7505c4883-1777603428724",
+      "pseudonym": "0x058f48b0FE2901214215aA53eDF2EAd7505c4883-1777603428724",
+      "appearsIn": [
+        "politics-today-volume:rank=9"
+      ],
+      "bestRank": 9,
+      "maxPnl": -2218.8785810992104,
+      "maxVolume": 187002.93624999997
+    },
+    "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1": {
+      "wallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+      "name": "aenews2",
+      "pseudonym": "aenews2",
+      "appearsIn": [
+        "politics-today-volume:rank=10",
+        "politics-today-profit:rank=7",
+        "politics-weekly-profit:rank=7",
+        "politics-all-biggestWins:rank=11"
+      ],
+      "bestRank": 7,
+      "maxPnl": 3124000.8299050005,
+      "maxVolume": 238847.224947,
+      "topBiggestWin": {
+        "eventTitle": "People Power Party (PPP) Presidential Candidate",
+        "pnl": 3124000.8299050005
+      }
+    },
+    "0x57dedd62596dd4f85c7ebe5317e07d22795ecd90": {
+      "wallet": "0x57dedd62596dd4f85c7ebe5317e07d22795ecd90",
+      "name": "largeleeks888",
+      "pseudonym": "largeleeks888",
+      "appearsIn": [
+        "politics-today-volume:rank=11"
+      ],
+      "bestRank": 11,
+      "maxPnl": 232.82894809221034,
+      "maxVolume": 185329.60234500002
+    },
+    "0x97f937e0ec5068121db4a4b900140544b09f4e4f": {
+      "wallet": "0x97f937e0ec5068121db4a4b900140544b09f4e4f",
+      "name": "Mark001-",
+      "pseudonym": "Mark001-",
+      "appearsIn": [
+        "politics-today-volume:rank=12"
+      ],
+      "bestRank": 12,
+      "maxPnl": 555.3110915777652,
+      "maxVolume": 173551.12263199998
+    },
+    "0xdfe3fedc5c7679be42c3d393e99d4b55247b73c4": {
+      "wallet": "0xdfe3fedc5c7679be42c3d393e99d4b55247b73c4",
+      "name": "cqs",
+      "pseudonym": "cqs",
+      "appearsIn": [
+        "politics-today-volume:rank=13"
+      ],
+      "bestRank": 13,
+      "maxPnl": -2589.79269401927,
+      "maxVolume": 172050.126918
+    },
+    "0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b": {
+      "wallet": "0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b",
+      "name": "Car",
+      "pseudonym": "Car",
+      "appearsIn": [
+        "politics-today-volume:rank=14"
+      ],
+      "bestRank": 14,
+      "maxPnl": 1512.4820758607239,
+      "maxVolume": 170907.09538900002
+    },
+    "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f": {
+      "wallet": "0x2663daca3cecf3767ca1c3b126002a8578a8ed1f",
+      "name": "Q96s3kwozynxpau",
+      "pseudonym": "Q96s3kwozynxpau",
+      "appearsIn": [
+        "politics-today-volume:rank=15",
+        "politics-weekly-volume:rank=7",
+        "politics-monthly-volume:rank=13",
+        "politics-monthly-profit:rank=19",
+        "politics-all-volume:rank=19"
+      ],
+      "bestRank": 7,
+      "maxPnl": 280727.19864323986,
+      "maxVolume": 133128223.61498694
+    },
+    "0x78c2894cca670265cf7e0d8682c9f2f8e8d18f4b": {
+      "wallet": "0x78c2894cca670265cf7e0d8682c9f2f8e8d18f4b",
+      "name": "Arron-",
+      "pseudonym": "Arron-",
+      "appearsIn": [
+        "politics-today-volume:rank=16"
+      ],
+      "bestRank": 16,
+      "maxPnl": 616.1382508873794,
+      "maxVolume": 155148.58362800002
+    },
+    "0x5188fa0e8a77e87bc6a58e6781fdfc4e165cc804": {
+      "wallet": "0x5188fa0e8a77e87bc6a58e6781fdfc4e165cc804",
+      "name": "AllByMyseIf",
+      "pseudonym": "AllByMyseIf",
+      "appearsIn": [
+        "politics-today-volume:rank=17"
+      ],
+      "bestRank": 17,
+      "maxPnl": 1271.6371665468905,
+      "maxVolume": 149847.72
+    },
+    "0xfc2f4f50ce2f6045d35558a5e2d8d4b2ac6610c7": {
+      "wallet": "0xfc2f4f50ce2f6045d35558a5e2d8d4b2ac6610c7",
+      "name": "0xFc2F4f50ce2F6045d35558A5E2D8d4b2aC6610c7-1769097007451",
+      "pseudonym": "0xFc2F4f50ce2F6045d35558A5E2D8d4b2aC6610c7-1769097007451",
+      "appearsIn": [
+        "politics-today-volume:rank=18",
+        "politics-weekly-volume:rank=11"
+      ],
+      "bestRank": 11,
+      "maxPnl": -3937.218821874947,
+      "maxVolume": 661850.829948
+    },
+    "0x5bb0de4e97698184ead80c80cb17a26cd6f6814b": {
+      "wallet": "0x5bb0de4e97698184ead80c80cb17a26cd6f6814b",
+      "name": "bobe2.1",
+      "pseudonym": "bobe2.1",
+      "appearsIn": [
+        "politics-today-volume:rank=19"
+      ],
+      "bestRank": 19,
+      "maxPnl": 555.8639756732664,
+      "maxVolume": 144587.312376
+    },
+    "0x88edd092d799556111e57ff3b2107e24dd406cfb": {
+      "wallet": "0x88edd092d799556111e57ff3b2107e24dd406cfb",
+      "name": "cooler-",
+      "pseudonym": "cooler-",
+      "appearsIn": [
+        "politics-today-volume:rank=20"
+      ],
+      "bestRank": 20,
+      "maxPnl": 388.24032665636514,
+      "maxVolume": 142623.454074
+    },
+    "0x88c4919de76e526d55a32c1f8afb439dd1f1129a": {
+      "wallet": "0x88c4919de76e526d55a32c1f8afb439dd1f1129a",
+      "name": "QuietRiskisWrong",
+      "pseudonym": "QuietRiskisWrong",
+      "appearsIn": [
+        "politics-today-profit:rank=1",
+        "politics-weekly-profit:rank=1"
+      ],
+      "bestRank": 1,
+      "maxPnl": 18070.998846643255,
+      "maxVolume": 142805.62788000001
+    },
+    "0x7f9e2d1df78614564a70becc7fa14aa9a6623a0e": {
+      "wallet": "0x7f9e2d1df78614564a70becc7fa14aa9a6623a0e",
+      "name": "nojnn",
+      "pseudonym": "nojnn",
+      "appearsIn": [
+        "politics-today-profit:rank=2",
+        "politics-weekly-profit:rank=2"
+      ],
+      "bestRank": 2,
+      "maxPnl": 16849.691771565704,
+      "maxVolume": 212.903224
+    },
+    "0x2974bd0059e48f215c391882976e0f1b4c8c9c23": {
+      "wallet": "0x2974bd0059e48f215c391882976e0f1b4c8c9c23",
+      "name": "65765757",
+      "pseudonym": "65765757",
+      "appearsIn": [
+        "politics-today-profit:rank=3",
+        "politics-weekly-profit:rank=3"
+      ],
+      "bestRank": 3,
+      "maxPnl": 13271.39627810201,
+      "maxVolume": 96139.55373400002
+    },
+    "0xbaa2bcb5439e985ce4ccf815b4700027d1b92c73": {
+      "wallet": "0xbaa2bcb5439e985ce4ccf815b4700027d1b92c73",
+      "name": "denizz",
+      "pseudonym": "denizz",
+      "appearsIn": [
+        "politics-today-profit:rank=4",
+        "politics-weekly-volume:rank=16",
+        "politics-weekly-profit:rank=4"
+      ],
+      "bestRank": 4,
+      "maxPnl": 12609.013173967134,
+      "maxVolume": 487411.245648
+    },
+    "0x162f6fff88a52864f2ecc9833e58089d5254798d": {
+      "wallet": "0x162f6fff88a52864f2ecc9833e58089d5254798d",
+      "name": "Valen9",
+      "pseudonym": "Valen9",
+      "appearsIn": [
+        "politics-today-profit:rank=5",
+        "politics-weekly-profit:rank=5"
+      ],
+      "bestRank": 5,
+      "maxPnl": 8203.843746795494,
+      "maxVolume": 21322.390099000004
+    },
+    "0x614dc8d3542c12103d2c6a3553fd761e391d1546": {
+      "wallet": "0x614dc8d3542c12103d2c6a3553fd761e391d1546",
+      "name": "mr.ozi",
+      "pseudonym": "mr.ozi",
+      "appearsIn": [
+        "politics-today-profit:rank=6",
+        "politics-weekly-profit:rank=6"
+      ],
+      "bestRank": 6,
+      "maxPnl": 8031.809520952229,
+      "maxVolume": 22222.956664999998
+    },
+    "0x9d84ce0306f8551e02efef1680475fc0f1dc1344": {
+      "wallet": "0x9d84ce0306f8551e02efef1680475fc0f1dc1344",
+      "name": "ImJustKen",
+      "pseudonym": "ImJustKen",
+      "appearsIn": [
+        "politics-today-profit:rank=8",
+        "politics-weekly-profit:rank=8",
+        "politics-monthly-profit:rank=12",
+        "politics-all-volume:rank=2"
+      ],
+      "bestRank": 2,
+      "maxPnl": 1250892.6825142186,
+      "maxVolume": 324716997.118917
+    },
+    "0x70d94a4ff67ed919a8480885cf0808afefe7a684": {
+      "wallet": "0x70d94a4ff67ed919a8480885cf0808afefe7a684",
+      "name": "naiiiiiii",
+      "pseudonym": "naiiiiiii",
+      "appearsIn": [
+        "politics-today-profit:rank=9",
+        "politics-weekly-profit:rank=9"
+      ],
+      "bestRank": 9,
+      "maxPnl": 5618.8857174149925,
+      "maxVolume": 95809.379498
+    },
+    "0xdc03d611e5bcc9f1c87edb95edeb91671471804c": {
+      "wallet": "0xdc03d611e5bcc9f1c87edb95edeb91671471804c",
+      "name": "jocpolitic",
+      "pseudonym": "jocpolitic",
+      "appearsIn": [
+        "politics-today-profit:rank=10",
+        "politics-weekly-profit:rank=10"
+      ],
+      "bestRank": 10,
+      "maxPnl": 5537.604820733191,
+      "maxVolume": 1766.332588
+    },
+    "0xddb1ecc4ddf67d6732630d5eea099f9ffa53ea72": {
+      "wallet": "0xddb1ecc4ddf67d6732630d5eea099f9ffa53ea72",
+      "name": "Reckless9",
+      "pseudonym": "Reckless9",
+      "appearsIn": [
+        "politics-today-profit:rank=11",
+        "politics-weekly-profit:rank=11"
+      ],
+      "bestRank": 11,
+      "maxPnl": 4840.186966027599,
+      "maxVolume": 4777.899515
+    },
+    "0xeed588bab0b0df73a9a6def7a59e512e9ede1a33": {
+      "wallet": "0xeed588bab0b0df73a9a6def7a59e512e9ede1a33",
+      "name": "mohahaha",
+      "pseudonym": "mohahaha",
+      "appearsIn": [
+        "politics-today-profit:rank=12",
+        "politics-weekly-profit:rank=12"
+      ],
+      "bestRank": 12,
+      "maxPnl": 4732.988117301502,
+      "maxVolume": 0
+    },
+    "0xf769c6390f6d564fe4859effbddb682c62660114": {
+      "wallet": "0xf769c6390f6d564fe4859effbddb682c62660114",
+      "name": "MrMarket",
+      "pseudonym": "MrMarket",
+      "appearsIn": [
+        "politics-today-profit:rank=13",
+        "politics-weekly-profit:rank=13"
+      ],
+      "bestRank": 13,
+      "maxPnl": 4285.827054607472,
+      "maxVolume": 5280.989997
+    },
+    "0xdf17f4a8dd01a4cfa6fc3da323a2baee5f8697d1": {
+      "wallet": "0xdf17f4a8dd01a4cfa6fc3da323a2baee5f8697d1",
+      "name": "Clear-Corridor",
+      "pseudonym": "Clear-Corridor",
+      "appearsIn": [
+        "politics-today-profit:rank=14",
+        "politics-weekly-profit:rank=14",
+        "politics-monthly-biggestWins:rank=18"
+      ],
+      "bestRank": 14,
+      "maxPnl": 108171.750971,
+      "maxVolume": 76917.93657100001,
+      "topBiggestWin": {
+        "eventTitle": "Israel x Hezbollah Ceasefire extended by...?",
+        "pnl": 108171.750971
+      }
+    },
+    "0xd49b42bce7ea10bac53e2901c188cae20ea4bdf9": {
+      "wallet": "0xd49b42bce7ea10bac53e2901c188cae20ea4bdf9",
+      "name": "i18z",
+      "pseudonym": "i18z",
+      "appearsIn": [
+        "politics-today-profit:rank=15",
+        "politics-weekly-profit:rank=15",
+        "politics-weekly-biggestWins:rank=7"
+      ],
+      "bestRank": 7,
+      "maxPnl": 4060.5519077791614,
+      "maxVolume": 319931.524517,
+      "topBiggestWin": {
+        "eventTitle": "Which party wins control of the most London borough councils?",
+        "pnl": 1908.8470587
+      }
+    },
+    "0x5011224f4848cb2cf2d87cf2b823551dfd0e220e": {
+      "wallet": "0x5011224f4848cb2cf2d87cf2b823551dfd0e220e",
+      "name": "GCNO1",
+      "pseudonym": "GCNO1",
+      "appearsIn": [
+        "politics-today-profit:rank=17",
+        "politics-weekly-profit:rank=17"
+      ],
+      "bestRank": 17,
+      "maxPnl": 3988.4284875744124,
+      "maxVolume": 81554.038283
+    },
+    "0x1fee90f352fd362ea4bf13c6ed7cdd83a4d2ed5e": {
+      "wallet": "0x1fee90f352fd362ea4bf13c6ed7cdd83a4d2ed5e",
+      "name": "lomneivan",
+      "pseudonym": "lomneivan",
+      "appearsIn": [
+        "politics-today-profit:rank=18",
+        "politics-weekly-profit:rank=18"
+      ],
+      "bestRank": 18,
+      "maxPnl": 3978.6311946715578,
+      "maxVolume": 0
+    },
+    "0x3c918a8ef8c379304f744592120cbb4d76149af7": {
+      "wallet": "0x3c918a8ef8c379304f744592120cbb4d76149af7",
+      "name": "Vilgefortz",
+      "pseudonym": "Vilgefortz",
+      "appearsIn": [
+        "politics-today-profit:rank=19",
+        "politics-weekly-profit:rank=19"
+      ],
+      "bestRank": 19,
+      "maxPnl": 3924.9502543130056,
+      "maxVolume": 9040
+    },
+    "0xfa87a158110370eb6dbe678843c055a6b144c2a0": {
+      "wallet": "0xfa87a158110370eb6dbe678843c055a6b144c2a0",
+      "name": "asdfadfasdf1",
+      "pseudonym": "asdfadfasdf1",
+      "appearsIn": [
+        "politics-today-profit:rank=20",
+        "politics-weekly-profit:rank=20"
+      ],
+      "bestRank": 20,
+      "maxPnl": 3707.6884906050036,
+      "maxVolume": 0
+    },
+    "0x4a650133a506a876352f8e8021ec3d220dab06bb": {
+      "wallet": "0x4a650133a506a876352f8e8021ec3d220dab06bb",
+      "name": ".sorry",
+      "pseudonym": ".sorry",
+      "appearsIn": [
+        "politics-weekly-volume:rank=2",
+        "politics-monthly-volume:rank=17"
+      ],
+      "bestRank": 2,
+      "maxPnl": 1455.6903823842845,
+      "maxVolume": 6562977.431706
+    },
+    "0xde7be6d489bce070a959e0cb813128ae659b5f4b": {
+      "wallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+      "name": "wan123",
+      "pseudonym": "wan123",
+      "appearsIn": [
+        "politics-weekly-volume:rank=8",
+        "politics-monthly-profit:rank=1",
+        "politics-monthly-biggestWins:rank=2",
+        "politics-monthly-biggestWins:rank=3"
+      ],
+      "bestRank": 1,
+      "maxPnl": 776632.5191104935,
+      "maxVolume": 3209117.1716439994,
+      "topBiggestWin": {
+        "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+        "pnl": 325034.71962522407
+      }
+    },
+    "0x74471a007ddcc488f6d57b5e86dfb35a8d48a16d": {
+      "wallet": "0x74471a007ddcc488f6d57b5e86dfb35a8d48a16d",
+      "name": "tetrose",
+      "pseudonym": "tetrose",
+      "appearsIn": [
+        "politics-weekly-volume:rank=9"
+      ],
+      "bestRank": 9,
+      "maxPnl": 448.81579781673645,
+      "maxVolume": 737055.118601
+    },
+    "0x801ba46b0e7ba3f82e6a3cfcedb436318e43e036": {
+      "wallet": "0x801ba46b0e7ba3f82e6a3cfcedb436318e43e036",
+      "name": "pizzaallosqualo",
+      "pseudonym": "pizzaallosqualo",
+      "appearsIn": [
+        "politics-weekly-volume:rank=10"
+      ],
+      "bestRank": 10,
+      "maxPnl": 71.4500549442464,
+      "maxVolume": 719365.365982
+    },
+    "0x4478d7bd8a295691ac84f60a5ec2b47e122102a4": {
+      "wallet": "0x4478d7bd8a295691ac84f60a5ec2b47e122102a4",
+      "name": "Warren-Buffett",
+      "pseudonym": "Warren-Buffett",
+      "appearsIn": [
+        "politics-weekly-volume:rank=12"
+      ],
+      "bestRank": 12,
+      "maxPnl": 1079.9355216461554,
+      "maxVolume": 588332.11241
+    },
+    "0xc6587b11a2209e46dfe3928b31c5514a8e33b784": {
+      "wallet": "0xc6587b11a2209e46dfe3928b31c5514a8e33b784",
+      "name": "Erasmus.",
+      "pseudonym": "Erasmus.",
+      "appearsIn": [
+        "politics-weekly-volume:rank=14",
+        "politics-monthly-profit:rank=7",
+        "politics-monthly-biggestWins:rank=9"
+      ],
+      "bestRank": 7,
+      "maxPnl": 255726.46152372274,
+      "maxVolume": 1831399.0652680001,
+      "topBiggestWin": {
+        "eventTitle": "Russia x Ukraine ceasefire by June 30, 2026?",
+        "pnl": 139768.965138
+      }
+    },
+    "0xc1dc8e2dce9dffbc7de3b3020a5090b7bdd40a9e": {
+      "wallet": "0xc1dc8e2dce9dffbc7de3b3020a5090b7bdd40a9e",
+      "name": "0xc1dc8e2dce9dffbc7de3b3020a5090b7bdd40a9e",
+      "pseudonym": "0xc1dc8e2dce9dffbc7de3b3020a5090b7bdd40a9e",
+      "appearsIn": [
+        "politics-weekly-volume:rank=15"
+      ],
+      "bestRank": 15,
+      "maxPnl": -0.6037425840022479,
+      "maxVolume": 510176.54792100005
+    },
+    "0xbdc8abf39513839ef3c1eb2aa98789f5a78edc1e": {
+      "wallet": "0xbdc8abf39513839ef3c1eb2aa98789f5a78edc1e",
+      "name": "ztrrtt",
+      "pseudonym": "ztrrtt",
+      "appearsIn": [
+        "politics-weekly-volume:rank=17"
+      ],
+      "bestRank": 17,
+      "maxPnl": -12.606978839998575,
+      "maxVolume": 480838.70999999996
+    },
+    "0x31f80487ffa111abb53c73b0de92c9279c22a6da": {
+      "wallet": "0x31f80487ffa111abb53c73b0de92c9279c22a6da",
+      "name": "zterrertzu",
+      "pseudonym": "zterrertzu",
+      "appearsIn": [
+        "politics-weekly-volume:rank=18"
+      ],
+      "bestRank": 18,
+      "maxPnl": 9.399999999999636,
+      "maxVolume": 477946.52
+    },
+    "0xdbf16bcffa41bd95faec2640daa2c95ab2bd86b5": {
+      "wallet": "0xdbf16bcffa41bd95faec2640daa2c95ab2bd86b5",
+      "name": "UnderperformingForALiving",
+      "pseudonym": "UnderperformingForALiving",
+      "appearsIn": [
+        "politics-weekly-volume:rank=19"
+      ],
+      "bestRank": 19,
+      "maxPnl": 621.9304395004729,
+      "maxVolume": 476507.45975000004
+    },
+    "0x9d736920e486176e7df7a76fa218f1ebd853216b": {
+      "wallet": "0x9d736920e486176e7df7a76fa218f1ebd853216b",
+      "name": "AlAhmeda",
+      "pseudonym": "AlAhmeda",
+      "appearsIn": [
+        "politics-weekly-volume:rank=20"
+      ],
+      "bestRank": 20,
+      "maxPnl": 472.13995658783824,
+      "maxVolume": 470725.259003
+    },
+    "0xe7cb6e31f033e0e9f5940e46d84166c7d7ded447": {
+      "wallet": "0xe7cb6e31f033e0e9f5940e46d84166c7d7ded447",
+      "name": "mindeirs",
+      "pseudonym": "mindeirs",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=1"
+      ],
+      "bestRank": 1,
+      "maxPnl": 15817.504071171852,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 15817.504071171852
+      }
+    },
+    "0x9ca119b8cd7bdb890aecf1ff3b0f6e3a45cc13b5": {
+      "wallet": "0x9ca119b8cd7bdb890aecf1ff3b0f6e3a45cc13b5",
+      "name": "JoeBlack01",
+      "pseudonym": "JoeBlack01",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=2"
+      ],
+      "bestRank": 2,
+      "maxPnl": 5476.224813,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 5476.224813
+      }
+    },
+    "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86": {
+      "wallet": "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86",
+      "name": "influenz.eth",
+      "pseudonym": "influenz.eth",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=3",
+        "politics-monthly-biggestWins:rank=17"
+      ],
+      "bestRank": 3,
+      "maxPnl": 109514.95572170001,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Tamil Nadu Legislative Assembly Election Winner",
+        "pnl": 109514.95572170001
+      }
+    },
+    "0x662a00b70022c45ee80f6f753baa60f1c85f77b7": {
+      "wallet": "0x662a00b70022c45ee80f6f753baa60f1c85f77b7",
+      "name": "redlioneye",
+      "pseudonym": "redlioneye",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=4"
+      ],
+      "bestRank": 4,
+      "maxPnl": 2900.51381814579,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 2900.51381814579
+      }
+    },
+    "0x23d81ba9371e576015c1e562db09c689f56b0288": {
+      "wallet": "0x23d81ba9371e576015c1e562db09c689f56b0288",
+      "name": "flawfence",
+      "pseudonym": "flawfence",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=6"
+      ],
+      "bestRank": 6,
+      "maxPnl": 1915.1440529999998,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Which party wins control of the most London borough councils?",
+        "pnl": 1915.1440529999998
+      }
+    },
+    "0xa3282d3e882501229c75d0caf134e62e3afb4977": {
+      "wallet": "0xa3282d3e882501229c75d0caf134e62e3afb4977",
+      "name": "korda77",
+      "pseudonym": "korda77",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=8"
+      ],
+      "bestRank": 8,
+      "maxPnl": 1861.46370817526,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Which party wins control of the most London borough councils?",
+        "pnl": 1861.46370817526
+      }
+    },
+    "0x1e82e3eb816aaf755ac9b44bc9d98f01b08aaf92": {
+      "wallet": "0x1e82e3eb816aaf755ac9b44bc9d98f01b08aaf92",
+      "name": "0x1E82E3Eb816aAf755AC9b44BC9d98F01b08AAF92-1772042958755",
+      "pseudonym": "0x1E82E3Eb816aAf755AC9b44BC9d98F01b08AAF92-1772042958755",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=9"
+      ],
+      "bestRank": 9,
+      "maxPnl": 1417.7518022760657,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Which party wins control of the most London borough councils?",
+        "pnl": 1417.7518022760657
+      }
+    },
+    "0x188e84eb9a9ecd72f90f55b9d9cc11a7de8770d8": {
+      "wallet": "0x188e84eb9a9ecd72f90f55b9d9cc11a7de8770d8",
+      "name": "fwfwefweg",
+      "pseudonym": "fwfwefweg",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=10"
+      ],
+      "bestRank": 10,
+      "maxPnl": 1342.042238,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 1342.042238
+      }
+    },
+    "0x5a218c7ad04135830a45c41aaed7294df7809318": {
+      "wallet": "0x5a218c7ad04135830a45c41aaed7294df7809318",
+      "name": "balthazar",
+      "pseudonym": "balthazar",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=11",
+        "politics-monthly-profit:rank=17"
+      ],
+      "bestRank": 11,
+      "maxPnl": 123154.01226901892,
+      "maxVolume": 929444.4192530001,
+      "topBiggestWin": {
+        "eventTitle": "Which party wins control of the most London borough councils?",
+        "pnl": 1297.32961
+      }
+    },
+    "0xd6ddc6559313bcc819f1df1b3647f3930da998ee": {
+      "wallet": "0xd6ddc6559313bcc819f1df1b3647f3930da998ee",
+      "name": "SaintPascal",
+      "pseudonym": "SaintPascal",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=12"
+      ],
+      "bestRank": 12,
+      "maxPnl": 944.2406725452181,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 944.2406725452181
+      }
+    },
+    "0x15f7ddbc6ffe08722ddeb64d51e58aef7b8ca018": {
+      "wallet": "0x15f7ddbc6ffe08722ddeb64d51e58aef7b8ca018",
+      "name": "idkwhatimdoinggg",
+      "pseudonym": "idkwhatimdoinggg",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=13"
+      ],
+      "bestRank": 13,
+      "maxPnl": 870.862641198134,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 870.862641198134
+      }
+    },
+    "0xda9126becc96be3598ddd05c4fc06f4093759ffd": {
+      "wallet": "0xda9126becc96be3598ddd05c4fc06f4093759ffd",
+      "name": "98Ddd05C98Ddd05C4fC06f4093759FFdhotking012",
+      "pseudonym": "98Ddd05C98Ddd05C4fC06f4093759FFdhotking012",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=14"
+      ],
+      "bestRank": 14,
+      "maxPnl": 836.225267552292,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 836.225267552292
+      }
+    },
+    "0x33287eae7e55b86c9b4cf4c53444f062d2dbe6b8": {
+      "wallet": "0x33287eae7e55b86c9b4cf4c53444f062d2dbe6b8",
+      "name": "0x33287EaE7e55B86c9B4Cf4c53444F062D2Dbe6b8-1756297889537",
+      "pseudonym": "0x33287EaE7e55B86c9B4Cf4c53444F062D2Dbe6b8-1756297889537",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=15"
+      ],
+      "bestRank": 15,
+      "maxPnl": 765.5757576800002,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Which party wins control of the most London borough councils?",
+        "pnl": 765.5757576800002
+      }
+    },
+    "0x3dd2db2d398ff72c2c71c9ad6473368b941e9ab1": {
+      "wallet": "0x3dd2db2d398ff72c2c71c9ad6473368b941e9ab1",
+      "name": "paspor",
+      "pseudonym": "paspor",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=16"
+      ],
+      "bestRank": 16,
+      "maxPnl": 761.3005012167321,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Which party wins control of the most London borough councils?",
+        "pnl": 761.3005012167321
+      }
+    },
+    "0xecaa8806a9a05049d7d5260a33dc924220e377a9": {
+      "wallet": "0xecaa8806a9a05049d7d5260a33dc924220e377a9",
+      "name": "Melody626",
+      "pseudonym": "Melody626",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=17"
+      ],
+      "bestRank": 17,
+      "maxPnl": 733.75630276722,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 733.75630276722
+      }
+    },
+    "0x8db5bfb848ee6745c475df375bd0c983468bfa3e": {
+      "wallet": "0x8db5bfb848ee6745c475df375bd0c983468bfa3e",
+      "name": "0x8DB5bfb848ee6745c475DF375bd0c983468BFA3E-1774575335053",
+      "pseudonym": "0x8DB5bfb848ee6745c475DF375bd0c983468BFA3E-1774575335053",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=18"
+      ],
+      "bestRank": 18,
+      "maxPnl": 655.822738,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 655.822738
+      }
+    },
+    "0xe3726a1b9c6ba2f06585d1c9e01d00afaedaeb38": {
+      "wallet": "0xe3726a1b9c6ba2f06585d1c9e01d00afaedaeb38",
+      "name": "cry.eth2",
+      "pseudonym": "cry.eth2",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=19"
+      ],
+      "bestRank": 19,
+      "maxPnl": 614.0102988223011,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Which party wins control of the most London borough councils?",
+        "pnl": 614.0102988223011
+      }
+    },
+    "0xac4a1fabdac2438d6afa2a9e8e83845310a0bf1e": {
+      "wallet": "0xac4a1fabdac2438d6afa2a9e8e83845310a0bf1e",
+      "name": "HerrieDavis",
+      "pseudonym": "HerrieDavis",
+      "appearsIn": [
+        "politics-weekly-biggestWins:rank=20"
+      ],
+      "bestRank": 20,
+      "maxPnl": 591.3199715226041,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next US x Iran diplomatic meeting on...?",
+        "pnl": 591.3199715226041
+      }
+    },
+    "0x2785e7022dc20757108204b13c08cea8613b70ae": {
+      "wallet": "0x2785e7022dc20757108204b13c08cea8613b70ae",
+      "name": "poorsob",
+      "pseudonym": "poorsob",
+      "appearsIn": [
+        "politics-monthly-volume:rank=1",
+        "politics-all-volume:rank=12"
+      ],
+      "bestRank": 1,
+      "maxPnl": 165126.6824875766,
+      "maxVolume": 173688235.56612298
+    },
+    "0x6480542954b70a674a74bd1a6015dec362dc8dc5": {
+      "wallet": "0x6480542954b70a674a74bd1a6015dec362dc8dc5",
+      "name": "tripping",
+      "pseudonym": "tripping",
+      "appearsIn": [
+        "politics-monthly-volume:rank=2",
+        "politics-all-volume:rank=4"
+      ],
+      "bestRank": 2,
+      "maxPnl": 40114.353692629964,
+      "maxVolume": 278117905.0273631
+    },
+    "0x4662492a083f518d87c91044227d97ef1d90bdf6": {
+      "wallet": "0x4662492a083f518d87c91044227d97ef1d90bdf6",
+      "name": "xibr",
+      "pseudonym": "xibr",
+      "appearsIn": [
+        "politics-monthly-volume:rank=3"
+      ],
+      "bestRank": 3,
+      "maxPnl": -39795.411036091966,
+      "maxVolume": 26744227.846836
+    },
+    "0xfdc07e182e6f959256295567e450a8727272fa79": {
+      "wallet": "0xfdc07e182e6f959256295567e450a8727272fa79",
+      "name": "FedWillWin",
+      "pseudonym": "FedWillWin",
+      "appearsIn": [
+        "politics-monthly-volume:rank=5"
+      ],
+      "bestRank": 5,
+      "maxPnl": 25608.369796950275,
+      "maxVolume": 17832091.82
+    },
+    "0x558ee6a05f51e7e8d89fc07b154e78a865202ee7": {
+      "wallet": "0x558ee6a05f51e7e8d89fc07b154e78a865202ee7",
+      "name": "perseusplus",
+      "pseudonym": "perseusplus",
+      "appearsIn": [
+        "politics-monthly-volume:rank=8"
+      ],
+      "bestRank": 8,
+      "maxPnl": -692.7258770164999,
+      "maxVolume": 14006695.154
+    },
+    "0x5e717d49744bef6dcd1b7764d07c2934a1e4ba82": {
+      "wallet": "0x5e717d49744bef6dcd1b7764d07c2934a1e4ba82",
+      "name": "G.V",
+      "pseudonym": "G.V",
+      "appearsIn": [
+        "politics-monthly-volume:rank=9"
+      ],
+      "bestRank": 9,
+      "maxPnl": -78589.54587991748,
+      "maxVolume": 11913658.146050999
+    },
+    "0x79c510469bd1bb14616dda7cf8625d920d10e7da": {
+      "wallet": "0x79c510469bd1bb14616dda7cf8625d920d10e7da",
+      "name": "0x79c510469bD1BB14616DDA7cf8625d920d10e7da-1778352690557",
+      "pseudonym": "0x79c510469bD1BB14616DDA7cf8625d920d10e7da-1778352690557",
+      "appearsIn": [
+        "politics-monthly-volume:rank=10"
+      ],
+      "bestRank": 10,
+      "maxPnl": -10534.06873665,
+      "maxVolume": 10267123.525
+    },
+    "0x9b979a065641e8cfde3022a30ed2d9415cf55e12": {
+      "wallet": "0x9b979a065641e8cfde3022a30ed2d9415cf55e12",
+      "name": "LlamaEnjoyer",
+      "pseudonym": "LlamaEnjoyer",
+      "appearsIn": [
+        "politics-monthly-volume:rank=11",
+        "politics-all-biggestWins:rank=13"
+      ],
+      "bestRank": 11,
+      "maxPnl": 2995111.3995009996,
+      "maxVolume": 9323780.133868003,
+      "topBiggestWin": {
+        "eventTitle": "People Power Party (PPP) Presidential Candidate",
+        "pnl": 2995111.3995009996
+      }
+    },
+    "0x0a543bb97015206f67e1bc5ead7c2d60baf64a03": {
+      "wallet": "0x0a543bb97015206f67e1bc5ead7c2d60baf64a03",
+      "name": "yyyy77777yyyyy777yyy",
+      "pseudonym": "yyyy77777yyyyy777yyy",
+      "appearsIn": [
+        "politics-monthly-volume:rank=12"
+      ],
+      "bestRank": 12,
+      "maxPnl": 13092.757256199637,
+      "maxVolume": 8818561.344673999
+    },
+    "0xc6dd722558dbfbd8fa780efcbe819ed8c6604b9f": {
+      "wallet": "0xc6dd722558dbfbd8fa780efcbe819ed8c6604b9f",
+      "name": "tourists",
+      "pseudonym": "tourists",
+      "appearsIn": [
+        "politics-monthly-volume:rank=14"
+      ],
+      "bestRank": 14,
+      "maxPnl": 46141.178661788,
+      "maxVolume": 7926392.4559229985
+    },
+    "0x5b8f191a4a3e66fe9b7348891f21021399762c14": {
+      "wallet": "0x5b8f191a4a3e66fe9b7348891f21021399762c14",
+      "name": "DistortedReality",
+      "pseudonym": "DistortedReality",
+      "appearsIn": [
+        "politics-monthly-volume:rank=15"
+      ],
+      "bestRank": 15,
+      "maxPnl": 4472.685930933898,
+      "maxVolume": 7820581.533482002
+    },
+    "0xe339bba7fba043520d83516ce22add16beb6e01b": {
+      "wallet": "0xe339bba7fba043520d83516ce22add16beb6e01b",
+      "name": "12Alexander12",
+      "pseudonym": "12Alexander12",
+      "appearsIn": [
+        "politics-monthly-volume:rank=16"
+      ],
+      "bestRank": 16,
+      "maxPnl": -7493.5,
+      "maxVolume": 7493500
+    },
+    "0x9a817c446ca66b8859e77f4716a785dc7e76d324": {
+      "wallet": "0x9a817c446ca66b8859e77f4716a785dc7e76d324",
+      "name": "Pedro1414",
+      "pseudonym": "Pedro1414",
+      "appearsIn": [
+        "politics-monthly-volume:rank=18"
+      ],
+      "bestRank": 18,
+      "maxPnl": -80753.51292749142,
+      "maxVolume": 5928229.334000001
+    },
+    "0x02abb585dc6cdd74b005c5f2583dadadfe76cc08": {
+      "wallet": "0x02abb585dc6cdd74b005c5f2583dadadfe76cc08",
+      "name": "0x02ABB585DC6cdD74B005C5F2583dAdaDfe76Cc08-1778348522700",
+      "pseudonym": "0x02ABB585DC6cdD74B005C5F2583dAdaDfe76Cc08-1778348522700",
+      "appearsIn": [
+        "politics-monthly-volume:rank=19"
+      ],
+      "bestRank": 19,
+      "maxPnl": -39872.017143,
+      "maxVolume": 5372863.11056
+    },
+    "0xd7f85d0eb0fe0732ca38d9107ad0d4d01b1289e4": {
+      "wallet": "0xd7f85d0eb0fe0732ca38d9107ad0d4d01b1289e4",
+      "name": "tdrhrhhd",
+      "pseudonym": "tdrhrhhd",
+      "appearsIn": [
+        "politics-monthly-profit:rank=2",
+        "politics-all-profit:rank=15"
+      ],
+      "bestRank": 2,
+      "maxPnl": 2368490.324575549,
+      "maxVolume": 13371252.749786997
+    },
+    "0x0c0e270cf879583d6a0142fc817e05b768d0434e": {
+      "wallet": "0x0c0e270cf879583d6a0142fc817e05b768d0434e",
+      "name": "The Spirit of Ukraine>UMA",
+      "pseudonym": "The Spirit of Ukraine>UMA",
+      "appearsIn": [
+        "politics-monthly-profit:rank=4"
+      ],
+      "bestRank": 4,
+      "maxPnl": 431961.3833007929,
+      "maxVolume": 573123.3957539999
+    },
+    "0xa53e8fc4c2f9910e584de69d8b40a502a638218d": {
+      "wallet": "0xa53e8fc4c2f9910e584de69d8b40a502a638218d",
+      "name": "VladimirPooper",
+      "pseudonym": "VladimirPooper",
+      "appearsIn": [
+        "politics-monthly-profit:rank=5"
+      ],
+      "bestRank": 5,
+      "maxPnl": 305194.1868414831,
+      "maxVolume": 811769.920834
+    },
+    "0xfd2b117412a698f322b0cd18d6827dad262b8e50": {
+      "wallet": "0xfd2b117412a698f322b0cd18d6827dad262b8e50",
+      "name": "surf",
+      "pseudonym": "surf",
+      "appearsIn": [
+        "politics-monthly-profit:rank=6",
+        "politics-monthly-biggestWins:rank=4"
+      ],
+      "bestRank": 4,
+      "maxPnl": 271155.199757244,
+      "maxVolume": 318418.658766,
+      "topBiggestWin": {
+        "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+        "pnl": 263963.47292490624
+      }
+    },
+    "0x5d0f03cf1243a3e21262d6cf844795afd9fff0ad": {
+      "wallet": "0x5d0f03cf1243a3e21262d6cf844795afd9fff0ad",
+      "name": "EB99999",
+      "pseudonym": "EB99999",
+      "appearsIn": [
+        "politics-monthly-profit:rank=8",
+        "politics-monthly-biggestWins:rank=11"
+      ],
+      "bestRank": 8,
+      "maxPnl": 252702.71796559013,
+      "maxVolume": 2696549.39194,
+      "topBiggestWin": {
+        "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+        "pnl": 133867.100862726
+      }
+    },
+    "0x93fb8127a1b21a112b11af936361225df0563e4a": {
+      "wallet": "0x93fb8127a1b21a112b11af936361225df0563e4a",
+      "name": "LlamaLoco0000",
+      "pseudonym": "LlamaLoco0000",
+      "appearsIn": [
+        "politics-monthly-profit:rank=9"
+      ],
+      "bestRank": 9,
+      "maxPnl": 231519.52783185785,
+      "maxVolume": 242919.335409
+    },
+    "0xd93cea39533c6146e0b2e8361afeed930a12689c": {
+      "wallet": "0xd93cea39533c6146e0b2e8361afeed930a12689c",
+      "name": "tm92391",
+      "pseudonym": "tm92391",
+      "appearsIn": [
+        "politics-monthly-profit:rank=10"
+      ],
+      "bestRank": 10,
+      "maxPnl": 213519.02079613975,
+      "maxVolume": 506223.99095700006
+    },
+    "0x152fdae6b14b9131a61ec77ed61dda50f68da549": {
+      "wallet": "0x152fdae6b14b9131a61ec77ed61dda50f68da549",
+      "name": "Ferwhere",
+      "pseudonym": "Ferwhere",
+      "appearsIn": [
+        "politics-monthly-profit:rank=11",
+        "politics-monthly-biggestWins:rank=6"
+      ],
+      "bestRank": 6,
+      "maxPnl": 172370.95070825444,
+      "maxVolume": 1149002.2377479998,
+      "topBiggestWin": {
+        "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+        "pnl": 172370.95070825444
+      }
+    },
+    "0x3e5b23e9f71b2a2edcd5629d3f948f12f591073b": {
+      "wallet": "0x3e5b23e9f71b2a2edcd5629d3f948f12f591073b",
+      "name": "beenraping",
+      "pseudonym": "beenraping",
+      "appearsIn": [
+        "politics-monthly-profit:rank=13"
+      ],
+      "bestRank": 13,
+      "maxPnl": 149574.62838110572,
+      "maxVolume": 3719337.527248
+    },
+    "0xb1a279adb096d316b1b168993e8ed976d3cd372a": {
+      "wallet": "0xb1a279adb096d316b1b168993e8ed976d3cd372a",
+      "name": "TwoEyes",
+      "pseudonym": "TwoEyes",
+      "appearsIn": [
+        "politics-monthly-profit:rank=14",
+        "politics-monthly-biggestWins:rank=15"
+      ],
+      "bestRank": 14,
+      "maxPnl": 147104.87720297658,
+      "maxVolume": 12520.269334999999,
+      "topBiggestWin": {
+        "eventTitle": "Russia x Ukraine ceasefire by June 30, 2026?",
+        "pnl": 116024.488487
+      }
+    },
+    "0x73e237f9363d5397f47f3d5c6719bec5602613c3": {
+      "wallet": "0x73e237f9363d5397f47f3d5c6719bec5602613c3",
+      "name": "night7ucker",
+      "pseudonym": "night7ucker",
+      "appearsIn": [
+        "politics-monthly-profit:rank=15",
+        "politics-monthly-biggestWins:rank=12"
+      ],
+      "bestRank": 12,
+      "maxPnl": 126161.475274,
+      "maxVolume": 80282.486092,
+      "topBiggestWin": {
+        "eventTitle": "Russia x Ukraine ceasefire by May 31, 2026?",
+        "pnl": 126161.475274
+      }
+    },
+    "0x16cbe223607a6513ae76d1e3751c78e4eabc2704": {
+      "wallet": "0x16cbe223607a6513ae76d1e3751c78e4eabc2704",
+      "name": "MRF",
+      "pseudonym": "MRF",
+      "appearsIn": [
+        "politics-monthly-profit:rank=16"
+      ],
+      "bestRank": 16,
+      "maxPnl": 124725.18011417109,
+      "maxVolume": 218069.71274600003
+    },
+    "0xa022ba0a68e11a78348382ff168601012d4d77f8": {
+      "wallet": "0xa022ba0a68e11a78348382ff168601012d4d77f8",
+      "name": "yungstalin",
+      "pseudonym": "yungstalin",
+      "appearsIn": [
+        "politics-monthly-profit:rank=18"
+      ],
+      "bestRank": 18,
+      "maxPnl": 103726.31949116467,
+      "maxVolume": 3993833.4836299997
+    },
+    "0x160771e1041ea85cb780f6f9216de8e56259121e": {
+      "wallet": "0x160771e1041ea85cb780f6f9216de8e56259121e",
+      "name": "orangexyz",
+      "pseudonym": "orangexyz",
+      "appearsIn": [
+        "politics-monthly-profit:rank=20"
+      ],
+      "bestRank": 20,
+      "maxPnl": 94836.05186059489,
+      "maxVolume": 21668.297410000006
+    },
+    "0xffe9858781cc1f053e7f3a5fd02a0cf6ee0f1599": {
+      "wallet": "0xffe9858781cc1f053e7f3a5fd02a0cf6ee0f1599",
+      "name": "tanar2007",
+      "pseudonym": "tanar2007",
+      "appearsIn": [
+        "politics-monthly-biggestWins:rank=5"
+      ],
+      "bestRank": 5,
+      "maxPnl": 184063.29039091666,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next Prime Minister of Hungary",
+        "pnl": 184063.29039091666
+      }
+    },
+    "0x0a59efd30de508bd0e7e197d4975f7ab49e107dd": {
+      "wallet": "0x0a59efd30de508bd0e7e197d4975f7ab49e107dd",
+      "name": "0x0A59eFd30de508Bd0E7E197D4975F7aB49E107dD-1768830597495",
+      "pseudonym": "0x0A59eFd30de508Bd0E7E197D4975F7aB49E107dD-1768830597495",
+      "appearsIn": [
+        "politics-monthly-biggestWins:rank=8"
+      ],
+      "bestRank": 8,
+      "maxPnl": 148113.6023448525,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next Prime Minister of Hungary",
+        "pnl": 148113.6023448525
+      }
+    },
+    "0x4b28a660415bf1d58f358b32fc729dc6b396d19a": {
+      "wallet": "0x4b28a660415bf1d58f358b32fc729dc6b396d19a",
+      "name": "schutzprem",
+      "pseudonym": "schutzprem",
+      "appearsIn": [
+        "politics-monthly-biggestWins:rank=10"
+      ],
+      "bestRank": 10,
+      "maxPnl": 136620.48872194393,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next Prime Minister of Hungary",
+        "pnl": 136620.48872194393
+      }
+    },
+    "0xdfdcd929644e720a472e246d257dfa4bbcf8c7c7": {
+      "wallet": "0xdfdcd929644e720a472e246d257dfa4bbcf8c7c7",
+      "name": "pcpc",
+      "pseudonym": "pcpc",
+      "appearsIn": [
+        "politics-monthly-biggestWins:rank=13"
+      ],
+      "bestRank": 13,
+      "maxPnl": 118158.56303083905,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next Prime Minister of Hungary",
+        "pnl": 118158.56303083905
+      }
+    },
+    "0x88b59d79b6e1659c95a0043028e5bb7a26e6205c": {
+      "wallet": "0x88b59d79b6e1659c95a0043028e5bb7a26e6205c",
+      "name": "almost-never",
+      "pseudonym": "almost-never",
+      "appearsIn": [
+        "politics-monthly-biggestWins:rank=14"
+      ],
+      "bestRank": 14,
+      "maxPnl": 116484.444061,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next Prime Minister of Hungary",
+        "pnl": 116484.444061
+      }
+    },
+    "0xa61ef8773ec2e821962306ca87d4b57e39ff0abd": {
+      "wallet": "0xa61ef8773ec2e821962306ca87d4b57e39ff0abd",
+      "name": "risk-manager",
+      "pseudonym": "risk-manager",
+      "appearsIn": [
+        "politics-monthly-biggestWins:rank=16",
+        "politics-all-volume:rank=10"
+      ],
+      "bestRank": 10,
+      "maxPnl": 208301.79066415108,
+      "maxVolume": 185048625.25234902,
+      "topBiggestWin": {
+        "eventTitle": "Next Prime Minister of Hungary",
+        "pnl": 109924.18923623806
+      }
+    },
+    "0x94a428cfa4f84b264e01f70d93d02bc96cb36356": {
+      "wallet": "0x94a428cfa4f84b264e01f70d93d02bc96cb36356",
+      "name": "GCottrell93",
+      "pseudonym": "GCottrell93",
+      "appearsIn": [
+        "politics-monthly-biggestWins:rank=19",
+        "politics-all-profit:rank=12",
+        "politics-all-biggestWins:rank=8"
+      ],
+      "bestRank": 8,
+      "maxPnl": 4460260.419508,
+      "maxVolume": 16806556.585626952,
+      "topBiggestWin": {
+        "eventTitle": "Presidential Election Winner 2024",
+        "pnl": 4460260.419508
+      }
+    },
+    "0x629bc4a1e53e1d475beb7ea3d388791e96dd995a": {
+      "wallet": "0x629bc4a1e53e1d475beb7ea3d388791e96dd995a",
+      "name": "lava-lava",
+      "pseudonym": "lava-lava",
+      "appearsIn": [
+        "politics-monthly-biggestWins:rank=20"
+      ],
+      "bestRank": 20,
+      "maxPnl": 101339.44909730082,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "Next Prime Minister of Hungary",
+        "pnl": 101339.44909730082
+      }
+    },
+    "0x9f47f1fcb1701bf9eaf31236ad39875e5d60af93": {
+      "wallet": "0x9f47f1fcb1701bf9eaf31236ad39875e5d60af93",
+      "name": "TheGuru-791",
+      "pseudonym": "TheGuru-791",
+      "appearsIn": [
+        "politics-all-volume:rank=1"
+      ],
+      "bestRank": 1,
+      "maxPnl": 491362.27594110556,
+      "maxVolume": 383707155.61132216
+    },
+    "0x5bffcf561bcae83af680ad600cb99f1184d6ffbe": {
+      "wallet": "0x5bffcf561bcae83af680ad600cb99f1184d6ffbe",
+      "name": "YatSen",
+      "pseudonym": "YatSen",
+      "appearsIn": [
+        "politics-all-volume:rank=3",
+        "politics-all-profit:rank=20"
+      ],
+      "bestRank": 3,
+      "maxPnl": 1774213.3954779138,
+      "maxVolume": 285518870.93956804
+    },
+    "0x4ce73141dbfce41e65db3723e31059a730f0abad": {
+      "wallet": "0x4ce73141dbfce41e65db3723e31059a730f0abad",
+      "name": "qrpenc",
+      "pseudonym": "qrpenc",
+      "appearsIn": [
+        "politics-all-volume:rank=6"
+      ],
+      "bestRank": 6,
+      "maxPnl": 311160.15781454765,
+      "maxVolume": 200897943.77312693
+    },
+    "0xd218e474776403a330142299f7796e8ba32eb5c9": {
+      "wallet": "0xd218e474776403a330142299f7796e8ba32eb5c9",
+      "name": "cigarettes",
+      "pseudonym": "cigarettes",
+      "appearsIn": [
+        "politics-all-volume:rank=8"
+      ],
+      "bestRank": 8,
+      "maxPnl": 491389.91834048514,
+      "maxVolume": 188305805.44926095
+    },
+    "0xfbfd14dd4bb607373119de95f1d4b21c3b6c0029": {
+      "wallet": "0xfbfd14dd4bb607373119de95f1d4b21c3b6c0029",
+      "name": "XAE12Archangel",
+      "pseudonym": "XAE12Archangel",
+      "appearsIn": [
+        "politics-all-volume:rank=9"
+      ],
+      "bestRank": 9,
+      "maxPnl": 124095.7690644644,
+      "maxVolume": 187040007.41019794
+    },
+    "0x59ee6c6a56d7b00223f0c30f8002c4df762b684d": {
+      "wallet": "0x59ee6c6a56d7b00223f0c30f8002c4df762b684d",
+      "name": "undertaker",
+      "pseudonym": "undertaker",
+      "appearsIn": [
+        "politics-all-volume:rank=11"
+      ],
+      "bestRank": 11,
+      "maxPnl": 274348.052706545,
+      "maxVolume": 179289796.01723105
+    },
+    "0xf8ba34bf0e95d952d05b578bfbc0833f9242a286": {
+      "wallet": "0xf8ba34bf0e95d952d05b578bfbc0833f9242a286",
+      "name": "kingfisher",
+      "pseudonym": "kingfisher",
+      "appearsIn": [
+        "politics-all-volume:rank=13"
+      ],
+      "bestRank": 13,
+      "maxPnl": -276029.06009639264,
+      "maxVolume": 172347071.21163687
+    },
+    "0xa1d75a199ef084ee3ec9ae60dc986b439fe6e17e": {
+      "wallet": "0xa1d75a199ef084ee3ec9ae60dc986b439fe6e17e",
+      "name": "TimeQuestion",
+      "pseudonym": "TimeQuestion",
+      "appearsIn": [
+        "politics-all-volume:rank=14"
+      ],
+      "bestRank": 14,
+      "maxPnl": 169926.2654519476,
+      "maxVolume": 153338641.96985996
+    },
+    "0xa58d4f278d7953cd38eeb929f7e242bfc7c0b9b8": {
+      "wallet": "0xa58d4f278d7953cd38eeb929f7e242bfc7c0b9b8",
+      "name": "AiBird",
+      "pseudonym": "AiBird",
+      "appearsIn": [
+        "politics-all-volume:rank=15"
+      ],
+      "bestRank": 15,
+      "maxPnl": 67048.57840867832,
+      "maxVolume": 152420260.86604503
+    },
+    "0x482bf5accdecfaffa67c14d4d4fbb59f428a3266": {
+      "wallet": "0x482bf5accdecfaffa67c14d4d4fbb59f428a3266",
+      "name": "Winry",
+      "pseudonym": "Winry",
+      "appearsIn": [
+        "politics-all-volume:rank=16"
+      ],
+      "bestRank": 16,
+      "maxPnl": 45685.04718960589,
+      "maxVolume": 140817097.5434531
+    },
+    "0x3cf3e8d5427aed066a7a5926980600f6c3cf87b3": {
+      "wallet": "0x3cf3e8d5427aed066a7a5926980600f6c3cf87b3",
+      "name": "50Whence",
+      "pseudonym": "50Whence",
+      "appearsIn": [
+        "politics-all-volume:rank=17"
+      ],
+      "bestRank": 17,
+      "maxPnl": 761386.6783714058,
+      "maxVolume": 139850458.376255
+    },
+    "0x5d189e816b4149be00977c1a3c8840374aec4972": {
+      "wallet": "0x5d189e816b4149be00977c1a3c8840374aec4972",
+      "name": "gloriafoster",
+      "pseudonym": "gloriafoster",
+      "appearsIn": [
+        "politics-all-volume:rank=18"
+      ],
+      "bestRank": 18,
+      "maxPnl": 85086.49274796354,
+      "maxVolume": 137570124.02881405
+    },
+    "0x971f91a412236cc942a6f4485d3d88aa8dcb5929": {
+      "wallet": "0x971f91a412236cc942a6f4485d3d88aa8dcb5929",
+      "name": "0x971f91a412236cc942a6f4485d3d88aa8dcb5929",
+      "pseudonym": "0x971f91a412236cc942a6f4485d3d88aa8dcb5929",
+      "appearsIn": [
+        "politics-all-volume:rank=20"
+      ],
+      "bestRank": 20,
+      "maxPnl": -21280.358848004256,
+      "maxVolume": 131480378.89705303
+    },
+    "0x56687bf447db6ffa42ffe2204a05edaa20f55839": {
+      "wallet": "0x56687bf447db6ffa42ffe2204a05edaa20f55839",
+      "name": "Theo4",
+      "pseudonym": "Theo4",
+      "appearsIn": [
+        "politics-all-profit:rank=1",
+        "politics-all-biggestWins:rank=1",
+        "politics-all-biggestWins:rank=4"
+      ],
+      "bestRank": 1,
+      "maxPnl": 22053952.526606,
+      "maxVolume": 43012710.74511701,
+      "topBiggestWin": {
+        "eventTitle": "Popular Vote Winner 2024",
+        "pnl": 14363191.802107
+      }
+    },
+    "0x1f2dd6d473f3e824cd2f8a89d9c69fb96f6ad0cf": {
+      "wallet": "0x1f2dd6d473f3e824cd2f8a89d9c69fb96f6ad0cf",
+      "name": "Fredi9999",
+      "pseudonym": "Fredi9999",
+      "appearsIn": [
+        "politics-all-profit:rank=2",
+        "politics-all-biggestWins:rank=3",
+        "politics-all-biggestWins:rank=9"
+      ],
+      "bestRank": 2,
+      "maxPnl": 16660338.662791152,
+      "maxVolume": 76276297.80875301,
+      "topBiggestWin": {
+        "eventTitle": "Presidential Election Winner 2024",
+        "pnl": 9696004.102517003
+      }
+    },
+    "0xd235973291b2b75ff4070e9c0b01728c520b0f29": {
+      "wallet": "0xd235973291b2b75ff4070e9c0b01728c520b0f29",
+      "name": "zxgngl",
+      "pseudonym": "zxgngl",
+      "appearsIn": [
+        "politics-all-profit:rank=3",
+        "politics-all-biggestWins:rank=2"
+      ],
+      "bestRank": 2,
+      "maxPnl": 11447932.086431,
+      "maxVolume": 29473479.549040988,
+      "topBiggestWin": {
+        "eventTitle": "Presidential Election Winner 2024",
+        "pnl": 11447930.968643
+      }
+    },
+    "0x78b9ac44a6d7d7a076c14e0ad518b301b63c6b76": {
+      "wallet": "0x78b9ac44a6d7d7a076c14e0ad518b301b63c6b76",
+      "name": "Len9311238",
+      "pseudonym": "Len9311238",
+      "appearsIn": [
+        "politics-all-profit:rank=4",
+        "politics-all-biggestWins:rank=5"
+      ],
+      "bestRank": 4,
+      "maxPnl": 8709972.988069998,
+      "maxVolume": 16402744.764626998,
+      "topBiggestWin": {
+        "eventTitle": "Popular Vote Winner 2024",
+        "pnl": 6198614.496266
+      }
+    },
+    "0x863134d00841b2e200492805a01e1e2f5defaa53": {
+      "wallet": "0x863134d00841b2e200492805a01e1e2f5defaa53",
+      "name": "RepTrump",
+      "pseudonym": "RepTrump",
+      "appearsIn": [
+        "politics-all-profit:rank=5",
+        "politics-all-biggestWins:rank=7"
+      ],
+      "bestRank": 5,
+      "maxPnl": 7532409.671579,
+      "maxVolume": 13983231.103425,
+      "topBiggestWin": {
+        "eventTitle": "Popular Vote Winner 2024",
+        "pnl": 5638262.128084
+      }
+    },
+    "0x8119010a6e589062aa03583bb3f39ca632d9f887": {
+      "wallet": "0x8119010a6e589062aa03583bb3f39ca632d9f887",
+      "name": "PrincessCaro",
+      "pseudonym": "PrincessCaro",
+      "appearsIn": [
+        "politics-all-profit:rank=6",
+        "politics-all-biggestWins:rank=10"
+      ],
+      "bestRank": 6,
+      "maxPnl": 6083643.099591745,
+      "maxVolume": 23520809.952867005,
+      "topBiggestWin": {
+        "eventTitle": "Presidential Election Winner 2024",
+        "pnl": 3263927.9030760005
+      }
+    },
+    "0xe9ad918c7678cd38b12603a762e638a5d1ee7091": {
+      "wallet": "0xe9ad918c7678cd38b12603a762e638a5d1ee7091",
+      "name": "walletmobile",
+      "pseudonym": "walletmobile",
+      "appearsIn": [
+        "politics-all-profit:rank=7",
+        "politics-all-biggestWins:rank=6"
+      ],
+      "bestRank": 6,
+      "maxPnl": 5942685.45339684,
+      "maxVolume": 32196692.075936034,
+      "topBiggestWin": {
+        "eventTitle": "Presidential Election Winner 2024",
+        "pnl": 5942685.45339684
+      }
+    },
+    "0x885783760858e1bd5dd09a3c3f916cfa251ac270": {
+      "wallet": "0x885783760858e1bd5dd09a3c3f916cfa251ac270",
+      "name": "BetTom42",
+      "pseudonym": "BetTom42",
+      "appearsIn": [
+        "politics-all-profit:rank=8",
+        "politics-all-biggestWins:rank=16"
+      ],
+      "bestRank": 8,
+      "maxPnl": 5642135.735356,
+      "maxVolume": 11212839.523403,
+      "topBiggestWin": {
+        "eventTitle": "Popular Vote Winner 2024",
+        "pnl": 2469608.3188540004
+      }
+    },
+    "0x23786fdad0073692157c6d7dc81f281843a35fcb": {
+      "wallet": "0x23786fdad0073692157c6d7dc81f281843a35fcb",
+      "name": "mikatrade77",
+      "pseudonym": "mikatrade77",
+      "appearsIn": [
+        "politics-all-profit:rank=9",
+        "politics-all-biggestWins:rank=15"
+      ],
+      "bestRank": 9,
+      "maxPnl": 5147998.544602999,
+      "maxVolume": 10884765.388775,
+      "topBiggestWin": {
+        "eventTitle": "Popular Vote Winner 2024",
+        "pnl": 2569455.361055
+      }
+    },
+    "0xd0c042c08f755ff940249f62745e82d356345565": {
+      "wallet": "0xd0c042c08f755ff940249f62745e82d356345565",
+      "name": "alexmulti",
+      "pseudonym": "alexmulti",
+      "appearsIn": [
+        "politics-all-profit:rank=10",
+        "politics-all-biggestWins:rank=17",
+        "politics-all-biggestWins:rank=18"
+      ],
+      "bestRank": 10,
+      "maxPnl": 4804855.613376001,
+      "maxVolume": 9949068.653841998,
+      "topBiggestWin": {
+        "eventTitle": "Popular Vote Winner 2024",
+        "pnl": 2268586.6008160003
+      }
+    },
+    "0x16f91db2592924cfed6e03b7e5cb5bb1e32299e3": {
+      "wallet": "0x16f91db2592924cfed6e03b7e5cb5bb1e32299e3",
+      "name": "Jenzigo",
+      "pseudonym": "Jenzigo",
+      "appearsIn": [
+        "politics-all-profit:rank=11",
+        "politics-all-biggestWins:rank=19"
+      ],
+      "bestRank": 11,
+      "maxPnl": 4049827.0941029997,
+      "maxVolume": 9457725.034338009,
+      "topBiggestWin": {
+        "eventTitle": "Presidential Election Winner 2024",
+        "pnl": 2139145.10226
+      }
+    },
+    "0x033a07b3de5947eab4306676ad74eb546da30d50": {
+      "wallet": "0x033a07b3de5947eab4306676ad74eb546da30d50",
+      "name": "RandomGenius-190",
+      "pseudonym": "RandomGenius-190",
+      "appearsIn": [
+        "politics-all-profit:rank=13",
+        "politics-all-biggestWins:rank=12"
+      ],
+      "bestRank": 12,
+      "maxPnl": 3115550.407118868,
+      "maxVolume": 8794464.960355,
+      "topBiggestWin": {
+        "eventTitle": "Presidential Election Winner 2024",
+        "pnl": 3115539.7222088682
+      }
+    },
+    "0xed2239a9150c3920000d0094d28fa51c7db03dd0": {
+      "wallet": "0xed2239a9150c3920000d0094d28fa51c7db03dd0",
+      "name": "Michie",
+      "pseudonym": "Michie",
+      "appearsIn": [
+        "politics-all-profit:rank=14",
+        "politics-all-biggestWins:rank=14"
+      ],
+      "bestRank": 14,
+      "maxPnl": 3095007.670859059,
+      "maxVolume": 8450962.774299005,
+      "topBiggestWin": {
+        "eventTitle": "Presidential Election Winner 2024",
+        "pnl": 2627904.234618
+      }
+    },
+    "0x2bf64b86b64c315d879571b07a3b76629e467cd0": {
+      "wallet": "0x2bf64b86b64c315d879571b07a3b76629e467cd0",
+      "name": "BabaTrump",
+      "pseudonym": "BabaTrump",
+      "appearsIn": [
+        "politics-all-profit:rank=16"
+      ],
+      "bestRank": 16,
+      "maxPnl": 2093362.982851,
+      "maxVolume": 3655046.6027250034
+    },
+    "0x0562c423912e325f83fa79df55085979e1f5594f": {
+      "wallet": "0x0562c423912e325f83fa79df55085979e1f5594f",
+      "name": "trezorisbest",
+      "pseudonym": "trezorisbest",
+      "appearsIn": [
+        "politics-all-profit:rank=17"
+      ],
+      "bestRank": 17,
+      "maxPnl": 1901365.986484077,
+      "maxVolume": 5173700.434507998
+    },
+    "0x3d1ecf16942939b3603c2539a406514a40b504d0": {
+      "wallet": "0x3d1ecf16942939b3603c2539a406514a40b504d0",
+      "name": "edenmoon",
+      "pseudonym": "edenmoon",
+      "appearsIn": [
+        "politics-all-profit:rank=18"
+      ],
+      "bestRank": 18,
+      "maxPnl": 1850872.0246252252,
+      "maxVolume": 5072720.228143
+    },
+    "0x7058c8a7cec79010b1927d05837dcf25f1a53505": {
+      "wallet": "0x7058c8a7cec79010b1927d05837dcf25f1a53505",
+      "name": "deetown",
+      "pseudonym": "deetown",
+      "appearsIn": [
+        "politics-all-profit:rank=19"
+      ],
+      "bestRank": 19,
+      "maxPnl": 1849974.955234,
+      "maxVolume": 7016597.407319001
+    },
+    "0x18ba5145fba0fd51e68972268f5773175763e68f": {
+      "wallet": "0x18ba5145fba0fd51e68972268f5773175763e68f",
+      "name": "FoldingNuts272",
+      "pseudonym": "FoldingNuts272",
+      "appearsIn": [
+        "politics-all-biggestWins:rank=20"
+      ],
+      "bestRank": 20,
+      "maxPnl": 2022904.8531560004,
+      "maxVolume": 0,
+      "topBiggestWin": {
+        "eventTitle": "People Power Party (PPP) Presidential Candidate",
+        "pnl": 2022904.8531560004
+      }
+    }
+  },
+  "summary": {
+    "uniqueTotal": 134,
+    "perRanking": {
+      "today/volume": 20,
+      "today/profit": 20,
+      "weekly/volume": 20,
+      "weekly/profit": 20,
+      "weekly/biggestWins": 20,
+      "monthly/volume": 20,
+      "monthly/profit": 20,
+      "monthly/biggestWins": 20,
+      "all/volume": 20,
+      "all/profit": 20,
+      "all/biggestWins": 20
+    }
+  }
+}
