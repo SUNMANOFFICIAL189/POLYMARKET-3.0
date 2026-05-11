@@ -308,11 +308,16 @@ export class Runner {
         //      lifecycle close misattribution (2026-05-07 -$943 audit gap).
         //   2. Then partition the remainder by pipeline: geopolitics rows go
         //      to geopoliticsExecutor, everything else to copyExecutor.
+        // The two-step filter above (nonSignalRows = openRows.filter(!== signal-bot)
+        // then copyRows = nonSignalRows.filter(pipeline)) is functionally
+        // equivalent to a compound single-filter, but Semgrep can't trace the
+        // variable chain across the intermediate assignment. Suppression is
+        // explicit: signal-bot trades ARE excluded — see `nonSignalRows` filter above.
         const nonSignalRows = openRows.filter(r => r.leader_wallet !== 'signal-bot');
         const geoRows = nonSignalRows.filter(r => r.pipeline === 'geopolitics');
         const copyRows = nonSignalRows.filter(r => r.pipeline !== 'geopolitics');
         const signalCount = openRows.length - nonSignalRows.length;
-        this.copyExecutor.hydrateOpenTrades(copyRows);
+        this.copyExecutor.hydrateOpenTrades(copyRows); // nosemgrep: pats-copy-executor-receiving-signal-bot
         this.geopoliticsExecutor.hydrateOpenTrades(geoRows);
         if (geoRows.length > 0 || signalCount > 0) {
           logger.info(`Hydration: ${copyRows.length} copy → copyExecutor, ${geoRows.length} geopolitics → geopoliticsExecutor, ${signalCount} signal-bot → signalExecutor only`);
