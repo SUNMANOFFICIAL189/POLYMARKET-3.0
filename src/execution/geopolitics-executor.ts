@@ -36,10 +36,14 @@ export interface ExecutionResult {
 
 // Sizing (env-overridable)
 const DEFAULT_FLAT_SIZE_USDC = parseFloat(process.env.GEOPOLITICS_FLAT_SIZE ?? '75');
-// Safety bands — same defaults as CopyExecutor's all-rank gates
-const MAX_ENTRY_PRICE = 0.85;       // skip if leader entered above this (margin of safety + tail risk on YES)
-const MIN_ENTRY_PRICE = 0.03;       // skip dust/near-zero (likely dead market)
-const EDGE_FLOOR_DISTANCE = 0.05;   // skip prices in (0.45, 0.55) — coin-flip zone, no edge
+// Safety bands — env-overridable for live tuning during paper soak.
+// 2026-05-12 loosening: MAX_ENTRY_PRICE bumped from 0.85 to 0.90 (env-tunable
+// via GEOPOLITICS_MAX_ENTRY_PRICE). Lower = stricter (more rejections at the
+// "leader closing position" end). Beyond 0.92 starts admitting pure leader-
+// closes which are negative-EV to mirror.
+const MAX_ENTRY_PRICE = parseFloat(process.env.GEOPOLITICS_MAX_ENTRY_PRICE ?? '0.85');
+const MIN_ENTRY_PRICE = parseFloat(process.env.GEOPOLITICS_MIN_ENTRY_PRICE ?? '0.03');
+const EDGE_FLOOR_DISTANCE = parseFloat(process.env.GEOPOLITICS_EDGE_FLOOR ?? '0.05');
 // Risk gates
 const MAX_OPEN_POSITIONS = parseInt(process.env.GEOPOLITICS_MAX_OPEN ?? '8');
 const CAPITAL_CAP_PCT = parseFloat(process.env.GEOPOLITICS_CAPITAL_CAP_PCT ?? '0.80');
