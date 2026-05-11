@@ -302,12 +302,16 @@ export class Runner {
         .select('*')
         .in('status', ['open', 'pending']);
       if (openRows) {
-        // Partition by pipeline so each executor gets only its own trades.
-        // Geopolitics trades land in geopoliticsExecutor; copy trades (anything
-        // else not tagged signal-bot) land in copyExecutor.
-        const geoRows = openRows.filter(r => r.pipeline === 'geopolitics');
-        const copyRows = openRows.filter(r => r.pipeline !== 'geopolitics' && r.leader_wallet !== 'signal-bot');
-        const signalCount = openRows.length - geoRows.length - copyRows.length;
+        // Two-step filter (preserves the c0e44b9 pattern for static analysers):
+        //   1. Filter signal-bot trades OUT first — they're owned by
+        //      signalExecutor only. Duplicating into copyExecutor causes
+        //      lifecycle close misattribution (2026-05-07 -$943 audit gap).
+        //   2. Then partition the remainder by pipeline: geopolitics rows go
+        //      to geopoliticsExecutor, everything else to copyExecutor.
+        const nonSignalRows = openRows.filter(r => r.leader_wallet !== 'signal-bot');
+        const geoRows = nonSignalRows.filter(r => r.pipeline === 'geopolitics');
+        const copyRows = nonSignalRows.filter(r => r.pipeline !== 'geopolitics');
+        const signalCount = openRows.length - nonSignalRows.length;
         this.copyExecutor.hydrateOpenTrades(copyRows);
         this.geopoliticsExecutor.hydrateOpenTrades(geoRows);
         if (geoRows.length > 0 || signalCount > 0) {
