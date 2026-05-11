@@ -12,25 +12,47 @@
 import { categoriseMarket } from '../../src/signals/market-categoriser.js';
 
 const DATA_API = 'https://data-api.polymarket.com';
-const WINDOW_DAYS = 30;
+const WINDOW_DAYS = Number(process.env.BACKTEST_WINDOW_DAYS ?? '30');
+// BACKTEST_WINDOW_END_DAYS_AGO: how many days BEFORE now the window ends.
+// 0 = window ends now (default, in-sample mode).
+// >0 = out-of-sample mode (e.g., 60 with WINDOW_DAYS=30 → window is 90-60 days ago).
+// In OOS mode, /positions current data can contaminate truePnl (the position's
+// truePnl includes activity after the window closed), so the harness uses
+// trade-flow ONLY and counts positions as usable only if they fully exited via
+// sale within the window.
+const WINDOW_END_DAYS_AGO = Number(process.env.BACKTEST_WINDOW_END_DAYS_AGO ?? '0');
+const OOS_MODE = WINDOW_END_DAYS_AGO > 0;
 
 // LEADERS — wallets to backtest as candidate geopolitics specialists.
+//
+// 2026-05-11 (v3): post-Phase 2 v3 / sprint-sweep verdict — the 6 Tier-1
+// specialists from the diversified pool that passed all 4 locked filters
+// using the corrected combined-source measurement. Mirrors what the
+// production GeopoliticsExecutor will mirror (single source of truth lives
+// in src/geopolitics/watchlist.ts:TIER_1).
+//
+// 2026-05-11 (v2): pre-sweep 3-wallet list `[0x24c8cf69, 0x5d05b1f5, 0x44c1dfe4]`
+// preserved below as INTERMEDIATE_LEADERS_2026_05_11 (commented).
 //
 // 2026-05-11 (v1): the original 11-wallet "convergence backtest" list (kept
 // below as LEGACY_LEADERS_2026_05_11 for reproducibility). Phase 1b audit
 // revealed only 1/11 had meaningful recent politics activity, motivating the
 // Phase 2 v2 expansion.
-//
-// 2026-05-11 (v2): post-research-sprint shortlist. `0x24c8cf69` is the Phase 2 v2
-// passer (149 geo positions, 62.4% WR, +$142K truePnl via /positions). The
-// other two are kept for comparison: `0x5d05b1f5` was the prior single specialist
-// (now known to be net negative under the corrected /positions measurement),
-// `0x44c1dfe4` is a positive-PnL near-miss (failed only the WR filter at 46.7%).
 const LEADERS: { wallet: string; historicalTrades: number; role: string }[] = [
-  { wallet: '0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1', historicalTrades: 149, role: 'PHASE2-V2 SHORTLIST PASSER' },
-  { wallet: '0x5d05b1f588780423488a09d9aefeb64df54d6320', historicalTrades: 28,  role: 'PRIOR BASELINE (control)' },
-  { wallet: '0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1', historicalTrades: 30,  role: 'POSITIVE-PNL NEAR-MISS' },
+  { wallet: '0x16cbe223607a6513ae76d1e3751c78e4eabc2704', historicalTrades: 43,  role: 'TIER-1 / MRF (74.4% WR, +$696K all-time)' },
+  { wallet: '0x5a218c7ad04135830a45c41aaed7294df7809318', historicalTrades: 330, role: 'TIER-1 / balthazar (62.7% WR, +$237K)' },
+  { wallet: '0xd218e474776403a330142299f7796e8ba32eb5c9', historicalTrades: 213, role: 'TIER-1 / cigarettes (86.9% WR, +$172K)' },
+  { wallet: '0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1', historicalTrades: 149, role: 'TIER-1 / debased (62.4% WR, +$143K)' },
+  { wallet: '0x0c0e270cf879583d6a0142fc817e05b768d0434e', historicalTrades: 57,  role: 'TIER-1 / Spirit of Ukraine>UMA (82.5% WR, +$89K)' },
+  { wallet: '0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b', historicalTrades: 106, role: 'TIER-1 / Car (61.3% WR, +$63K)' },
 ];
+// Intermediate 3-wallet list — used during the same-day Phase 3 backtest run.
+// Preserved for reproducibility of the prior commit's verdict.
+// const INTERMEDIATE_LEADERS_2026_05_11 = [
+//   '0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1',
+//   '0x5d05b1f588780423488a09d9aefeb64df54d6320',
+//   '0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1',
+// ];
 // Original list — preserved for reproducing the 2026-05-11 baseline run.
 // const LEGACY_LEADERS_2026_05_11 = [
 //   '0x204f72f35326db932158cba6adff0b9a1da95e14',
@@ -93,10 +115,12 @@ async function fetchAllRecentTrades(wallet: string, sinceSec: number, hardLimit 
 
 async function main() {
   const nowSec = Math.floor(Date.now() / 1000);
-  const sinceSec = nowSec - WINDOW_DAYS * 86400;
+  const endSec = nowSec - WINDOW_END_DAYS_AGO * 86400;
+  const sinceSec = endSec - WINDOW_DAYS * 86400;
 
   console.log(`▸ Branch 3 backtest — geopolitics-only proportional copy`);
-  console.log(`  window: last ${WINDOW_DAYS} days (since ${new Date(sinceSec * 1000).toISOString()})`);
+  console.log(`  window: ${WINDOW_DAYS} days from ${new Date(sinceSec * 1000).toISOString()} → ${new Date(endSec * 1000).toISOString()}`);
+  console.log(`  mode: ${OOS_MODE ? `OUT-OF-SAMPLE (window ends ${WINDOW_END_DAYS_AGO}d ago — trade-flow accounting only)` : 'in-sample (window ends now)'}`);
   console.log(`  leaders watched: ${LEADERS.length}`);
   console.log();
 
@@ -109,7 +133,7 @@ async function main() {
     process.stdout.write(`  ${wallet.slice(0, 12)}... (hist ${historicalTrades})  `);
     const raw = await fetchAllRecentTrades(wallet, sinceSec);
     process.stdout.write(`fetched ${raw.length}, `);
-    const inWindow = raw.filter((t) => t.timestamp >= sinceSec);
+    const inWindow = raw.filter((t) => t.timestamp >= sinceSec && t.timestamp <= endSec);
     process.stdout.write(`in-window ${inWindow.length}, `);
 
     const byCategory: Record<string, number> = { sports: 0, politics: 0, crypto: 0, finance: 0, other: 0 };
@@ -325,16 +349,24 @@ async function main() {
 
   // Inner map keyed by `${conditionId}|${outcomeIndex}` for O(1) lookup later
   const positionsByLeader = new Map<string, Map<string, PolymarketPosition>>();
-  for (const { wallet } of LEADERS) {
-    process.stdout.write(`  ${wallet.slice(0, 12)}... `);
-    const positions = await fetchPositions(wallet);
-    const indexed = new Map<string, PolymarketPosition>();
-    for (const p of positions) {
-      indexed.set(`${p.conditionId}|${p.outcomeIndex ?? 0}`, p);
+  if (OOS_MODE) {
+    console.log(`  OOS mode active — skipping /positions fetch (current data would contaminate the OOS window).`);
+    console.log(`  Will use trade-flow accounting only: a position is counted only if the trader fully exited via sale within the OOS window.`);
+    for (const { wallet } of LEADERS) {
+      positionsByLeader.set(wallet, new Map());
     }
-    positionsByLeader.set(wallet, indexed);
-    process.stdout.write(`${positions.length} positions\n`);
-    await new Promise((r) => setTimeout(r, 80));
+  } else {
+    for (const { wallet } of LEADERS) {
+      process.stdout.write(`  ${wallet.slice(0, 12)}... `);
+      const positions = await fetchPositions(wallet);
+      const indexed = new Map<string, PolymarketPosition>();
+      for (const p of positions) {
+        indexed.set(`${p.conditionId}|${p.outcomeIndex ?? 0}`, p);
+      }
+      positionsByLeader.set(wallet, indexed);
+      process.stdout.write(`${positions.length} positions\n`);
+      await new Promise((r) => setTimeout(r, 80));
+    }
   }
 
   console.log();

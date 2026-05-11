@@ -54,6 +54,16 @@ export class PositionLifecycleManager {
   private marketStatusCache: Map<string, { status: MarketStatus; fetchedAt: number }> = new Map();
   private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 min cache
 
+  /**
+   * Optional callback for per-pipeline TTL. Receives the open trade and returns
+   * the MAX_POSITION_AGE_MS to apply. Used when different pipelines have
+   * different natural hold durations — e.g. signal pipeline (short-dated
+   * sentiment trades) wants 24h floor while geopolitics (event-by-date markets
+   * with 2-7d resolution per balthazar's lifetime data 2026-05-11) wants 168h.
+   * If not provided, falls back to the constant maxPositionAgeMs.
+   */
+  private readonly getMaxAgeForTrade?: (trade: unknown) => number;
+
   constructor(opts: {
     closePosition: ClosePositionFn;
     getOpenTrades: GetOpenTradesFn;
@@ -62,6 +72,7 @@ export class PositionLifecycleManager {
     ttlCheckMs?: number;
     stopLossCheckMs?: number;
     maxPositionAgeMs?: number;
+    getMaxAgeForTrade?: (trade: unknown) => number;
     stopLossPct?: number;
   }) {
     this.closePosition = opts.closePosition;
@@ -72,6 +83,7 @@ export class PositionLifecycleManager {
     this.TTL_CHECK_MS = opts.ttlCheckMs ?? 30 * 60 * 1000;                // 30 min
     this.STOP_LOSS_CHECK_MS = opts.stopLossCheckMs ?? 60 * 1000;           // 60 sec
     this.MAX_POSITION_AGE_MS = opts.maxPositionAgeMs ?? 24 * 60 * 60 * 1000; // 24 hours (was 48h — too long for sports markets that resolve in hours)
+    this.getMaxAgeForTrade = opts.getMaxAgeForTrade;
     this.STOP_LOSS_PCT = opts.stopLossPct ?? 0.30; // 30% loss = close
   }
 
@@ -158,17 +170,25 @@ export class PositionLifecycleManager {
       if (isNaN(entryTime)) continue;
 
       const ageMs = now - entryTime;
-      // Dynamic TTL: use market endDate if available, otherwise fallback to MAX_POSITION_AGE_MS
-      // Cap at 14 days regardless of market resolution date
+      // Per-pipeline TTL floor (added 2026-05-11): different pipelines have
+      // different natural hold durations. Signal = short-dated sentiment, 24h.
+      // Geopolitics = event-by-date markets, 2-7d resolution typical (verified
+      // empirically against balthazar's 78-position lifetime distribution),
+      // so 168h floor.
+      const pipelineFloor = this.getMaxAgeForTrade
+        ? this.getMaxAgeForTrade(trade)
+        : this.MAX_POSITION_AGE_MS;
+      // Dynamic TTL: use market endDate if available, otherwise fallback to pipeline floor.
+      // Cap at 14 days regardless of market resolution date.
       const MAX_TTL_MS = 14 * 24 * 3600000; // 14 days hard cap
-      let effectiveTTL = this.MAX_POSITION_AGE_MS; // default 24h
+      let effectiveTTL = pipelineFloor;
       const endDateStr = (trade as any).endDate;
       if (endDateStr) {
         const endDate = new Date(endDateStr).getTime();
         if (!isNaN(endDate) && endDate > now) {
           // Set TTL to 1 day before market resolution, capped at 14 days
           effectiveTTL = Math.min(endDate - entryTime - 24 * 3600000, MAX_TTL_MS);
-          if (effectiveTTL < this.MAX_POSITION_AGE_MS) effectiveTTL = this.MAX_POSITION_AGE_MS; // never shorter than default
+          if (effectiveTTL < pipelineFloor) effectiveTTL = pipelineFloor; // never shorter than pipeline floor
         }
       }
       if (ageMs > effectiveTTL) {

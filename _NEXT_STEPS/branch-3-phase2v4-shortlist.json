@@ -1,0 +1,95 @@
+{
+  "fetchedAt": "2026-05-11T12:05:14.496Z",
+  "rules": {
+    "v3_1_min_geo_positions": 15,
+    "v3_2_min_wr_pct": 55,
+    "v3_3_median_size_range": [
+      10,
+      500
+    ],
+    "v3_4_active_within_hours": 336,
+    "v4_1": "overall truePnl > 0",
+    "v4_2": "at least 1 politics trade in last 14d",
+    "v4_3": "OOS truePnl > 0 on positions resolved >60d ago",
+    "v4_4_min_oos_resolved_n": 5
+  },
+  "candidatePoolSize": 145,
+  "shortlist": [
+    {
+      "wallet": "0x5a218c7ad04135830a45c41aaed7294df7809318",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "balthazar",
+      "leaderboardBestRank": 11,
+      "leaderboardMaxPnl": 123154.01226901892,
+      "geoPositions": 321,
+      "wins": 218,
+      "losses": 103,
+      "wrPct": 67.9,
+      "truePnlOverall": 258654.44,
+      "medianInitialValue": 77.58,
+      "newestTradeAge_h": 0.2,
+      "politicsTradesLast14d": 231,
+      "newestPoliticsTradeAge_h": 2.5,
+      "oosResolvedCount": 7,
+      "oosTruePnl": 3523.78,
+      "tier": "shortlist",
+      "rejections": []
+    },
+    {
+      "wallet": "0xd218e474776403a330142299f7796e8ba32eb5c9",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "cigarettes",
+      "leaderboardBestRank": 8,
+      "leaderboardMaxPnl": 491389.91834048514,
+      "geoPositions": 209,
+      "wins": 182,
+      "losses": 27,
+      "wrPct": 87.1,
+      "truePnlOverall": 171570.88,
+      "medianInitialValue": 10.92,
+      "newestTradeAge_h": 0.1,
+      "politicsTradesLast14d": 1,
+      "newestPoliticsTradeAge_h": 180.2,
+      "oosResolvedCount": 9,
+      "oosTruePnl": 256.49,
+      "tier": "shortlist",
+      "rejections": []
+    }
+  ],
+  "tier2": [
+    {
+      "wallet": "0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b",
+      "source": [
+        "politics-leaderboard"
+      ],
+      "leaderboardName": "Car",
+      "leaderboardBestRank": 14,
+      "leaderboardMaxPnl": 1512.4820758607239,
+      "geoPositions": 85,
+      "wins": 52,
+      "losses": 33,
+      "wrPct": 61.2,
+      "truePnlOverall": 61708.49,
+      "medianInitialValue": 390.66,
+      "newestTradeAge_h": 9.3,
+      "politicsTradesLast14d": 370,
+      "newestPoliticsTradeAge_h": 9.3,
+      "oosResolvedCount": 1,
+      "oosTruePnl": 54.74,
+      "tier": "tier_2",
+      "rejections": [
+        "v4.4 OOS n<5 (got 1)"
+      ]
+    }
+  ],
+  "rejectedCount": 142,
+  "summary": {
+    "shortlist": 2,
+    "tier_2": 1,
+    "rejected": 142
+  }
+}

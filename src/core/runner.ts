@@ -259,6 +259,19 @@ export class Runner {
         }
       },
       maxPositionAgeMs: parseInt(process.env.MAX_POSITION_AGE_HOURS ?? '24') * 3600000,
+      // Per-pipeline TTL floor (2026-05-11). Geopolitics needs 7d because
+      // balthazar's profit distribution lives in the 24h-7d window (78-position
+      // sample: 6-24h bucket is net-negative, 24-48h and 2-7d are 92-96% WR /
+      // $63K combined). A 24h floor would cut the strategy off before the edge
+      // materialises. Signal stays at 24h (short-dated sentiment).
+      getMaxAgeForTrade: (trade: unknown) => {
+        const pipeline = (trade as { pipeline?: string; pipelineId?: string }).pipeline
+          ?? (trade as { pipeline?: string; pipelineId?: string }).pipelineId;
+        if (pipeline === 'geopolitics') {
+          return parseInt(process.env.GEOPOLITICS_MAX_AGE_HOURS ?? '168') * 3600000;
+        }
+        return parseInt(process.env.MAX_POSITION_AGE_HOURS ?? '24') * 3600000;
+      },
       stopLossPct: parseFloat(process.env.STOP_LOSS_PCT ?? '0.30'),
     });
   }
