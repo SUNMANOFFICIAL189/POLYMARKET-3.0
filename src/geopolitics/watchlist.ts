@@ -38,72 +38,89 @@ const SNAPSHOT_DATE = '2026-05-11';
 
 /**
  * Tier-1: active mirror targets for the geopolitics pipeline.
- * Each entry passed all 4 locked Phase 2 v3 filters with comfortable margin.
+ *
+ * Post-Phase-2-v4 rigorous-screen revision (2026-05-11): tightened from 6
+ * wallets to 2. balthazar passed all 8 v4 rules cleanly. Car passed v3 + v4.1
+ * + v4.2 + v4.3 but failed only v4.4 (OOS sample n<5) — promoted to Tier-1
+ * for the paper soak because (a) bounded downside in paper mode, (b)
+ * meaningful in-sample track record (+$62K, 61% WR on 85 positions), (c)
+ * adds diversification + signal volume vs single-wallet concentration risk.
+ *
+ * MRF, cigarettes, debased, and Spirit of Ukraine>UMA all FAILED v4 rules
+ * and were demoted to Tier-2. See `_NEXT_STEPS/branch-3-phase2v4-shortlist.json`
+ * for per-wallet rejection reasons.
  */
 export const TIER_1: GeopoliticsSpecialist[] = [
-  {
-    walletAddress: '0x16cbe223607a6513ae76d1e3751c78e4eabc2704',
-    name: 'MRF',
-    tier: 1,
-    wrPct: 74.4,
-    truePnl: 695808,
-    medianSize: 71,
-    snapshotDate: SNAPSHOT_DATE,
-  },
   {
     walletAddress: '0x5a218c7ad04135830a45c41aaed7294df7809318',
     name: 'balthazar',
     tier: 1,
-    wrPct: 62.7,
-    truePnl: 236718,
-    medianSize: 88,
-    snapshotDate: SNAPSHOT_DATE,
-  },
-  {
-    walletAddress: '0xd218e474776403a330142299f7796e8ba32eb5c9',
-    name: 'cigarettes',
-    tier: 1,
-    wrPct: 86.9,
-    truePnl: 172015,
-    medianSize: 11,
-    snapshotDate: SNAPSHOT_DATE,
-  },
-  {
-    walletAddress: '0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1',
-    name: 'debased',
-    tier: 1,
-    wrPct: 62.4,
-    truePnl: 142955,
-    medianSize: 183,
-    snapshotDate: SNAPSHOT_DATE,
-  },
-  {
-    walletAddress: '0x0c0e270cf879583d6a0142fc817e05b768d0434e',
-    name: 'Spirit of Ukraine>UMA',
-    tier: 1,
-    wrPct: 82.5,
-    truePnl: 88781,
-    medianSize: 280,
+    wrPct: 67.9,           // Updated from v3 (62.7%) — v4 measurement on 321 positions
+    truePnl: 258654,       // Updated from v3 ($236K) — v4 measurement
+    medianSize: 78,        // Updated from v3 ($88) — v4 measurement
     snapshotDate: SNAPSHOT_DATE,
   },
   {
     walletAddress: '0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b',
     name: 'Car',
     tier: 1,
-    wrPct: 61.3,
-    truePnl: 62815,
+    wrPct: 61.2,           // 85 positions
+    truePnl: 61708,
     medianSize: 370,
     snapshotDate: SNAPSHOT_DATE,
   },
 ];
 
 /**
- * Tier-2: passed the filters but with smaller absolute P&L, marginal WR, or
- * inactivity flags. Tracked separately — NOT actively mirrored in the v1
- * geopolitics pipeline. Candidates for promotion after 30-day paper soak
- * shows Tier-1 working as expected.
+ * Tier-2: tracked but NOT actively mirrored. Two cohorts:
+ *
+ * (a) Demoted from Tier-1 after Phase 2 v4 rigorous screening (2026-05-11)
+ *     because they failed one or more v4 rules. Retained here so the future
+ *     Phase A weekly diff alert (BACKLOG item) can re-promote them if
+ *     observed performance recovers.
+ *
+ * (b) Original Phase 2 v3 near-misses with marginal P&L or unstable signal.
+ *     Less interesting than (a) but kept for completeness.
  */
 export const TIER_2: GeopoliticsSpecialist[] = [
+  // (a) Demoted from Tier-1 by Phase 2 v4
+  {
+    walletAddress: '0x16cbe223607a6513ae76d1e3751c78e4eabc2704',
+    name: 'MRF',
+    tier: 2,
+    wrPct: 73.8,
+    truePnl: 695803,       // Massive historical, but recent 90d was -$8K and OOS was -$7,895 on n=3 → demoted
+    medianSize: 71,
+    snapshotDate: SNAPSHOT_DATE,
+  },
+  {
+    walletAddress: '0xd218e474776403a330142299f7796e8ba32eb5c9',
+    name: 'cigarettes',
+    tier: 2,
+    wrPct: 87.1,
+    truePnl: 171570,       // Strong historical but only 1 politics trade in last 14d (pivoted to sports) → demoted via v4.2
+    medianSize: 11,
+    snapshotDate: SNAPSHOT_DATE,
+  },
+  {
+    walletAddress: '0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1',
+    name: 'debased',
+    tier: 2,
+    wrPct: 62.4,
+    truePnl: 142955,       // Joined Mar 2026 — insufficient OOS history (only 50 days old at screen) → demoted via v4.4
+    medianSize: 183,
+    snapshotDate: SNAPSHOT_DATE,
+  },
+  {
+    walletAddress: '0x0c0e270cf879583d6a0142fc817e05b768d0434e',
+    name: 'Spirit of Ukraine>UMA',
+    tier: 2,
+    wrPct: 82.5,
+    truePnl: 88781,        // UMA-arbitrage style, only n=1 OOS resolved → demoted via v4.4
+    medianSize: 280,
+    snapshotDate: SNAPSHOT_DATE,
+  },
+  // (b) Original Phase 2 v3 near-misses (retained from earlier snapshot)
   {
     walletAddress: '0x3e5b23e9f71b2a2edcd5629d3f948f12f591073b',
     name: 'beenraping',
@@ -120,44 +137,6 @@ export const TIER_2: GeopoliticsSpecialist[] = [
     wrPct: 75,
     truePnl: 10647,
     medianSize: 20,
-    snapshotDate: SNAPSHOT_DATE,
-  },
-  {
-    walletAddress: '0xd6ddc6559313bcc819f1df1b3647f3930da998ee',
-    name: 'SaintPascal',
-    tier: 2,
-    wrPct: 64.5,
-    truePnl: 2151,
-    medianSize: 116,
-    snapshotDate: SNAPSHOT_DATE,
-  },
-  {
-    walletAddress: '0x4a650133a506a876352f8e8021ec3d220dab06bb',
-    name: '.sorry',
-    tier: 2,
-    wrPct: 69,
-    truePnl: 1066,
-    medianSize: 396,
-    snapshotDate: SNAPSHOT_DATE,
-  },
-  {
-    walletAddress: '0x15f7ddbc6ffe08722ddeb64d51e58aef7b8ca018',
-    name: 'idkwhatimdoinggg',
-    tier: 2,
-    wrPct: 70.8,
-    truePnl: 753,
-    medianSize: 99,
-    snapshotDate: SNAPSHOT_DATE,
-  },
-  {
-    // On the bubble — passed filters but truePnl is negative on the latest
-    // snapshot. Re-evaluate at the 30-day soak gate; demote if it stays negative.
-    walletAddress: '0x0a543bb97015206f67e1bc5ead7c2d60baf64a03',
-    name: 'yyyy77777yyyyy777yyy',
-    tier: 2,
-    wrPct: 55,
-    truePnl: -13484,
-    medianSize: 101,
     snapshotDate: SNAPSHOT_DATE,
   },
 ];
