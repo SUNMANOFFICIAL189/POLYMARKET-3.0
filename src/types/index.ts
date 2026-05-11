@@ -288,7 +288,13 @@ export type ConfirmationDecision = 'approved' | 'vetoed' | 'skipped';
 
 export interface CopyTrade {
   id?: string;
-  source?: 'copy' | 'signal' | 'movement';  // identifies which pipeline created this trade
+  /**
+   * Pipeline that originated this trade — persisted to Supabase `pipeline` column
+   * (added 2026-05-11 as part of Option D refactor). The legacy `source` field
+   * remains for sub-classification within signal pipeline (signal vs movement).
+   */
+  pipeline: PipelineId;
+  source?: 'copy' | 'signal' | 'movement';  // legacy sub-type — kept for backward compat
   leaderWallet: string;
   leaderTradeId?: string;
   marketId: string;

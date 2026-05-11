@@ -3,7 +3,7 @@ import { PaperTradingEngine } from '../core/paper-trading.js';
 import { RiskManager } from '../core/risk-manager.js';
 import { categoriseMarket } from '../signals/market-categoriser.js';
 import * as cliWrapper from './cli-wrapper.js';
-import type { LeaderTrade, CopyTrade, ConfirmationDecision, RiskLevel } from '../types/index.js';
+import type { LeaderTrade, CopyTrade, ConfirmationDecision, PipelineId, RiskLevel } from '../types/index.js';
 
 /**
  * CopyExecutor — mirrors a leader's trade with proportional position sizing.
@@ -90,6 +90,9 @@ export class CopyExecutor {
       if (!marketId || this.openCopyTrades.has(marketId)) continue;
       const copyTrade: CopyTrade = {
         id: row.id as string,
+        // Read pipeline from DB row if present, else derive from leader_wallet
+        // (forward-compat shim until Supabase column is backfilled)
+        pipeline: (row.pipeline as PipelineId | undefined) ?? (row.leader_wallet === 'signal-bot' ? 'signal' : 'copy'),
         leaderWallet: row.leader_wallet as string,
         leaderTradeId: row.leader_trade_id as string | undefined,
         marketId,
@@ -146,6 +149,7 @@ export class CopyExecutor {
 
     if (confirmation !== 'approved') {
       const copyTrade: CopyTrade = {
+        pipeline: 'copy',  // Option D
         leaderWallet: leaderTrade.leaderWallet,
         leaderTradeId: leaderTrade.tradeId,
         marketId: leaderTrade.marketId,
@@ -482,6 +486,7 @@ export class CopyExecutor {
 
     const copyTrade: CopyTrade = {
       id: result.trade.id,
+      pipeline: 'copy',  // Option D
       leaderWallet: leaderTrade.leaderWallet,
       leaderTradeId: leaderTrade.tradeId,
       marketId: leaderTrade.marketId,
@@ -529,6 +534,7 @@ export class CopyExecutor {
       }
 
       const copyTrade: CopyTrade = {
+        pipeline: 'copy',  // Option D
         leaderWallet: leaderTrade.leaderWallet,
         leaderTradeId: leaderTrade.tradeId,
         marketId: leaderTrade.marketId,

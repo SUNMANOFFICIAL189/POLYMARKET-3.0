@@ -403,6 +403,7 @@ export class Runner {
         if (this.config.supabase.url) {
           try {
             const dbId = await db.insertCopyTrade({
+              pipeline: 'signal',  // movement scanner feeds signal pipeline
               leaderWallet: 'signal-bot',
               marketId: signal.market.slug,
               marketQuestion: signal.market.question,
@@ -439,6 +440,7 @@ export class Runner {
         if (this.config.supabase.url) {
           try {
             const dbId = await db.insertCopyTrade({
+              pipeline: 'signal',  // signal generator → signal pipeline
               leaderWallet: 'signal-bot',
               marketId: signal.market.slug,
               marketQuestion: signal.market.question,

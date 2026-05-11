@@ -125,6 +125,7 @@ export async function insertLeaderHistory(event: RotationEvent): Promise<void> {
 
 export async function insertCopyTrade(trade: CopyTrade): Promise<string | null> {
   const { data, error } = await getClient().from('copy_trades').insert({
+    pipeline: trade.pipeline,  // Option D — requires `pipeline TEXT` column to exist (migration 2026-05-11)
     leader_wallet: trade.leaderWallet,
     leader_trade_id: trade.leaderTradeId,
     market_id: trade.marketId,
@@ -220,8 +221,16 @@ export async function incrementLeaderTrades(walletAddress: string, pnl: number):
 // ─── Mappers ───────────────────────────────────────────────────
 
 function mapCopyTradeRow(row: Record<string, unknown>): CopyTrade {
+  // Read `pipeline` from Supabase column if present, fall back to deriving
+  // from leader_wallet (forward-compat shim until the column lands & is
+  // backfilled). Option D, 2026-05-11.
+  const rawPipeline = row.pipeline as string | null | undefined;
+  const pipeline = (rawPipeline === 'signal' || rawPipeline === 'copy' || rawPipeline === 'geopolitics')
+    ? rawPipeline
+    : (row.leader_wallet === 'signal-bot' ? 'signal' : 'copy');
   return {
     id: row.id as string,
+    pipeline,
     leaderWallet: row.leader_wallet as string,
     leaderTradeId: row.leader_trade_id as string | undefined,
     marketId: row.market_id as string,
