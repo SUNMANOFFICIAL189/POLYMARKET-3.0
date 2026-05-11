@@ -279,60 +279,71 @@ async function main() {
   }
 
   console.log();
-  console.log('=== STAGE 3a: fetch current outcome prices from Gamma (for MTM) ===');
+  console.log('=== STAGE 3a: fetch /positions per leader (truePnl source — replaces Gamma MTM) ===');
 
-  const GAMMA = 'https://gamma-api.polymarket.com';
-  const priceCache = new Map<string, { outcomePrices: number[]; closed: boolean; error?: string }>();
+  // BACKLOG bug #2 fix (2026-05-11):
+  // The prior Gamma /markets MTM path silently omitted resolved markets — so it
+  // saw only currently-open positions, systematically the wallet's still-winning
+  // bets. That's what produced the misleading 2026-05-11 baseline verdict.
+  //
+  // New approach:
+  //   1. /positions?user=<wallet>&limit=500 returns per-position cashPnl + realizedPnl
+  //      including resolved-but-redeemable positions (the ground truth)
+  //   2. For positions the leader fully exited via sale (so they're missing from
+  //      /positions because net shares = 0), fall back to trade-derived cashFlow
+  //      as realized PnL — this covers sell-out style wallets
+  //   3. Skip positions still being held that aren't in /positions (rare; no MTM)
+  //
+  // The two sources together = "truePnl" — the same canonical metric used by
+  // scripts/research/phase2v3-screen-combined.ts.
 
-  async function fetchCurrentPrices(conditionId: string): Promise<{ outcomePrices: number[]; closed: boolean; error?: string }> {
-    const cached = priceCache.get(conditionId);
-    if (cached) return cached;
+  interface PolymarketPosition {
+    proxyWallet: string;
+    conditionId: string;
+    outcomeIndex: number;
+    title?: string;
+    cashPnl: number;
+    realizedPnl: number;
+    initialValue?: number;
+    curPrice?: number;
+    currentValue?: number;
+    redeemable?: boolean;
+  }
+
+  async function fetchPositions(wallet: string): Promise<PolymarketPosition[]> {
     try {
-      await new Promise((r) => setTimeout(r, 60));  // polite rate
-      const url = `${GAMMA}/markets?condition_ids=${conditionId}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(12_000) });
-      if (!res.ok) {
-        const r = { outcomePrices: [], closed: false, error: `http_${res.status}` };
-        priceCache.set(conditionId, r);
-        return r;
-      }
+      const res = await fetch(`${DATA_API}/positions?user=${wallet}&limit=500`, {
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) return [];
       const data = await res.json();
-      const m = Array.isArray(data) ? data[0] : data;
-      if (!m) {
-        const r = { outcomePrices: [], closed: false, error: 'empty' };
-        priceCache.set(conditionId, r);
-        return r;
-      }
-      let prices: number[] = [];
-      try {
-        const raw = m.outcomePrices ?? '[]';
-        prices = typeof raw === 'string' ? JSON.parse(raw).map(Number) : raw.map(Number);
-      } catch { prices = []; }
-      const r = { outcomePrices: prices, closed: m.closed === true };
-      priceCache.set(conditionId, r);
-      return r;
-    } catch (e) {
-      const r = { outcomePrices: [], closed: false, error: String((e as Error).message).slice(0, 50) };
-      priceCache.set(conditionId, r);
-      return r;
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
     }
   }
 
-  console.log();
-  console.log('=== STAGE 3b: leader-realized-PnL accounting (per leader+market+leg) ===');
+  // Inner map keyed by `${conditionId}|${outcomeIndex}` for O(1) lookup later
+  const positionsByLeader = new Map<string, Map<string, PolymarketPosition>>();
+  for (const { wallet } of LEADERS) {
+    process.stdout.write(`  ${wallet.slice(0, 12)}... `);
+    const positions = await fetchPositions(wallet);
+    const indexed = new Map<string, PolymarketPosition>();
+    for (const p of positions) {
+      indexed.set(`${p.conditionId}|${p.outcomeIndex ?? 0}`, p);
+    }
+    positionsByLeader.set(wallet, indexed);
+    process.stdout.write(`${positions.length} positions\n`);
+    await new Promise((r) => setTimeout(r, 80));
+  }
 
-  // Group ALL of each leader's politics trades by (conditionId, outcomeIndex)
-  // = unique position. Compute net shares + net USD cash flow.
-  //
-  // Polymarket allows shorting (sell YES = open short or close long, depending
-  // on whether you currently own YES shares). For backtest purposes we track
-  // net share balance per (leader, conditionId, outcomeIndex):
-  //   shares_balance = sum(BUY shares) - sum(SELL shares)
-  //   cash_balance   = sum(SELL USD)   - sum(BUY USD)
-  //
-  // When shares_balance ≈ 0 by end of window: cash_balance IS realized PnL.
-  // When non-zero: leader has an open position; we don't include in primary
-  // verdict (need outcome resolution to close).
+  console.log();
+  console.log('=== STAGE 3b: leader truePnl accounting (positions ∪ trade-flow) ===');
+
+  // Build trade-flow state per (leader, conditionId, outcomeIndex). This is
+  // both (a) the fallback source for sell-out positions not in /positions, and
+  // (b) the deployed-capital denominator used by STAGE 4's our-hypothetical-PnL
+  // calculation.
 
   interface LeaderPosition {
     leader: string;
@@ -380,58 +391,53 @@ async function main() {
   const allPositions = Array.from(positionMap.values());
   const CLOSED_SHARE_THRESHOLD = 1;
 
-  // Fetch current MTM prices for ALL positions (we'll use these for open positions)
-  const uniqueConditions = Array.from(new Set(allPositions.map((p) => p.conditionId)));
-  console.log(`  fetching current outcome prices for ${uniqueConditions.length} markets...`);
-  let fetched = 0;
-  for (const c of uniqueConditions) {
-    await fetchCurrentPrices(c);
-    fetched++;
-    if (fetched % 10 === 0) process.stdout.write(`    ${fetched}/${uniqueConditions.length}\n`);
-  }
-  const priceAvailable = uniqueConditions.filter((c) => (priceCache.get(c)?.outcomePrices.length ?? 0) > 0);
-  console.log(`  markets with usable prices: ${priceAvailable.length}/${uniqueConditions.length}`);
-  console.log();
+  // For each trade-derived position, derive truePnl from:
+  //   (a) /positions if present → cashPnl + realizedPnl (canonical)
+  //   (b) trade-flow cashflow if fully exited via sale (|netShares| < 1)
+  //   (c) otherwise: still holding, no /positions entry → skip (no MTM available)
 
-  // For each position, compute total economic PnL = cashFlow + (netShares × current_price)
-  // For fully-closed positions netShares ≈ 0, so total = cashFlow (pure realized).
-  // For open positions, the second term marks the remaining position to current market price.
-  type EnrichedPosition = LeaderPosition & { mtmPrice: number; mtmValue: number; totalPnl: number; status: 'closed' | 'mtm' | 'no_price' };
+  type Source = 'positions' | 'trade-flow' | 'open-no-mtm';
+  type EnrichedPosition = LeaderPosition & { totalPnl: number; source: Source; status: 'usable' | 'open-no-mtm' };
+
   const enrichedPositions: EnrichedPosition[] = allPositions.map((p) => {
-    const isClosed = Math.abs(p.netShares) < CLOSED_SHARE_THRESHOLD;
-    const cached = priceCache.get(p.conditionId);
-    const mtmPrice = cached?.outcomePrices[p.outcomeIndex] ?? 0;
-    const havePrice = cached && cached.outcomePrices.length > 0 && !cached.error;
-    const mtmValue = havePrice ? p.netShares * mtmPrice : 0;
-    const totalPnl = p.cashFlow + mtmValue;
-    const status: 'closed' | 'mtm' | 'no_price' = isClosed ? 'closed' : (havePrice ? 'mtm' : 'no_price');
-    return { ...p, mtmPrice, mtmValue, totalPnl, status };
+    const lpositions = positionsByLeader.get(p.leader);
+    const fromPos = lpositions?.get(`${p.conditionId}|${p.outcomeIndex}`);
+    if (fromPos) {
+      const truePnl = (fromPos.cashPnl ?? 0) + (fromPos.realizedPnl ?? 0);
+      return { ...p, totalPnl: truePnl, source: 'positions', status: 'usable' };
+    }
+    if (Math.abs(p.netShares) < CLOSED_SHARE_THRESHOLD) {
+      return { ...p, totalPnl: p.cashFlow, source: 'trade-flow', status: 'usable' };
+    }
+    return { ...p, totalPnl: 0, source: 'open-no-mtm', status: 'open-no-mtm' };
   });
 
-  const usable = enrichedPositions.filter((p) => p.status !== 'no_price');
-  const closedOnly = enrichedPositions.filter((p) => p.status === 'closed');
-  const mtmOnly = enrichedPositions.filter((p) => p.status === 'mtm');
-  const noPrice = enrichedPositions.filter((p) => p.status === 'no_price');
+  const usable = enrichedPositions.filter((p) => p.status === 'usable');
+  const fromPositions = usable.filter((p) => p.source === 'positions');
+  const fromTradeFlow = usable.filter((p) => p.source === 'trade-flow');
+  const noMtm = enrichedPositions.filter((p) => p.status === 'open-no-mtm');
 
   console.log(`  positions classification:`);
-  console.log(`    fully closed (realized PnL): ${closedOnly.length}`);
-  console.log(`    open + MTM available:        ${mtmOnly.length}`);
-  console.log(`    open but no price (skipped): ${noPrice.length}`);
+  console.log(`    truePnl via /positions:      ${fromPositions.length}`);
+  console.log(`    truePnl via trade-flow:      ${fromTradeFlow.length}`);
+  console.log(`    open w/o /positions entry:   ${noMtm.length}  (skipped — rare)`);
   console.log();
 
   const totalLeaderPnl = usable.reduce((s, p) => s + p.totalPnl, 0);
-  const closedLeaderPnl = closedOnly.reduce((s, p) => s + p.cashFlow, 0);
-  const mtmLeaderPnl = mtmOnly.reduce((s, p) => s + p.totalPnl, 0);
+  const positionsPnl = fromPositions.reduce((s, p) => s + p.totalPnl, 0);
+  const tradeFlowPnl = fromTradeFlow.reduce((s, p) => s + p.totalPnl, 0);
   const leaderWR = usable.length > 0 ? usable.filter((p) => p.totalPnl > 0).length / usable.length * 100 : 0;
 
-  console.log('  ── LEADER PNL (closed = realized; open = MTM) ──');
+  console.log('  ── LEADER PNL (truePnl = /positions cashPnl+realizedPnl, OR trade-flow cashflow for sell-out closed) ──');
   console.log(`    usable positions:   ${usable.length}`);
   console.log(`    winners:            ${usable.filter((p) => p.totalPnl > 0).length}  (WR ${leaderWR.toFixed(1)}%)`);
-  console.log(`    sum total PnL:      $${totalLeaderPnl.toFixed(2)}  (realized $${closedLeaderPnl.toFixed(2)} + MTM $${mtmLeaderPnl.toFixed(2)})`);
+  console.log(`    sum total PnL:      $${totalLeaderPnl.toFixed(2)}  (positions $${positionsPnl.toFixed(2)} + trade-flow $${tradeFlowPnl.toFixed(2)})`);
   if (usable.length > 0) {
     const sorted = [...usable].sort((a, b) => a.totalPnl - b.totalPnl);
-    console.log(`    best:               +$${sorted[sorted.length - 1].totalPnl.toFixed(2)} on "${sorted[sorted.length - 1].title.slice(0, 50)}" (${sorted[sorted.length - 1].status})`);
-    console.log(`    worst:              $${sorted[0].totalPnl.toFixed(2)} on "${sorted[0].title.slice(0, 50)}" (${sorted[0].status})`);
+    const best = sorted[sorted.length - 1];
+    const worst = sorted[0];
+    console.log(`    best:               +$${best.totalPnl.toFixed(2)} on "${best.title.slice(0, 50)}" (${best.source})`);
+    console.log(`    worst:              $${worst.totalPnl.toFixed(2)} on "${worst.title.slice(0, 50)}" (${worst.source})`);
   }
 
   console.log();
@@ -551,8 +557,8 @@ async function main() {
   const propDeployed = copyResults.reduce((s, r) => s + r.ourDeployedTotal, 0);
   const flatDeployed = flatResults.reduce((s, r) => s + r.ourDeployedTotal, 0);
 
-  console.log(`  positions analyzed: ${usable.length}  (closed=${closedOnly.length}, mtm=${mtmOnly.length}, skipped=${noPrice.length})`);
-  console.log(`  leader's total PnL on those: $${totalLeaderPnl.toFixed(2)}  (realized $${closedLeaderPnl.toFixed(2)} + MTM $${mtmLeaderPnl.toFixed(2)})`);
+  console.log(`  positions analyzed: ${usable.length}  (positions=${fromPositions.length}, trade-flow=${fromTradeFlow.length}, skipped=${noMtm.length})`);
+  console.log(`  leader's total truePnl: $${totalLeaderPnl.toFixed(2)}  (positions $${positionsPnl.toFixed(2)} + trade-flow $${tradeFlowPnl.toFixed(2)})`);
   console.log();
   console.log(`  Proportional sizing — pnl=$${propTotal.toFixed(2)}  deployed=$${propDeployed.toFixed(2)}  ROI=${propDeployed > 0 ? (propTotal/propDeployed*100).toFixed(2) : 'n/a'}%`);
   console.log(`  Flat $75 sizing     — pnl=$${flatTotal.toFixed(2)}  deployed=$${flatDeployed.toFixed(2)}  ROI=${flatDeployed > 0 ? (flatTotal/flatDeployed*100).toFixed(2) : 'n/a'}%`);
