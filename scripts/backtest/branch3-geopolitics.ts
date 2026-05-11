@@ -14,22 +14,37 @@ import { categoriseMarket } from '../../src/signals/market-categoriser.js';
 const DATA_API = 'https://data-api.polymarket.com';
 const WINDOW_DAYS = 30;
 
-// 12 geopolitics leaders identified by the convergence backtest (from master
-// handoff doc — see vault Decision Log "2026-05-08 Branch 2 PAUSED" entry).
-// Counts beside each are the historical trade counts from that backtest era.
-const LEADERS: { wallet: string; historicalTrades: number }[] = [
-  { wallet: '0x204f72f35326db932158cba6adff0b9a1da95e14', historicalTrades: 211 },
-  { wallet: '0x2005d16a84ceefa912d4e380cd32e7ff827875ea', historicalTrades: 92 },
-  { wallet: '0xee613b3fc183ee44f9da9c05f53e2da107e3debf', historicalTrades: 34 },
-  { wallet: '0x2a2c53bd278c04da9962fcf96490e17f3dfb9bc1', historicalTrades: 28 },
-  { wallet: '0x5d05b1f588780423488a09d9aefeb64df54d6320', historicalTrades: 19 },
-  { wallet: '0x6ac5bb06a9eb05641fd5e82640268b92f3ab4b6e', historicalTrades: 12 },
-  { wallet: '0x507e52ef684ca2dd91f90a9d26d149dd3288beae', historicalTrades: 7 },
-  { wallet: '0x37c1874a60d348903594a96703e0507c518fc53a', historicalTrades: 6 },
-  { wallet: '0x492442eab586f242b53bda933fd5de859c8a3782', historicalTrades: 6 },
-  { wallet: '0xfe787d2da716d60e8acff57fb87eb13cd4d10319', historicalTrades: 5 },
-  { wallet: '0x0c154c190e293b7e5f8d453b5f690c4dc9599a45', historicalTrades: 2 },
+// LEADERS — wallets to backtest as candidate geopolitics specialists.
+//
+// 2026-05-11 (v1): the original 11-wallet "convergence backtest" list (kept
+// below as LEGACY_LEADERS_2026_05_11 for reproducibility). Phase 1b audit
+// revealed only 1/11 had meaningful recent politics activity, motivating the
+// Phase 2 v2 expansion.
+//
+// 2026-05-11 (v2): post-research-sprint shortlist. `0x24c8cf69` is the Phase 2 v2
+// passer (149 geo positions, 62.4% WR, +$142K truePnl via /positions). The
+// other two are kept for comparison: `0x5d05b1f5` was the prior single specialist
+// (now known to be net negative under the corrected /positions measurement),
+// `0x44c1dfe4` is a positive-PnL near-miss (failed only the WR filter at 46.7%).
+const LEADERS: { wallet: string; historicalTrades: number; role: string }[] = [
+  { wallet: '0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1', historicalTrades: 149, role: 'PHASE2-V2 SHORTLIST PASSER' },
+  { wallet: '0x5d05b1f588780423488a09d9aefeb64df54d6320', historicalTrades: 28,  role: 'PRIOR BASELINE (control)' },
+  { wallet: '0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1', historicalTrades: 30,  role: 'POSITIVE-PNL NEAR-MISS' },
 ];
+// Original list — preserved for reproducing the 2026-05-11 baseline run.
+// const LEGACY_LEADERS_2026_05_11 = [
+//   '0x204f72f35326db932158cba6adff0b9a1da95e14',
+//   '0x2005d16a84ceefa912d4e380cd32e7ff827875ea',
+//   '0xee613b3fc183ee44f9da9c05f53e2da107e3debf',
+//   '0x2a2c53bd278c04da9962fcf96490e17f3dfb9bc1',
+//   '0x5d05b1f588780423488a09d9aefeb64df54d6320',
+//   '0x6ac5bb06a9eb05641fd5e82640268b92f3ab4b6e',
+//   '0x507e52ef684ca2dd91f90a9d26d149dd3288beae',
+//   '0x37c1874a60d348903594a96703e0507c518fc53a',
+//   '0x492442eab586f242b53bda933fd5de859c8a3782',
+//   '0xfe787d2da716d60e8acff57fb87eb13cd4d10319',
+//   '0x0c154c190e293b7e5f8d453b5f690c4dc9599a45',
+// ];
 
 interface DataApiTrade {
   proxyWallet: string;

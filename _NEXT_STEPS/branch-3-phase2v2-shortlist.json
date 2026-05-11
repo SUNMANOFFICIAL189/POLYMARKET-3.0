@@ -1,0 +1,661 @@
+{
+  "fetchedAt": "2026-05-11T09:00:43.521Z",
+  "method": "/positions endpoint, truePnl = cashPnl + realizedPnl, broader geopolitics keyword list (see scripts/research/phase2v2-screen-via-positions.ts:GEO_KW)",
+  "filters": {
+    "minGeoPositions": 15,
+    "minWrPct": 55,
+    "minMedianSize": 10,
+    "maxMedianSize": 500,
+    "activeWithinHours": 336
+  },
+  "candidatePoolSize": 76,
+  "shortlistSize": 1,
+  "shortlist": [
+    {
+      "wallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "geoPositions": 149,
+      "wins": 93,
+      "losses": 56,
+      "wrPct": 62.4,
+      "totalTruePnl": 142791.3,
+      "totalInitialValue": 752514.11,
+      "medianInitialValue": 182.82,
+      "meanInitialValue": 6022.77,
+      "minInitialValue": 0.01,
+      "maxInitialValue": 315000,
+      "resolvedPositions": 69,
+      "openPositions": 80,
+      "newestTradeAge_h": 0.6,
+      "topWinPnl": 82793.83,
+      "worstLossPnl": -81585,
+      "passes": true,
+      "rejections": []
+    }
+  ],
+  "interesting": [
+    {
+      "wallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "geoPositions": 138,
+      "wins": 41,
+      "losses": 97,
+      "wrPct": 29.7,
+      "totalTruePnl": 321497.59,
+      "totalInitialValue": 1271947.27,
+      "medianInitialValue": 1351.41,
+      "meanInitialValue": 9217.01,
+      "minInitialValue": 1,
+      "maxInitialValue": 128558.91,
+      "resolvedPositions": 85,
+      "openPositions": 53,
+      "newestTradeAge_h": 5,
+      "topWinPnl": 330884.71,
+      "worstLossPnl": -143218.05,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 29.7%)",
+        "median_size>$500 (got $1351.41)"
+      ]
+    },
+    {
+      "wallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+      "source": [
+        "leaderboard-All"
+      ],
+      "geoPositions": 30,
+      "wins": 14,
+      "losses": 16,
+      "wrPct": 46.7,
+      "totalTruePnl": 20586.31,
+      "totalInitialValue": 337299.67,
+      "medianInitialValue": 139.22,
+      "meanInitialValue": 11243.32,
+      "minInitialValue": 0.18,
+      "maxInitialValue": 164779.46,
+      "resolvedPositions": 4,
+      "openPositions": 26,
+      "newestTradeAge_h": 3.1,
+      "topWinPnl": 88000.56,
+      "worstLossPnl": -45166.94,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 46.7%)"
+      ]
+    },
+    {
+      "wallet": "0xd7f85d0eb0fe0732ca38d9107ad0d4d01b1289e4",
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "geoPositions": 10,
+      "wins": 6,
+      "losses": 4,
+      "wrPct": 60,
+      "totalTruePnl": 2574.07,
+      "totalInitialValue": 59353.25,
+      "medianInitialValue": 2486.16,
+      "meanInitialValue": 5935.32,
+      "minInitialValue": 23.26,
+      "maxInitialValue": 29963.32,
+      "resolvedPositions": 0,
+      "openPositions": 10,
+      "newestTradeAge_h": 194.2,
+      "topWinPnl": 12044.51,
+      "worstLossPnl": -7376.3,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 10)",
+        "median_size>$500 (got $2486.16)"
+      ]
+    },
+    {
+      "wallet": "0x84cfffc3f16dcc353094de30d4a45226eccd2f63",
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "geoPositions": 5,
+      "wins": 5,
+      "losses": 0,
+      "wrPct": 100,
+      "totalTruePnl": 962.37,
+      "totalInitialValue": 12354.05,
+      "medianInitialValue": 677.54,
+      "meanInitialValue": 2470.81,
+      "minInitialValue": 114.62,
+      "maxInitialValue": 7889.87,
+      "resolvedPositions": 0,
+      "openPositions": 5,
+      "newestTradeAge_h": 0.1,
+      "topWinPnl": 658.95,
+      "worstLossPnl": 2.26,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 5)",
+        "median_size>$500 (got $677.54)"
+      ]
+    },
+    {
+      "wallet": "0x507e52ef684ca2dd91f90a9d26d149dd3288beae",
+      "source": [
+        "leaderboard-All",
+        "watchlist"
+      ],
+      "geoPositions": 11,
+      "wins": 5,
+      "losses": 6,
+      "wrPct": 45.5,
+      "totalTruePnl": 399.4,
+      "totalInitialValue": 2912825.03,
+      "medianInitialValue": 152.17,
+      "meanInitialValue": 264802.28,
+      "minInitialValue": 1.08,
+      "maxInitialValue": 1454998,
+      "resolvedPositions": 7,
+      "openPositions": 4,
+      "newestTradeAge_h": 2,
+      "topWinPnl": 909373.75,
+      "worstLossPnl": -909373.75,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 11)",
+        "WR<55% (got 45.5%)"
+      ]
+    },
+    {
+      "wallet": "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86",
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "geoPositions": 7,
+      "wins": 7,
+      "losses": 0,
+      "wrPct": 100,
+      "totalTruePnl": 62.27,
+      "totalInitialValue": 2.94,
+      "medianInitialValue": 2.99,
+      "meanInitialValue": 2.99,
+      "minInitialValue": 2.99,
+      "maxInitialValue": 2.99,
+      "resolvedPositions": 0,
+      "openPositions": 7,
+      "newestTradeAge_h": 146.8,
+      "topWinPnl": 45.52,
+      "worstLossPnl": 0.09,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 7)",
+        "median_size<$10 (got $2.99)"
+      ]
+    },
+    {
+      "wallet": "0x241f846866c2de4fb67cdb0ca6b963d85e56ef50",
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "geoPositions": 10,
+      "wins": 3,
+      "losses": 7,
+      "wrPct": 30,
+      "totalTruePnl": 4.41,
+      "totalInitialValue": 33.44,
+      "medianInitialValue": 2.16,
+      "meanInitialValue": 3.34,
+      "minInitialValue": 1.73,
+      "maxInitialValue": 5.85,
+      "resolvedPositions": 0,
+      "openPositions": 10,
+      "newestTradeAge_h": 54.8,
+      "topWinPnl": 12.22,
+      "worstLossPnl": -6.03,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 10)",
+        "WR<55% (got 30%)",
+        "median_size<$10 (got $2.16)"
+      ]
+    },
+    {
+      "wallet": "0x006cc834cc092684f1b56626e23bedb3835c16ea",
+      "source": [
+        "leaderboard-All"
+      ],
+      "geoPositions": 5,
+      "wins": 3,
+      "losses": 2,
+      "wrPct": 60,
+      "totalTruePnl": -33.06,
+      "totalInitialValue": 148013.78,
+      "medianInitialValue": 493.79,
+      "meanInitialValue": 29602.76,
+      "minInitialValue": 1.07,
+      "maxInitialValue": 73748.39,
+      "resolvedPositions": 0,
+      "openPositions": 5,
+      "newestTradeAge_h": 73.9,
+      "topWinPnl": 38260.66,
+      "worstLossPnl": -38275.41,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 5)"
+      ]
+    },
+    {
+      "wallet": "0x2117ae94a97d69b78cbc81b6680a62deb1955c26",
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "geoPositions": 19,
+      "wins": 1,
+      "losses": 18,
+      "wrPct": 5.3,
+      "totalTruePnl": -1842.13,
+      "totalInitialValue": 2318.13,
+      "medianInitialValue": 26.72,
+      "meanInitialValue": 122.01,
+      "minInitialValue": 0.98,
+      "maxInitialValue": 596.82,
+      "resolvedPositions": 17,
+      "openPositions": 2,
+      "newestTradeAge_h": 0.3,
+      "topWinPnl": 57,
+      "worstLossPnl": -596.82,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 5.3%)"
+      ]
+    },
+    {
+      "wallet": "0x5d05b1f588780423488a09d9aefeb64df54d6320",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositions": 28,
+      "wins": 15,
+      "losses": 13,
+      "wrPct": 53.6,
+      "totalTruePnl": -2404.84,
+      "totalInitialValue": 8484.94,
+      "medianInitialValue": 5.44,
+      "meanInitialValue": 303.03,
+      "minInitialValue": 0.88,
+      "maxInitialValue": 5274.8,
+      "resolvedPositions": 8,
+      "openPositions": 20,
+      "newestTradeAge_h": 7.4,
+      "topWinPnl": 1049.1,
+      "worstLossPnl": -3312.52,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 53.6%)",
+        "median_size<$10 (got $5.44)"
+      ]
+    },
+    {
+      "wallet": "0x53757615de1c42b83f893b79d4241a009dc2aeea",
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "geoPositions": 10,
+      "wins": 5,
+      "losses": 5,
+      "wrPct": 50,
+      "totalTruePnl": -5956.97,
+      "totalInitialValue": 13056.34,
+      "medianInitialValue": 902.88,
+      "meanInitialValue": 1305.63,
+      "minInitialValue": 81.9,
+      "maxInitialValue": 6225.66,
+      "resolvedPositions": 1,
+      "openPositions": 9,
+      "newestTradeAge_h": 1.7,
+      "topWinPnl": 308.66,
+      "worstLossPnl": -6225.66,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 10)",
+        "WR<55% (got 50%)",
+        "median_size>$500 (got $902.88)"
+      ]
+    },
+    {
+      "wallet": "0x27f738fe203827445690339104aae35b20bc44b0",
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "geoPositions": 10,
+      "wins": 0,
+      "losses": 10,
+      "wrPct": 0,
+      "totalTruePnl": -75818.26,
+      "totalInitialValue": 75818.26,
+      "medianInitialValue": 1891,
+      "meanInitialValue": 7581.83,
+      "minInitialValue": 461.75,
+      "maxInitialValue": 32171.46,
+      "resolvedPositions": 10,
+      "openPositions": 0,
+      "newestTradeAge_h": 6.9,
+      "topWinPnl": -461.75,
+      "worstLossPnl": -32171.46,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 10)",
+        "WR<55% (got 0%)",
+        "median_size>$500 (got $1891.00)"
+      ]
+    },
+    {
+      "wallet": "0x2005d16a84ceefa912d4e380cd32e7ff827875ea",
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly",
+        "leaderboard-All",
+        "watchlist"
+      ],
+      "geoPositions": 58,
+      "wins": 21,
+      "losses": 37,
+      "wrPct": 36.2,
+      "totalTruePnl": -76429.5,
+      "totalInitialValue": 365290.01,
+      "medianInitialValue": 3363.66,
+      "meanInitialValue": 6298.1,
+      "minInitialValue": 388.75,
+      "maxInitialValue": 32346.04,
+      "resolvedPositions": 38,
+      "openPositions": 20,
+      "newestTradeAge_h": 0.1,
+      "topWinPnl": 27888.87,
+      "worstLossPnl": -17279.54,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 36.2%)",
+        "median_size>$500 (got $3363.66)"
+      ]
+    },
+    {
+      "wallet": "0xfe787d2da716d60e8acff57fb87eb13cd4d10319",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositions": 7,
+      "wins": 0,
+      "losses": 7,
+      "wrPct": 0,
+      "totalTruePnl": -80568.57,
+      "totalInitialValue": 82519,
+      "medianInitialValue": 11421.97,
+      "meanInitialValue": 11788.43,
+      "minInitialValue": 4925.84,
+      "maxInitialValue": 20909.77,
+      "resolvedPositions": 7,
+      "openPositions": 0,
+      "newestTradeAge_h": 2,
+      "topWinPnl": -3622.23,
+      "worstLossPnl": -23151.42,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 7)",
+        "WR<55% (got 0%)",
+        "median_size>$500 (got $11421.97)"
+      ]
+    },
+    {
+      "wallet": "0x6ac5bb06a9eb05641fd5e82640268b92f3ab4b6e",
+      "source": [
+        "leaderboard-Monthly",
+        "watchlist"
+      ],
+      "geoPositions": 7,
+      "wins": 0,
+      "losses": 7,
+      "wrPct": 0,
+      "totalTruePnl": -87610.7,
+      "totalInitialValue": 87646.62,
+      "medianInitialValue": 16100,
+      "meanInitialValue": 12520.95,
+      "minInitialValue": 2.69,
+      "maxInitialValue": 25549.83,
+      "resolvedPositions": 5,
+      "openPositions": 2,
+      "newestTradeAge_h": 11.4,
+      "topWinPnl": -0.01,
+      "worstLossPnl": -25549.83,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 7)",
+        "WR<55% (got 0%)",
+        "median_size>$500 (got $16100.00)"
+      ]
+    },
+    {
+      "wallet": "0x9495425feeb0c250accb89275c97587011b19a27",
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "geoPositions": 5,
+      "wins": 0,
+      "losses": 5,
+      "wrPct": 0,
+      "totalTruePnl": -109952.38,
+      "totalInitialValue": 109952.38,
+      "medianInitialValue": 21915,
+      "meanInitialValue": 21990.48,
+      "minInitialValue": 3823.49,
+      "maxInitialValue": 38533.81,
+      "resolvedPositions": 5,
+      "openPositions": 0,
+      "newestTradeAge_h": 6.7,
+      "topWinPnl": -3823.49,
+      "worstLossPnl": -38533.81,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 5)",
+        "WR<55% (got 0%)",
+        "median_size>$500 (got $21915.00)"
+      ]
+    },
+    {
+      "wallet": "0x2a2c53bd278c04da9962fcf96490e17f3dfb9bc1",
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly",
+        "watchlist"
+      ],
+      "geoPositions": 20,
+      "wins": 2,
+      "losses": 18,
+      "wrPct": 10,
+      "totalTruePnl": -156545.34,
+      "totalInitialValue": 156799,
+      "medianInitialValue": 821.36,
+      "meanInitialValue": 8252.58,
+      "minInitialValue": 1.37,
+      "maxInitialValue": 49036.58,
+      "resolvedPositions": 19,
+      "openPositions": 1,
+      "newestTradeAge_h": 6.9,
+      "topWinPnl": 92.69,
+      "worstLossPnl": -49036.58,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 10%)",
+        "median_size>$500 (got $821.36)"
+      ]
+    },
+    {
+      "wallet": "0x9b979a065641e8cfde3022a30ed2d9415cf55e12",
+      "source": [
+        "leaderboard-All"
+      ],
+      "geoPositions": 67,
+      "wins": 3,
+      "losses": 64,
+      "wrPct": 4.5,
+      "totalTruePnl": -240026.83,
+      "totalInitialValue": 243353.75,
+      "medianInitialValue": 3414.19,
+      "meanInitialValue": 3632.15,
+      "minInitialValue": 0.02,
+      "maxInitialValue": 10398.66,
+      "resolvedPositions": 64,
+      "openPositions": 3,
+      "newestTradeAge_h": 37.8,
+      "topWinPnl": 3771.01,
+      "worstLossPnl": -10398.66,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 4.5%)",
+        "median_size>$500 (got $3414.19)"
+      ]
+    },
+    {
+      "wallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "geoPositions": 122,
+      "wins": 40,
+      "losses": 82,
+      "wrPct": 32.8,
+      "totalTruePnl": -473691.71,
+      "totalInitialValue": 4152278.01,
+      "medianInitialValue": 3846.94,
+      "meanInitialValue": 34035.07,
+      "minInitialValue": 0.5,
+      "maxInitialValue": 410603.69,
+      "resolvedPositions": 60,
+      "openPositions": 62,
+      "newestTradeAge_h": 11.8,
+      "topWinPnl": 77288.46,
+      "worstLossPnl": -178862.32,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 32.8%)",
+        "median_size>$500 (got $3846.94)"
+      ]
+    },
+    {
+      "wallet": "0xe90bec87d9ef430f27f9dcfe72c34b76967d5da2",
+      "source": [
+        "leaderboard-All"
+      ],
+      "geoPositions": 21,
+      "wins": 1,
+      "losses": 20,
+      "wrPct": 4.8,
+      "totalTruePnl": -481875.27,
+      "totalInitialValue": 487644.01,
+      "medianInitialValue": 16948.43,
+      "meanInitialValue": 23221.14,
+      "minInitialValue": 2.31,
+      "maxInitialValue": 84108.58,
+      "resolvedPositions": 21,
+      "openPositions": 0,
+      "newestTradeAge_h": 1671.6,
+      "topWinPnl": 923,
+      "worstLossPnl": -84108.58,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 4.8%)",
+        "median_size>$500 (got $16948.43)",
+        "inactive_>14d (newest 1671.6h)"
+      ]
+    },
+    {
+      "wallet": "0x37c1874a60d348903594a96703e0507c518fc53a",
+      "source": [
+        "watchlist"
+      ],
+      "geoPositions": 14,
+      "wins": 0,
+      "losses": 14,
+      "wrPct": 0,
+      "totalTruePnl": -613179.83,
+      "totalInitialValue": 613179.83,
+      "medianInitialValue": 27235.83,
+      "meanInitialValue": 43798.56,
+      "minInitialValue": 4078.71,
+      "maxInitialValue": 236754.59,
+      "resolvedPositions": 14,
+      "openPositions": 0,
+      "newestTradeAge_h": 423.7,
+      "topWinPnl": -4078.71,
+      "worstLossPnl": -236754.59,
+      "passes": false,
+      "rejections": [
+        "geo_positions<15 (got 14)",
+        "WR<55% (got 0%)",
+        "median_size>$500 (got $27235.83)",
+        "inactive_>14d (newest 423.7h)"
+      ]
+    },
+    {
+      "wallet": "0xa5ea13a81d2b7e8e424b182bdc1db08e756bd96a",
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "geoPositions": 47,
+      "wins": 1,
+      "losses": 46,
+      "wrPct": 2.1,
+      "totalTruePnl": -799288.55,
+      "totalInitialValue": 850845.97,
+      "medianInitialValue": 1773.81,
+      "meanInitialValue": 18103.11,
+      "minInitialValue": 1.66,
+      "maxInitialValue": 167945.54,
+      "resolvedPositions": 46,
+      "openPositions": 1,
+      "newestTradeAge_h": 5.7,
+      "topWinPnl": 1300.53,
+      "worstLossPnl": -167945.54,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 2.1%)",
+        "median_size>$500 (got $1773.81)"
+      ]
+    },
+    {
+      "wallet": "0xdc876e6873772d38716fda7f2452a78d426d7ab6",
+      "source": [
+        "leaderboard-All"
+      ],
+      "geoPositions": 15,
+      "wins": 0,
+      "losses": 15,
+      "wrPct": 0,
+      "totalTruePnl": -1712850.75,
+      "totalInitialValue": 1712850.75,
+      "medianInitialValue": 42871.89,
+      "meanInitialValue": 114190.05,
+      "minInitialValue": 2999.33,
+      "maxInitialValue": 1085443.64,
+      "resolvedPositions": 15,
+      "openPositions": 0,
+      "newestTradeAge_h": 1502.7,
+      "topWinPnl": -2999.33,
+      "worstLossPnl": -1085443.64,
+      "passes": false,
+      "rejections": [
+        "WR<55% (got 0%)",
+        "median_size>$500 (got $42871.89)",
+        "inactive_>14d (newest 1502.7h)"
+      ]
+    }
+  ],
+  "sleeping": 52,
+  "summary": {
+    "passing": 1,
+    "interestingCount": 23,
+    "sleepingCount": 52
+  }
+}

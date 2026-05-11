@@ -1,0 +1,261 @@
+{
+  "fetchedAt": "2026-05-11T08:49:23.694Z",
+  "windowDays": 90,
+  "sinceSec": 1770713330,
+  "audit": [
+    {
+      "wallet": "0x204f72f35326db932158cba6adff0b9a1da95e14",
+      "windowDays": 90,
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 2,
+      "sportsTrades": 1951,
+      "cryptoTrades": 0,
+      "financeTrades": 0,
+      "otherTrades": 1547,
+      "newestTradeAge_h": 0.2,
+      "oldestTradeAge_d": 0.5,
+      "uniquePoliticsMarkets": 2,
+      "politicsTradesByMonth": {
+        "2026-05": 2
+      },
+      "politicsAvgUsdcNotional": 63.4,
+      "politicsMedianUsdcNotional": 122.91,
+      "politicsBuyCount": 2,
+      "politicsSellCount": 0
+    },
+    {
+      "wallet": "0x2005d16a84ceefa912d4e380cd32e7ff827875ea",
+      "windowDays": 90,
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "sportsTrades": 2036,
+      "cryptoTrades": 20,
+      "financeTrades": 25,
+      "otherTrades": 1419,
+      "newestTradeAge_h": 0.1,
+      "oldestTradeAge_d": 2.3,
+      "uniquePoliticsMarkets": 0,
+      "politicsTradesByMonth": {},
+      "politicsAvgUsdcNotional": null,
+      "politicsMedianUsdcNotional": null,
+      "politicsBuyCount": 0,
+      "politicsSellCount": 0
+    },
+    {
+      "wallet": "0xee613b3fc183ee44f9da9c05f53e2da107e3debf",
+      "windowDays": 90,
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 7,
+      "sportsTrades": 946,
+      "cryptoTrades": 15,
+      "financeTrades": 24,
+      "otherTrades": 2508,
+      "newestTradeAge_h": 402.3,
+      "oldestTradeAge_d": 24.6,
+      "uniquePoliticsMarkets": 3,
+      "politicsTradesByMonth": {
+        "2026-04": 7
+      },
+      "politicsAvgUsdcNotional": 623.11,
+      "politicsMedianUsdcNotional": 301.08,
+      "politicsBuyCount": 7,
+      "politicsSellCount": 0
+    },
+    {
+      "wallet": "0x2a2c53bd278c04da9962fcf96490e17f3dfb9bc1",
+      "windowDays": 90,
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 1,
+      "sportsTrades": 2773,
+      "cryptoTrades": 6,
+      "financeTrades": 5,
+      "otherTrades": 715,
+      "newestTradeAge_h": 6.7,
+      "oldestTradeAge_d": 58.3,
+      "uniquePoliticsMarkets": 1,
+      "politicsTradesByMonth": {
+        "2026-03": 1
+      },
+      "politicsAvgUsdcNotional": 17456.19,
+      "politicsMedianUsdcNotional": 17456.19,
+      "politicsBuyCount": 1,
+      "politicsSellCount": 0
+    },
+    {
+      "wallet": "0x5d05b1f588780423488a09d9aefeb64df54d6320",
+      "windowDays": 90,
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 908,
+      "sportsTrades": 91,
+      "cryptoTrades": 4,
+      "financeTrades": 2,
+      "otherTrades": 2495,
+      "newestTradeAge_h": 7.2,
+      "oldestTradeAge_d": 81.1,
+      "uniquePoliticsMarkets": 64,
+      "politicsTradesByMonth": {
+        "2026-05": 31,
+        "2026-04": 582,
+        "2026-03": 283,
+        "2026-02": 12
+      },
+      "politicsAvgUsdcNotional": 76.31,
+      "politicsMedianUsdcNotional": 15.1,
+      "politicsBuyCount": 630,
+      "politicsSellCount": 278
+    },
+    {
+      "wallet": "0x6ac5bb06a9eb05641fd5e82640268b92f3ab4b6e",
+      "windowDays": 90,
+      "totalTradesInWindow": 3060,
+      "politicsTrades": 2,
+      "sportsTrades": 2210,
+      "cryptoTrades": 1,
+      "financeTrades": 2,
+      "otherTrades": 845,
+      "newestTradeAge_h": 11.2,
+      "oldestTradeAge_d": 84.6,
+      "uniquePoliticsMarkets": 2,
+      "politicsTradesByMonth": {
+        "2026-03": 1,
+        "2026-02": 1
+      },
+      "politicsAvgUsdcNotional": 156.79,
+      "politicsMedianUsdcNotional": 310.69,
+      "politicsBuyCount": 1,
+      "politicsSellCount": 1
+    },
+    {
+      "wallet": "0x507e52ef684ca2dd91f90a9d26d149dd3288beae",
+      "windowDays": 90,
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 6,
+      "sportsTrades": 919,
+      "cryptoTrades": 30,
+      "financeTrades": 11,
+      "otherTrades": 2534,
+      "newestTradeAge_h": 1.8,
+      "oldestTradeAge_d": 8.9,
+      "uniquePoliticsMarkets": 1,
+      "politicsTradesByMonth": {
+        "2026-05": 6
+      },
+      "politicsAvgUsdcNotional": 163.99,
+      "politicsMedianUsdcNotional": 189,
+      "politicsBuyCount": 6,
+      "politicsSellCount": 0
+    },
+    {
+      "wallet": "0x37c1874a60d348903594a96703e0507c518fc53a",
+      "windowDays": 90,
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "sportsTrades": 2932,
+      "cryptoTrades": 0,
+      "financeTrades": 0,
+      "otherTrades": 568,
+      "newestTradeAge_h": 423.5,
+      "oldestTradeAge_d": 29.7,
+      "uniquePoliticsMarkets": 0,
+      "politicsTradesByMonth": {},
+      "politicsAvgUsdcNotional": null,
+      "politicsMedianUsdcNotional": null,
+      "politicsBuyCount": 0,
+      "politicsSellCount": 0
+    },
+    {
+      "wallet": "0x492442eab586f242b53bda933fd5de859c8a3782",
+      "windowDays": 90,
+      "totalTradesInWindow": 3398,
+      "politicsTrades": 0,
+      "sportsTrades": 3035,
+      "cryptoTrades": 0,
+      "financeTrades": 0,
+      "otherTrades": 363,
+      "newestTradeAge_h": 9.8,
+      "oldestTradeAge_d": 89.4,
+      "uniquePoliticsMarkets": 0,
+      "politicsTradesByMonth": {},
+      "politicsAvgUsdcNotional": null,
+      "politicsMedianUsdcNotional": null,
+      "politicsBuyCount": 0,
+      "politicsSellCount": 0
+    },
+    {
+      "wallet": "0xfe787d2da716d60e8acff57fb87eb13cd4d10319",
+      "windowDays": 90,
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 7,
+      "sportsTrades": 1025,
+      "cryptoTrades": 17,
+      "financeTrades": 24,
+      "otherTrades": 2427,
+      "newestTradeAge_h": 1.8,
+      "oldestTradeAge_d": 8.8,
+      "uniquePoliticsMarkets": 2,
+      "politicsTradesByMonth": {
+        "2026-05": 7
+      },
+      "politicsAvgUsdcNotional": 482.24,
+      "politicsMedianUsdcNotional": 95.4,
+      "politicsBuyCount": 7,
+      "politicsSellCount": 0
+    },
+    {
+      "wallet": "0x0c154c190e293b7e5f8d453b5f690c4dc9599a45",
+      "windowDays": 90,
+      "totalTradesInWindow": 203,
+      "politicsTrades": 0,
+      "sportsTrades": 202,
+      "cryptoTrades": 0,
+      "financeTrades": 0,
+      "otherTrades": 1,
+      "newestTradeAge_h": 15.4,
+      "oldestTradeAge_d": 39.4,
+      "uniquePoliticsMarkets": 0,
+      "politicsTradesByMonth": {},
+      "politicsAvgUsdcNotional": null,
+      "politicsMedianUsdcNotional": null,
+      "politicsBuyCount": 0,
+      "politicsSellCount": 0
+    }
+  ],
+  "summary": {
+    "walletsWithAnyTrade": 11,
+    "walletsWithPoliticsTrade": 7,
+    "walletsActiveLast14d": 9,
+    "totalPoliticsTrades": 933,
+    "topByPoliticsTradeCount": [
+      {
+        "wallet": "0x5d05b1f588780423488a09d9aefeb64df54d6320",
+        "politicsTrades": 908,
+        "newestH": 7.2,
+        "avgUsdc": 76.31
+      },
+      {
+        "wallet": "0xee613b3fc183ee44f9da9c05f53e2da107e3debf",
+        "politicsTrades": 7,
+        "newestH": 402.3,
+        "avgUsdc": 623.11
+      },
+      {
+        "wallet": "0xfe787d2da716d60e8acff57fb87eb13cd4d10319",
+        "politicsTrades": 7,
+        "newestH": 1.8,
+        "avgUsdc": 482.24
+      },
+      {
+        "wallet": "0x507e52ef684ca2dd91f90a9d26d149dd3288beae",
+        "politicsTrades": 6,
+        "newestH": 1.8,
+        "avgUsdc": 163.99
+      },
+      {
+        "wallet": "0x204f72f35326db932158cba6adff0b9a1da95e14",
+        "politicsTrades": 2,
+        "newestH": 0.2,
+        "avgUsdc": 63.4
+      }
+    ]
+  }
+}

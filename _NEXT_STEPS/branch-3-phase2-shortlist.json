@@ -1,0 +1,2134 @@
+{
+  "fetchedAt": "2026-05-11T08:53:24.792Z",
+  "windowDays": 90,
+  "filters": {
+    "minPoliticsTrades": 15,
+    "minClosedPositions": 5,
+    "minWrPct": 55,
+    "minAvgSize": 10,
+    "maxAvgSize": 500,
+    "activeWithinHours": 336
+  },
+  "candidatePoolSize": 76,
+  "shortlistSize": 0,
+  "shortlist": [],
+  "rejected": [
+    {
+      "wallet": "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 1316,
+      "newestTradeAge_h": 146.6,
+      "politicsAvgUsdc": 77.84,
+      "politicsMedianUsdc": 26.36,
+      "politicsMinUsdc": 1.01,
+      "politicsMaxUsdc": 1325.41,
+      "uniquePoliticsPositions": 210,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+      "totalTradesInWindow": 2311,
+      "politicsTrades": 989,
+      "newestTradeAge_h": 0.5,
+      "politicsAvgUsdc": 3977.45,
+      "politicsMedianUsdc": 425.67,
+      "politicsMinUsdc": 0.29,
+      "politicsMaxUsdc": 356380.61,
+      "uniquePoliticsPositions": 144,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $3977.45)"
+      ]
+    },
+    {
+      "wallet": "0x5d05b1f588780423488a09d9aefeb64df54d6320",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 908,
+      "newestTradeAge_h": 7.3,
+      "politicsAvgUsdc": 76.31,
+      "politicsMedianUsdc": 15.1,
+      "politicsMinUsdc": 0,
+      "politicsMaxUsdc": 2476.71,
+      "uniquePoliticsPositions": 78,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+      "totalTradesInWindow": 948,
+      "politicsTrades": 442,
+      "newestTradeAge_h": 4.9,
+      "politicsAvgUsdc": 6225.41,
+      "politicsMedianUsdc": 1719.95,
+      "politicsMinUsdc": 0.02,
+      "politicsMaxUsdc": 199400,
+      "uniquePoliticsPositions": 100,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $6225.41)"
+      ]
+    },
+    {
+      "wallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+      "totalTradesInWindow": 810,
+      "politicsTrades": 228,
+      "newestTradeAge_h": 3,
+      "politicsAvgUsdc": 7519.88,
+      "politicsMedianUsdc": 1263.72,
+      "politicsMinUsdc": 0.06,
+      "politicsMaxUsdc": 188947.99,
+      "uniquePoliticsPositions": 94,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $7519.88)"
+      ]
+    },
+    {
+      "wallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+      "totalTradesInWindow": 629,
+      "politicsTrades": 98,
+      "newestTradeAge_h": 11.7,
+      "politicsAvgUsdc": 6585.22,
+      "politicsMedianUsdc": 770.26,
+      "politicsMinUsdc": 3.2,
+      "politicsMaxUsdc": 198883.67,
+      "uniquePoliticsPositions": 37,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $6585.22)"
+      ]
+    },
+    {
+      "wallet": "0x241f846866c2de4fb67cdb0ca6b963d85e56ef50",
+      "totalTradesInWindow": 2164,
+      "politicsTrades": 77,
+      "newestTradeAge_h": 54.7,
+      "politicsAvgUsdc": 352.54,
+      "politicsMedianUsdc": 387.6,
+      "politicsMinUsdc": 0.01,
+      "politicsMaxUsdc": 3996,
+      "uniquePoliticsPositions": 60,
+      "closedPoliticsPositions": 3,
+      "closedWins": 1,
+      "closedLosses": 2,
+      "closedWrPct": 33.3,
+      "realizedPoliticsPnl": 4.39,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 3)",
+        "wr<55% (got 33.3%)"
+      ]
+    },
+    {
+      "wallet": "0xa53c26443fb636d8ae31ac24f62fc1d5ef8f67a5",
+      "totalTradesInWindow": 523,
+      "politicsTrades": 30,
+      "newestTradeAge_h": 157.4,
+      "politicsAvgUsdc": 7149.46,
+      "politicsMedianUsdc": 1.13,
+      "politicsMinUsdc": 0.03,
+      "politicsMaxUsdc": 39880,
+      "uniquePoliticsPositions": 24,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $7149.46)"
+      ]
+    },
+    {
+      "wallet": "0x94a428cfa4f84b264e01f70d93d02bc96cb36356",
+      "totalTradesInWindow": 55,
+      "politicsTrades": 23,
+      "newestTradeAge_h": 227.6,
+      "politicsAvgUsdc": 27503.51,
+      "politicsMedianUsdc": 5097.35,
+      "politicsMinUsdc": 2.14,
+      "politicsMaxUsdc": 292976.25,
+      "uniquePoliticsPositions": 11,
+      "closedPoliticsPositions": 1,
+      "closedWins": 1,
+      "closedLosses": 0,
+      "closedWrPct": 100,
+      "realizedPoliticsPnl": 18036.76,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 1)",
+        "avg_size>$500 (got $27503.51)"
+      ]
+    },
+    {
+      "wallet": "0x9b979a065641e8cfde3022a30ed2d9415cf55e12",
+      "totalTradesInWindow": 104,
+      "politicsTrades": 20,
+      "newestTradeAge_h": 37.7,
+      "politicsAvgUsdc": 126129.32,
+      "politicsMedianUsdc": 95979.31,
+      "politicsMinUsdc": 32.54,
+      "politicsMaxUsdc": 359349.54,
+      "uniquePoliticsPositions": 6,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $126129.32)"
+      ]
+    },
+    {
+      "wallet": "0xa49becb692927d455924583b5e3e5788246f4c40",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 14,
+      "newestTradeAge_h": 5.2,
+      "politicsAvgUsdc": 20431.11,
+      "politicsMedianUsdc": 624.41,
+      "politicsMinUsdc": 4.29,
+      "politicsMaxUsdc": 265202,
+      "uniquePoliticsPositions": 8,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 14)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $20431.11)"
+      ]
+    },
+    {
+      "wallet": "0x006cc834cc092684f1b56626e23bedb3835c16ea",
+      "totalTradesInWindow": 57,
+      "politicsTrades": 11,
+      "newestTradeAge_h": 73.8,
+      "politicsAvgUsdc": 1347.69,
+      "politicsMedianUsdc": 59.95,
+      "politicsMinUsdc": 0.26,
+      "politicsMaxUsdc": 14349.48,
+      "uniquePoliticsPositions": 4,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 11)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $1347.69)"
+      ]
+    },
+    {
+      "wallet": "0xee613b3fc183ee44f9da9c05f53e2da107e3debf",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 7,
+      "newestTradeAge_h": 402.3,
+      "politicsAvgUsdc": 623.11,
+      "politicsMedianUsdc": 301.08,
+      "politicsMinUsdc": 2.46,
+      "politicsMaxUsdc": 2649.43,
+      "uniquePoliticsPositions": 4,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 7)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $623.11)",
+        "inactive_>14d (newest 402.3h)"
+      ]
+    },
+    {
+      "wallet": "0xfe787d2da716d60e8acff57fb87eb13cd4d10319",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 7,
+      "newestTradeAge_h": 1.9,
+      "politicsAvgUsdc": 482.24,
+      "politicsMedianUsdc": 95.4,
+      "politicsMinUsdc": 21.89,
+      "politicsMaxUsdc": 1637.71,
+      "uniquePoliticsPositions": 3,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 7)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x507e52ef684ca2dd91f90a9d26d149dd3288beae",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 6,
+      "newestTradeAge_h": 1.9,
+      "politicsAvgUsdc": 163.99,
+      "politicsMedianUsdc": 189,
+      "politicsMinUsdc": 38.94,
+      "politicsMaxUsdc": 189,
+      "uniquePoliticsPositions": 1,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All",
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 6)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x9f2fe025f84839ca81dd8e0338892605702d2ca8",
+      "totalTradesInWindow": 266,
+      "politicsTrades": 5,
+      "newestTradeAge_h": 13.8,
+      "politicsAvgUsdc": 143.85,
+      "politicsMedianUsdc": 83.63,
+      "politicsMinUsdc": 33.21,
+      "politicsMaxUsdc": 462.87,
+      "uniquePoliticsPositions": 1,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 5)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0xd7f85d0eb0fe0732ca38d9107ad0d4d01b1289e4",
+      "totalTradesInWindow": 12,
+      "politicsTrades": 4,
+      "newestTradeAge_h": 194,
+      "politicsAvgUsdc": 377.92,
+      "politicsMedianUsdc": 322.93,
+      "politicsMinUsdc": 1.99,
+      "politicsMaxUsdc": 1082.78,
+      "uniquePoliticsPositions": 4,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 4)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x8a6c6811e8937f9e8afc1b9249fa540262c30b3f",
+      "totalTradesInWindow": 2673,
+      "politicsTrades": 2,
+      "newestTradeAge_h": 9.2,
+      "politicsAvgUsdc": 5665.15,
+      "politicsMedianUsdc": 6363.34,
+      "politicsMinUsdc": 4966.97,
+      "politicsMaxUsdc": 6363.34,
+      "uniquePoliticsPositions": 1,
+      "closedPoliticsPositions": 1,
+      "closedWins": 1,
+      "closedLosses": 0,
+      "closedWrPct": 100,
+      "realizedPoliticsPnl": 1396.37,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 2)",
+        "closed_positions<5 (got 1)",
+        "avg_size>$500 (got $5665.15)"
+      ]
+    },
+    {
+      "wallet": "0xd809c54478c5e50fe2aa20acccf0857baa0a6542",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 2,
+      "newestTradeAge_h": 8.7,
+      "politicsAvgUsdc": 500,
+      "politicsMedianUsdc": 500,
+      "politicsMinUsdc": 500,
+      "politicsMaxUsdc": 500,
+      "uniquePoliticsPositions": 1,
+      "closedPoliticsPositions": 1,
+      "closedWins": 0,
+      "closedLosses": 1,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": 0,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 2)",
+        "closed_positions<5 (got 1)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x204f72f35326db932158cba6adff0b9a1da95e14",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 2,
+      "newestTradeAge_h": 0.1,
+      "politicsAvgUsdc": 63.4,
+      "politicsMedianUsdc": 122.91,
+      "politicsMinUsdc": 3.89,
+      "politicsMaxUsdc": 122.91,
+      "uniquePoliticsPositions": 2,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly",
+        "leaderboard-All",
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 2)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x6ac5bb06a9eb05641fd5e82640268b92f3ab4b6e",
+      "totalTradesInWindow": 3060,
+      "politicsTrades": 2,
+      "newestTradeAge_h": 11.3,
+      "politicsAvgUsdc": 156.79,
+      "politicsMedianUsdc": 310.69,
+      "politicsMinUsdc": 2.9,
+      "politicsMaxUsdc": 310.69,
+      "uniquePoliticsPositions": 2,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly",
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 2)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x27f738fe203827445690339104aae35b20bc44b0",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 1,
+      "newestTradeAge_h": 6.7,
+      "politicsAvgUsdc": 32.19,
+      "politicsMedianUsdc": 32.19,
+      "politicsMinUsdc": 32.19,
+      "politicsMaxUsdc": 32.19,
+      "uniquePoliticsPositions": 1,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 1)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x0eb568f307e9a48af2c3e688ad6074236712c494",
+      "totalTradesInWindow": 321,
+      "politicsTrades": 1,
+      "newestTradeAge_h": 13.9,
+      "politicsAvgUsdc": 408,
+      "politicsMedianUsdc": 408,
+      "politicsMinUsdc": 408,
+      "politicsMaxUsdc": 408,
+      "uniquePoliticsPositions": 1,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 1)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0x2a2c53bd278c04da9962fcf96490e17f3dfb9bc1",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 1,
+      "newestTradeAge_h": 6.8,
+      "politicsAvgUsdc": 17456.19,
+      "politicsMedianUsdc": 17456.19,
+      "politicsMinUsdc": 17456.19,
+      "politicsMaxUsdc": 17456.19,
+      "uniquePoliticsPositions": 1,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly",
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 1)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size>$500 (got $17456.19)"
+      ]
+    },
+    {
+      "wallet": "0xc2e7800b5af46e6093872b177b7a5e7f0563be51",
+      "totalTradesInWindow": 349,
+      "politicsTrades": 1,
+      "newestTradeAge_h": 13.9,
+      "politicsAvgUsdc": 448.2,
+      "politicsMedianUsdc": 448.2,
+      "politicsMinUsdc": 448.2,
+      "politicsMaxUsdc": 448.2,
+      "uniquePoliticsPositions": 1,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly",
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 1)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)"
+      ]
+    },
+    {
+      "wallet": "0xa5ea13a81d2b7e8e424b182bdc1db08e756bd96a",
+      "totalTradesInWindow": 1946,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 5.5,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x53757615de1c42b83f893b79d4241a009dc2aeea",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 1.6,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xce9d175628fb6eb014636cf9e3e2976779eff402",
+      "totalTradesInWindow": 42,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 55.4,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x9495425feeb0c250accb89275c97587011b19a27",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 6.6,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x3de4543d599ffb09386aac2eab198a295511b032",
+      "totalTradesInWindow": 207,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 45.7,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x3dfb153c197d4c19d3b31c1ecd2c7b6860eeabaf",
+      "totalTradesInWindow": 141,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 3.3,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x84cfffc3f16dcc353094de30d4a45226eccd2f63",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 0,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x5b4ec9c06b284ee52c41a761974d836992880232",
+      "totalTradesInWindow": 7,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 9.3,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xa71093cafc0c099b4ccab24c3cb8018d817923c4",
+      "totalTradesInWindow": 886,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 9.9,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xa8e089ade142c95538e06196e09c85681112ad50",
+      "totalTradesInWindow": 736,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 11.2,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xd106952ebf30a3125affd8a23b6c1f30c35fc79c",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 0.2,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x2005d16a84ceefa912d4e380cd32e7ff827875ea",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 0.1,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly",
+        "leaderboard-All",
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xcf98eafbaee9fbd41a3d67b59a50e39e55ba6e0a",
+      "totalTradesInWindow": 64,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 8.5,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x2117ae94a97d69b78cbc81b6680a62deb1955c26",
+      "totalTradesInWindow": 1787,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 0.2,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xd202bf6d89dc6bab1b9f00ead175f75466348973",
+      "totalTradesInWindow": 266,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 10.4,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xa1360dbbc43a66cfdbccd72ee8aa868d478c97de",
+      "totalTradesInWindow": 329,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 13.9,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x91eee6b7cea1916214daebec3b92b7513079c5b8",
+      "totalTradesInWindow": 355,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 14.2,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xbee54d90051720e27921dc6874f02d646ffca636",
+      "totalTradesInWindow": 345,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 13.9,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xa380c504a480f591c7dfbf9944fac3994b9b21ff",
+      "totalTradesInWindow": 4,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 14.7,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xbc7ab79192c6aa7c961eb89260b38ec049a96940",
+      "totalTradesInWindow": 2,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 69.6,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x0a55f6b56bd976ae3ddfbffc9c2c4b70a0f9f9be",
+      "totalTradesInWindow": 10,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 37.2,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x1b626635d9155f6366298c0f8dc2eac2e546db9c",
+      "totalTradesInWindow": 12,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 27.8,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x4bff30af91642dc7d2b19a8664378fe55c45fc26",
+      "totalTradesInWindow": 265,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 30.3,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xd9c4f7323b02bcb3e476291e9203239667006f95",
+      "totalTradesInWindow": 1036,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 13.9,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x492442eab586f242b53bda933fd5de859c8a3782",
+      "totalTradesInWindow": 3398,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 9.9,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly",
+        "leaderboard-Monthly",
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x4f2122d5d91257761c15161317f34d52d6640ec5",
+      "totalTradesInWindow": 79,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 14.7,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Weekly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x85f031d069de300055900c4055c1baeb6bde3f67",
+      "totalTradesInWindow": 228,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 17.9,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x5966db1fe50763c9e3c014d756369bad07e1f804",
+      "totalTradesInWindow": 92,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 11.9,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x57cd939930fd119067ca9dc42b22b3e15708a0fb",
+      "totalTradesInWindow": 375,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 64.7,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0xbddf61af533ff524d27154e589d2d7a81510c684",
+      "totalTradesInWindow": 306,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 36.7,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-Monthly"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x56687bf447db6ffa42ffe2204a05edaa20f55839",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0x1f2dd6d473f3e824cd2f8a89d9c69fb96f6ad0cf",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0x6a72f61820b26b1fe4d956e17b6dc2a1ea3033ee",
+      "totalTradesInWindow": 2745,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 4.8,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    },
+    {
+      "wallet": "0x78b9ac44a6d7d7a076c14e0ad518b301b63c6b76",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0xd235973291b2b75ff4070e9c0b01728c520b0f29",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0x863134d00841b2e200492805a01e1e2f5defaa53",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0x8119010a6e589062aa03583bb3f39ca632d9f887",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0xe9ad918c7678cd38b12603a762e638a5d1ee7091",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0x94f199fb7789f1aef7fff6b758d6b375100f4c7a",
+      "totalTradesInWindow": 101,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 1864.4,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest 1864.4h)"
+      ]
+    },
+    {
+      "wallet": "0x885783760858e1bd5dd09a3c3f916cfa251ac270",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0x23786fdad0073692157c6d7dc81f281843a35fcb",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0xe90bec87d9ef430f27f9dcfe72c34b76967d5da2",
+      "totalTradesInWindow": 1348,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 1671.5,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest 1671.5h)"
+      ]
+    },
+    {
+      "wallet": "0xd0c042c08f755ff940249f62745e82d356345565",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0xdc876e6873772d38716fda7f2452a78d426d7ab6",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 1502.6,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest 1502.6h)"
+      ]
+    },
+    {
+      "wallet": "0x16f91db2592924cfed6e03b7e5cb5bb1e32299e3",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0xac44cb78be973ec7d91b69678c4bdfa7009afbd7",
+      "totalTradesInWindow": 76,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 1957.5,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest 1957.5h)"
+      ]
+    },
+    {
+      "wallet": "0xefbc5fec8d7b0acdc8911bdd9a98d6964308f9a2",
+      "totalTradesInWindow": 65,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 1285.1,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest 1285.1h)"
+      ]
+    },
+    {
+      "wallet": "0x033a07b3de5947eab4306676ad74eb546da30d50",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0xed2239a9150c3920000d0094d28fa51c7db03dd0",
+      "totalTradesInWindow": 0,
+      "politicsTrades": 0,
+      "newestTradeAge_h": null,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "leaderboard-All"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest n/ah)"
+      ]
+    },
+    {
+      "wallet": "0x37c1874a60d348903594a96703e0507c518fc53a",
+      "totalTradesInWindow": 3500,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 423.5,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)",
+        "inactive_>14d (newest 423.5h)"
+      ]
+    },
+    {
+      "wallet": "0x0c154c190e293b7e5f8d453b5f690c4dc9599a45",
+      "totalTradesInWindow": 203,
+      "politicsTrades": 0,
+      "newestTradeAge_h": 15.4,
+      "politicsAvgUsdc": null,
+      "politicsMedianUsdc": null,
+      "politicsMinUsdc": null,
+      "politicsMaxUsdc": null,
+      "uniquePoliticsPositions": 0,
+      "closedPoliticsPositions": 0,
+      "closedWins": 0,
+      "closedLosses": 0,
+      "closedWrPct": null,
+      "realizedPoliticsPnl": null,
+      "source": [
+        "watchlist"
+      ],
+      "passesAllFilters": false,
+      "rejections": [
+        "politics_trades<15 (got 0)",
+        "closed_positions<5 (got 0)",
+        "wr<55% (got n/a%)",
+        "avg_size<$10 (got $n/a)"
+      ]
+    }
+  ],
+  "summary": {
+    "passingCount": 0,
+    "topByRealizedPnl": [],
+    "nearMisses": [
+      {
+        "wallet": "0xe8dd7741ccb12350957ec71e9ee332e0d1e6ec86",
+        "politicsTrades": 1316,
+        "closedPositions": 0,
+        "wrPct": null,
+        "avgSize": 77.84,
+        "rejections": [
+          "closed_positions<5 (got 0)",
+          "wr<55% (got n/a%)"
+        ]
+      },
+      {
+        "wallet": "0x24c8cf69a0e0a17eee21f69d29752bfa32e823e1",
+        "politicsTrades": 989,
+        "closedPositions": 0,
+        "wrPct": null,
+        "avgSize": 3977.45,
+        "rejections": [
+          "closed_positions<5 (got 0)",
+          "wr<55% (got n/a%)",
+          "avg_size>$500 (got $3977.45)"
+        ]
+      },
+      {
+        "wallet": "0x5d05b1f588780423488a09d9aefeb64df54d6320",
+        "politicsTrades": 908,
+        "closedPositions": 0,
+        "wrPct": null,
+        "avgSize": 76.31,
+        "rejections": [
+          "closed_positions<5 (got 0)",
+          "wr<55% (got n/a%)"
+        ]
+      },
+      {
+        "wallet": "0xde7be6d489bce070a959e0cb813128ae659b5f4b",
+        "politicsTrades": 442,
+        "closedPositions": 0,
+        "wrPct": null,
+        "avgSize": 6225.41,
+        "rejections": [
+          "closed_positions<5 (got 0)",
+          "wr<55% (got n/a%)",
+          "avg_size>$500 (got $6225.41)"
+        ]
+      },
+      {
+        "wallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+        "politicsTrades": 228,
+        "closedPositions": 0,
+        "wrPct": null,
+        "avgSize": 7519.88,
+        "rejections": [
+          "closed_positions<5 (got 0)",
+          "wr<55% (got n/a%)",
+          "avg_size>$500 (got $7519.88)"
+        ]
+      },
+      {
+        "wallet": "0x96489abcb9f583d6835c8ef95ffc923d05a86825",
+        "politicsTrades": 98,
+        "closedPositions": 0,
+        "wrPct": null,
+        "avgSize": 6585.22,
+        "rejections": [
+          "closed_positions<5 (got 0)",
+          "wr<55% (got n/a%)",
+          "avg_size>$500 (got $6585.22)"
+        ]
+      },
+      {
+        "wallet": "0x241f846866c2de4fb67cdb0ca6b963d85e56ef50",
+        "politicsTrades": 77,
+        "closedPositions": 3,
+        "wrPct": 33.3,
+        "avgSize": 352.54,
+        "rejections": [
+          "closed_positions<5 (got 3)",
+          "wr<55% (got 33.3%)"
+        ]
+      },
+      {
+        "wallet": "0xa53c26443fb636d8ae31ac24f62fc1d5ef8f67a5",
+        "politicsTrades": 30,
+        "closedPositions": 0,
+        "wrPct": null,
+        "avgSize": 7149.46,
+        "rejections": [
+          "closed_positions<5 (got 0)",
+          "wr<55% (got n/a%)",
+          "avg_size>$500 (got $7149.46)"
+        ]
+      },
+      {
+        "wallet": "0x94a428cfa4f84b264e01f70d93d02bc96cb36356",
+        "politicsTrades": 23,
+        "closedPositions": 1,
+        "wrPct": 100,
+        "avgSize": 27503.51,
+        "rejections": [
+          "closed_positions<5 (got 1)",
+          "avg_size>$500 (got $27503.51)"
+        ]
+      },
+      {
+        "wallet": "0x9b979a065641e8cfde3022a30ed2d9415cf55e12",
+        "politicsTrades": 20,
+        "closedPositions": 0,
+        "wrPct": null,
+        "avgSize": 126129.32,
+        "rejections": [
+          "closed_positions<5 (got 0)",
+          "wr<55% (got n/a%)",
+          "avg_size>$500 (got $126129.32)"
+        ]
+      }
+    ]
+  }
+}
