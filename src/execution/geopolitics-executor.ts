@@ -60,6 +60,13 @@ export class GeopoliticsExecutor {
   private stopLossCooldown: Map<string, number> = new Map();
   private executedCount = 0;
   private blockedCount = 0;
+  /**
+   * Per-pipeline cash balance — tracks the geopolitics pool's available capital.
+   * Updated on open/close and fed to the per-pipeline RiskManager so its
+   * drawdown breaker operates against the geopolitics pool ONLY, not the
+   * bot-wide balance. Option D isolation, 2026-05-12.
+   */
+  private poolBalance: number;
 
   constructor(opts: {
     paperEngine: PaperTradingEngine;
@@ -75,6 +82,8 @@ export class GeopoliticsExecutor {
     this.capitalPool = opts.capitalPool;
     this.riskLevel = opts.riskLevel;
     this.flatSizeUsdc = opts.flatSizeUsdc ?? DEFAULT_FLAT_SIZE_USDC;
+    this.poolBalance = opts.capitalPool;
+    this.riskManager.updateBalance(this.poolBalance);
   }
 
   /** Hydrate open positions from Supabase on startup (geopolitics-pipeline trades only) */
@@ -123,6 +132,9 @@ export class GeopoliticsExecutor {
       this.openTrades.delete(marketId);
       this.paperEngine.closeTradeByMarketId(marketId, trade.ourEntryPrice ?? 0, 'rollback');
       this.executedCount = Math.max(0, this.executedCount - 1);
+      // Refund capital — the trade was reverted, no P&L realized.
+      this.poolBalance += trade.ourSize ?? 0;
+      this.riskManager.updateBalance(this.poolBalance);
       logger.warn(`GeopoliticsExecutor: Rolled back trade for ${marketId.slice(0, 20)} (Supabase write failed)`);
     }
   }
@@ -230,6 +242,16 @@ export class GeopoliticsExecutor {
       return { success: false, reason: `Final size $${ourSize.toFixed(2)} below $1 floor` };
     }
 
+    // ─── Per-pipeline risk gate (drawdown breaker + daily loss + exposure) ───
+    // Operates on the geopolitics pool only (Option D, 2026-05-12). Bot-wide
+    // signal-pipeline losses no longer block geopolitics trades.
+    this.riskManager.setOpenTrades(this.toRMTrades());
+    const riskCheck = this.riskManager.checkTrade(ourSize);
+    if (!riskCheck.allowed) {
+      this.blockedCount++;
+      return { success: false, reason: `Geopolitics RM blocked: ${riskCheck.reason}` };
+    }
+
     logger.info(`GeopoliticsExecutor: ${this.paperMode ? '[PAPER]' : '[LIVE]'} Copying ${specialistTag}`, {
       market: leaderTrade.marketQuestion.slice(0, 50),
       side: leaderTrade.side,
@@ -285,6 +307,9 @@ export class GeopoliticsExecutor {
 
     this.openTrades.set(leaderTrade.marketId, trade);
     this.executedCount++;
+    // Per-pipeline balance accounting — capital reserved.
+    this.poolBalance -= ourSize;
+    this.riskManager.updateBalance(this.poolBalance);
     return { success: true, copyTrade: trade };
   }
 
@@ -319,6 +344,9 @@ export class GeopoliticsExecutor {
       };
       this.openTrades.set(leaderTrade.marketId, trade);
       this.executedCount++;
+      // Per-pipeline balance accounting — capital reserved.
+      this.poolBalance -= ourSize;
+      this.riskManager.updateBalance(this.poolBalance);
       return { success: true, copyTrade: trade };
     } catch (err) {
       this.blockedCount++;
@@ -341,6 +369,9 @@ export class GeopoliticsExecutor {
         if (reason === 'stop_loss' || reason === 'stop-loss') {
           this.stopLossCooldown.set(marketId, Date.now());
         }
+        // Per-pipeline balance accounting — capital returned + realized P&L.
+        this.poolBalance += (trade.ourSize ?? 0) + (closed.pnl ?? 0);
+        this.riskManager.updateBalance(this.poolBalance);
         return trade;
       }
     } else if (trade.tokenId) {
@@ -348,12 +379,41 @@ export class GeopoliticsExecutor {
         await cliWrapper.smartOrder(trade.tokenId, 'sell', trade.ourSize);
         trade.status = 'closed';
         this.openTrades.delete(marketId);
+        // Live close: paperEngine isn't writing P&L; book the capital return
+        // only. Realised P&L is settled at reconciliation/audit time.
+        this.poolBalance += (trade.ourSize ?? 0);
+        this.riskManager.updateBalance(this.poolBalance);
         return trade;
       } catch (err) {
         logger.error(`GeopoliticsExecutor: Live close failed for ${marketId}: ${err}`);
       }
     }
     return null;
+  }
+
+  /**
+   * Convert open CopyTrade map → minimal Trade shape that RiskManager's
+   * exposure check expects. Only fields it reads matter (usdcAmount).
+   */
+  private toRMTrades(): import('../types/index.js').Trade[] {
+    return Array.from(this.openTrades.values()).map((t) => ({
+      id: t.id ?? '',
+      marketId: t.marketId,
+      question: t.marketQuestion,
+      tokenId: t.tokenId ?? '',
+      outcome: t.outcome,
+      side: t.side,
+      entryPrice: t.ourEntryPrice ?? t.leaderEntryPrice,
+      size: 0,
+      usdcAmount: t.ourSize ?? 0,
+      convictionScore: 75,
+      riskLevel: this.riskLevel,
+      status: 'open',
+      stopLoss: 0.3,
+      signalIds: [],
+      entryTime: t.entryTime,
+      pipelineId: 'geopolitics',
+    }));
   }
 
   getOpenTrades(): CopyTrade[] {

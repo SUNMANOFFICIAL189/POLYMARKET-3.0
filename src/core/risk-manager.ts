@@ -85,13 +85,18 @@ export class RiskManager {
     if (this.dailyPnl <= -maxDailyLoss) {
       return { allowed: false, reason: `Daily loss limit reached` };
     }
-    const DRAWDOWN_LIMIT = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
-    const currentDrawdown = (this.peakBalance - this.balance) / this.peakBalance;
-    if (currentDrawdown > DRAWDOWN_LIMIT) {
-      return {
-        allowed: false,
-        reason: `Drawdown circuit breaker ${(currentDrawdown * 100).toFixed(1)}% > ${(DRAWDOWN_LIMIT * 100).toFixed(0)}% limit`,
-      };
+    // Drawdown circuit breaker — pipeline-scoped only. Skip for the 'global'
+    // RM (paper-engine cash ledger). Bot-wide DD bleeding across pipelines
+    // breaks Option D isolation — see vault Decision Log 2026-05-12.
+    if (this.pipelineId !== 'global') {
+      const DRAWDOWN_LIMIT = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
+      const currentDrawdown = (this.peakBalance - this.balance) / this.peakBalance;
+      if (currentDrawdown > DRAWDOWN_LIMIT) {
+        return {
+          allowed: false,
+          reason: `Drawdown circuit breaker [${this.pipelineId}] ${(currentDrawdown * 100).toFixed(1)}% > ${(DRAWDOWN_LIMIT * 100).toFixed(0)}% limit`,
+        };
+      }
     }
     return { allowed: true };
   }
