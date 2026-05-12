@@ -494,15 +494,15 @@ export class Runner {
       }
     });
 
-    // Handle signals from the signal generator
+    // Handle signals from the signal generator.
+    //
+    // Telegram notification semantics (Option 1 fix, 2026-05-12): the alert
+    // fires only AFTER the executor accepts. Previously fired on every AI
+    // "yes" — but with current filters (BUY disabled + 24h SELL cap) almost
+    // nothing reached execution, and the user saw "SIGNAL TRADE 95%" pings
+    // for trades that never happened. See vault Decision Log 2026-05-12.
     this.signalGenerator.on('signal', async (signal: TradingSignal) => {
       logger.info(`SIGNAL RECEIVED: ${signal.side.toUpperCase()} on "${signal.market.question.slice(0, 50)}" (${(signal.confidence * 100).toFixed(0)}% confidence) — ${signal.reasoning}`);
-      sendTelegramAlert(
-        `🎯 <b>SIGNAL TRADE</b>\n` +
-        `📊 ${signal.side.toUpperCase()} "${signal.market.question.slice(0, 50)}"\n` +
-        `💪 ${(signal.confidence * 100).toFixed(0)}% confidence\n` +
-        `📰 ${signal.newsHeadline.slice(0, 60)}`
-      );
 
       const result = await this.signalExecutor.execute(signal);
       if (result.success && result.trade) {
@@ -529,6 +529,13 @@ export class Runner {
           } catch (err) { logger.warn(`Supabase: signal trade insert failed: ${err}`); }
         }
         logger.info(`SIGNAL TRADE EXECUTED: $${result.trade.usdcAmount?.toFixed(2) ?? '?'} on "${signal.market.question.slice(0, 40)}"`);
+        sendTelegramAlert(
+          `🎯 <b>SIGNAL TRADE EXECUTED</b>\n` +
+          `📊 ${signal.side.toUpperCase()} "${signal.market.question.slice(0, 50)}"\n` +
+          `💪 ${(signal.confidence * 100).toFixed(0)}% confidence\n` +
+          `💵 $${result.trade.usdcAmount?.toFixed(2) ?? '?'} deployed @ ${result.trade.entryPrice?.toFixed(4) ?? '?'}\n` +
+          `📰 ${signal.newsHeadline.slice(0, 60)}`
+        );
       } else {
         logger.info(`Signal trade not executed: ${result.reason}`);
       }

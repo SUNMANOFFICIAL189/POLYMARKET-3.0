@@ -191,6 +191,29 @@ export class SignalGenerator extends EventEmitter {
       return;
     }
 
+    // Pre-AI eligibility check — when BUYs are disabled AND the market resolves
+    // outside MAX_HOURS_SELL_RESOLUTION, there's no possible trade type that
+    // would survive the executor's filter chain. Skipping here saves the AI
+    // call AND prevents the misleading downstream "SIGNAL TRADE" notification.
+    // Dominant rejection class in 2026-05-12 logs: ~90% of all rejections
+    // were SELLs on markets resolving > 24h out (Fed Chair, 2028 elections,
+    // far-dated peace deals). See `feedback_communication_plain_english_ctdd`.
+    const buyEnabled = process.env.SIGNAL_BUY_ENABLED === 'true';
+    if (!buyEnabled && market.endDate) {
+      const endTs = new Date(market.endDate).getTime();
+      if (!isNaN(endTs)) {
+        const maxSellHours = Number(process.env.MAX_HOURS_SELL_RESOLUTION ?? '24') || 24;
+        const hoursToResolution = (endTs - Date.now()) / 3600000;
+        if (hoursToResolution > maxSellHours) {
+          logger.info(
+            `SignalGenerator: pre-AI skip — "${market.question.slice(0, 50)}" ` +
+            `resolves in ${hoursToResolution.toFixed(0)}h (>${maxSellHours}h SELL cap, BUY disabled) — no trade type would survive executor`,
+          );
+          return;
+        }
+      }
+    }
+
     // Extract current price string for the AI prompt
     const priceStr = this.formatMarketPrices(market);
 
