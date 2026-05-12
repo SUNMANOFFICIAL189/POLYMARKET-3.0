@@ -624,7 +624,11 @@ export class Runner {
   private async handleGeopoliticsTrade(trade: LeaderTrade): Promise<void> {
     const result = await this.geopoliticsExecutor.execute(trade);
     if (!result.success) {
-      logger.debug(`GeopoliticsExecutor: skipped — ${result.reason}`);
+      // info-level (not debug) so silent rejection regressions are visible
+      // in pm2 logs without flipping log level. 2026-05-12 incident: a per-
+      // pipeline RM gate was silently rejecting every trade for 4h with no
+      // visible reason because this line was at debug level.
+      logger.info(`GeopoliticsExecutor: skipped — ${result.reason}`);
       return;
     }
     // Write-through to Supabase

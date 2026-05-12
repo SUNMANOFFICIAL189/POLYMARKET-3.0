@@ -34,7 +34,14 @@ export const RISK_PRESETS: Record<RiskLevel, RiskConfig> = {
   paper: {
     level: 'paper',
     minConviction: 40,
-    maxPositionPct: 0.02,
+    // 2026-05-12: bumped 0.02 → 0.10. The 2% cap was set for global bot
+    // capital ($6300 × 0.02 = $126); after Option D pipeline isolation
+    // (2026-05-12), each per-pipeline RM uses its OWN pool balance, so 2%
+    // of a $1500 geopolitics pool = $30 — silently rejected the $75 flat
+    // sizing. The per-trade max-loss cap (MAX_LOSS_PCT_PER_TRADE=0.05) is
+    // the real asymmetric-exposure safety gate; this percent is just a
+    // sanity cap on dollar size.
+    maxPositionPct: 0.10,
     maxOpenPositions: 5,
     maxDailyRiskPct: 0.05,
     minWhaleConsensus: 0,
