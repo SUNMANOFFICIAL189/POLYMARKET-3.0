@@ -109,6 +109,14 @@ export class Runner {
   private currentLeader: Leader | null = null;
   private vetoedTodayCount = 0;
   private consecutiveVetoes = 0;
+  /**
+   * Max-loss monitor TG-alert cooldown: tradeId → last-alert-timestamp.
+   * Without this, a position over-cap fires a Telegram alert on every
+   * 5-min status pump, spamming until it resolves. Cooldown ensures one
+   * alert per position per MAX_LOSS_MONITOR_COOLDOWN_H (default 6h).
+   * Console logs still fire on every check. Phase 1.2.1, 2026-05-17.
+   */
+  private maxLossAlertCooldown: Map<string, number> = new Map();
   private pendingTrades: Map<string, LeaderTrade> = new Map(); // tradeId → trade being processed
 
   constructor() {
@@ -1121,8 +1129,7 @@ export class Runner {
     const maxLossPct = Number(process.env.MAX_LOSS_PCT_PER_TRADE ?? '0.05') || 0.05;
     const violations = this.paperEngine.checkMaxLossExposure(maxLossPct);
     if (violations.length > 0) {
-      const tgLines: string[] = ['⚠️ <b>MAX-LOSS MONITOR</b>'];
-      tgLines.push(violations.length + ' position(s) over the ' + (maxLossPct * 100).toFixed(0) + '% per-trade cap:');
+      // Always log each violation (no spam — logs are cheap)
       for (const v of violations) {
         logger.warn(
           'MaxLossMonitor: position ' + v.trade.id.slice(0, 8) +
@@ -1131,50 +1138,54 @@ export class Runner {
           '(cap $' + v.capDollars.toFixed(2) + ', overage +' + v.overagePct.toFixed(1) + '%) ' +
           '"' + (v.trade.question || v.trade.marketId).slice(0, 50) + '"',
         );
-        tgLines.push('• ' + v.trade.side.toUpperCase() + ' @' + v.trade.entryPrice.toFixed(4) +
-          ' size $' + v.trade.usdcAmount.toFixed(0) +
-          ' — max-loss $' + v.maxLoss.toFixed(0) + ' (' + v.pctOfBalance.toFixed(1) + '%): ' +
-          (v.trade.question || v.trade.marketId).slice(0, 45));
       }
-      // Optional auto-close (default OFF for safety; flip env var to enable).
+      // Per-position TG-alert cooldown — only alert once per cooldown window
+      // per trade. Phase 1.2.1, 2026-05-17.
+      const cooldownMs = (parseInt(process.env.MAX_LOSS_MONITOR_COOLDOWN_H ?? '6')) * 60 * 60 * 1000;
+      const now = Date.now();
+      // Prune expired cooldown entries to keep map bounded
+      for (const [tradeId, ts] of this.maxLossAlertCooldown) {
+        if (now - ts > cooldownMs) this.maxLossAlertCooldown.delete(tradeId);
+      }
+      // Auto-close fires for ALL violations independent of TG-cooldown.
+      // Default OFF for safety; flip MAX_LOSS_MONITOR_AUTOCLOSE=true to enable.
       // Routes through the same close-cascade the lifecycle manager uses so
-      // all per-executor bookkeeping (RM balance updates, Supabase persist)
-      // fires correctly. Uses MarketCache for realistic exit price when
-      // available; falls back to entry price (zero-P&L close) on cache miss.
+      // all per-executor bookkeeping (RM balance, pool, Supabase) fires
+      // correctly. Uses MarketCache for realistic exit price; falls back
+      // to entry price (zero-P&L close) on cache miss.
       const autoCloseEnabled = process.env.MAX_LOSS_MONITOR_AUTOCLOSE === 'true';
+      const autoClosed: string[] = [];
       if (autoCloseEnabled) {
-        tgLines.push('');
-        tgLines.push('<i>Auto-close enabled — closing flagged positions.</i>');
         for (const v of violations) {
           try {
-            // Look up current market price for realistic exit P&L
             const cached = this.marketCache.getMarket(v.trade.marketId);
-            let exitPrice = v.trade.entryPrice; // safe fallback
+            let exitPrice = v.trade.entryPrice;
             if (cached?.outcomePrices?.length) {
               const outcomeIdx = cached.outcomes.findIndex((o) => o.toLowerCase() === (v.trade.outcome ?? 'yes').toLowerCase());
               if (outcomeIdx >= 0 && Number.isFinite(cached.outcomePrices[outcomeIdx])) {
                 exitPrice = cached.outcomePrices[outcomeIdx];
               }
             }
-            // Try each executor in turn — only the owning one returns a non-null
             const closedCopy = await this.copyExecutor.closePosition(v.trade.marketId, exitPrice, 'max_loss_exposure_breach');
             const closedGeo = closedCopy ? null : await this.geopoliticsExecutor.closePosition(v.trade.marketId, exitPrice, 'max_loss_exposure_breach');
             const closedSig = closedCopy || closedGeo ? null : await this.signalExecutor.closePosition(v.trade.marketId, exitPrice, 'max_loss_exposure_breach');
             const closed = closedCopy || closedGeo || closedSig;
             if (closed) {
               logger.info('MaxLossMonitor: auto-closed ' + v.trade.id.slice(0, 8) + ' at exit ' + exitPrice.toFixed(4));
-              // Persist close to Supabase
+              autoClosed.push(v.trade.id);
               if (this.config.supabase.url && v.trade.id) {
                 try {
                   await db.updateCopyTrade(v.trade.id, {
                     status: 'stopped',
-                    pnl: (closed as any).pnl ?? 0,
+                    pnl: (closed as { pnl?: number }).pnl ?? 0,
                     exitTime: new Date().toISOString(),
-                  } as any);
+                  } as Record<string, unknown>);
                 } catch (err) {
                   logger.warn('MaxLossMonitor: Supabase persist failed for ' + v.trade.id + ': ' + err);
                 }
               }
+              // Once auto-closed we no longer want a "still over cap" TG alert
+              this.maxLossAlertCooldown.delete(v.trade.id);
             } else {
               logger.warn('MaxLossMonitor: no executor accepted close for ' + v.trade.marketId);
             }
@@ -1182,11 +1193,32 @@ export class Runner {
             logger.error('MaxLossMonitor: auto-close failed for ' + v.trade.id.slice(0, 8) + ': ' + err);
           }
         }
-      } else {
-        tgLines.push('');
-        tgLines.push('<i>Manual review needed. Set MAX_LOSS_MONITOR_AUTOCLOSE=true to enable automatic close.</i>');
       }
-      sendTelegramAlert(tgLines.join('\n'));
+
+      // TG alert with per-position cooldown. Only NEW violations (i.e. not
+      // alerted in the last MAX_LOSS_MONITOR_COOLDOWN_H hours, and not just
+      // auto-closed) trigger a fresh TG ping. Logs above already fired for
+      // every violation, every cycle, so the audit trail is complete.
+      const stillOpen = violations.filter((v) => !autoClosed.includes(v.trade.id));
+      const newAlerts = stillOpen.filter((v) => !this.maxLossAlertCooldown.has(v.trade.id));
+      if (newAlerts.length > 0) {
+        const tgLines: string[] = ['⚠️ <b>MAX-LOSS MONITOR</b>'];
+        tgLines.push(newAlerts.length + ' new position(s) over the ' + (maxLossPct * 100).toFixed(0) + '% per-trade cap:');
+        for (const v of newAlerts) {
+          tgLines.push('• ' + v.trade.side.toUpperCase() + ' @' + v.trade.entryPrice.toFixed(4) +
+            ' size $' + v.trade.usdcAmount.toFixed(0) +
+            ' — max-loss $' + v.maxLoss.toFixed(0) + ' (' + v.pctOfBalance.toFixed(1) + '%): ' +
+            (v.trade.question || v.trade.marketId).slice(0, 45));
+          this.maxLossAlertCooldown.set(v.trade.id, now);
+        }
+        tgLines.push('');
+        if (autoCloseEnabled) {
+          tgLines.push('<i>Auto-close ON; positions closed where executor accepted.</i>');
+        } else {
+          tgLines.push('<i>Auto-close OFF. Next alert per position in ' + (cooldownMs / 3600000).toFixed(0) + 'h if still over cap.</i>');
+        }
+        sendTelegramAlert(tgLines.join('\n'));
+      }
     }
 
     const paperStats = this.paperEngine.getStats();
