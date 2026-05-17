@@ -27,6 +27,7 @@ import { MarketCache } from '../signals/market-cache.js';
 import { SignalGenerator } from '../signals/signal-generator.js';
 import { MarketMovementScanner } from '../signals/market-movement-scanner.js';
 import { StrategyCScanner } from '../signals/strategy-c-scanner.js';
+import { WalletScreener, type WalletScreenReport } from '../screener/wallet-rotation.js';
 import { AIClassifier } from '../signals/ai-classifier.js';
 import * as db from '../data/supabase.js';
 import { PositionLifecycleManager } from './position-lifecycle.js';
@@ -92,6 +93,7 @@ export class Runner {
   private signalExecutor: SignalExecutor;
   private movementScanner: MarketMovementScanner;
   private strategyCScanner: StrategyCScanner;
+  private walletScreener: WalletScreener;
 
   // Execution
   private confirmationLayer: ConfirmationLayer;
@@ -211,6 +213,11 @@ export class Runner {
     // with sufficient liquidity). Emits TradingSignal events routed through
     // the same SignalExecutor as news + movement signals.
     this.strategyCScanner = new StrategyCScanner({ marketCache: this.marketCache });
+    // WalletScreener — weekly defensive screen of Tier-1 wallet performance
+    // + external promotion candidates. Read-only by design: emits a report
+    // to TG; user manually edits src/geopolitics/watchlist.ts if they agree
+    // with a demote/promote recommendation. Phase 1, 2026-05-17.
+    this.walletScreener = new WalletScreener();
 
     // Branch 3 (geopolitics) — wired but disabled by default. Activate via
     // GEOPOLITICS_ENABLED=true. Watches a static Tier-1 list of pre-vetted
@@ -437,6 +444,7 @@ export class Runner {
     this.marketCache.stop();
     this.movementScanner.stop();
     this.strategyCScanner.stop();
+    this.walletScreener.stop();
     if (this.blockListener) await this.blockListener.stop();
     if (this.divergenceLogger) this.divergenceLogger.stop();
 
@@ -467,6 +475,13 @@ export class Runner {
     this.marketCache.start();
     this.movementScanner.start();
     this.strategyCScanner.start();
+    this.walletScreener.start();
+
+    // WalletScreener report → format and send Telegram alert. Read-only —
+    // bot does NOT auto-modify watchlist. Phase 1, 2026-05-17.
+    this.walletScreener.on('report', (report: WalletScreenReport) => {
+      this.handleWalletScreenReport(report);
+    });
 
     // Wire StrategyC scanner signals (Phase 0.4, 2026-05-17). Same path as
     // news + movement signals: route through SignalExecutor's filter chain
@@ -1026,6 +1041,61 @@ export class Runner {
     } catch (err) {
       logger.warn(`Reconciliation failed: ${err}`);
     }
+  }
+
+  /**
+   * Format the WalletScreener report and ship to Telegram. Report-only —
+   * bot does NOT modify the watchlist. User reviews the recommendation
+   * and manually edits src/geopolitics/watchlist.ts if they agree.
+   * Phase 1, 2026-05-17.
+   */
+  private handleWalletScreenReport(report: WalletScreenReport): void {
+    const lines: string[] = [];
+    lines.push('📊 <b>WALLET SCREEN REPORT</b>');
+    lines.push('Generated: ' + report.generatedAt.slice(0, 16).replace('T', ' ') + ' UTC');
+    lines.push(`Source: ${report.totalEventsScanned} events → ${report.totalWalletsAggregated} wallets`);
+    lines.push('');
+
+    lines.push('<b>Current Tier-1 performance:</b>');
+    for (const w of report.tier1) {
+      const indicator = w.flag === 'DEMOTE' ? ' ⚠️' : ' ✓';
+      const nameStr = w.internalName ?? w.displayName;
+      lines.push(`• ${nameStr}: $${w.totalWinPnl.toFixed(0)} (${w.eventCount} winning events)${indicator}`);
+    }
+    lines.push('');
+
+    if (report.demotionCandidates.length > 0) {
+      lines.push('<b>⚠️ Demote candidates (Tier-1 underperforming):</b>');
+      for (const w of report.demotionCandidates) {
+        const nameStr = w.internalName ?? w.displayName;
+        lines.push(`• ${nameStr} — ${w.reason ?? 'below threshold'}`);
+      }
+      lines.push('');
+    }
+
+    if (report.promotionCandidates.length > 0) {
+      lines.push('<b>✅ Promote candidates (top external wallets):</b>');
+      for (const w of report.promotionCandidates) {
+        const shortAddr = w.wallet.slice(0, 10);
+        const name = w.displayName !== shortAddr ? `${w.displayName} (${shortAddr}…)` : shortAddr;
+        lines.push(`• ${name}: $${w.totalWinPnl.toFixed(0)} on ${w.eventCount} events`);
+      }
+    } else {
+      lines.push('<i>No external wallets met the promote threshold this cycle.</i>');
+    }
+    lines.push('');
+    lines.push('<i>Report-only. Bot will NOT auto-edit the watchlist. Review and edit src/geopolitics/watchlist.ts manually if changes are warranted.</i>');
+
+    const message = lines.join('\n');
+    // TG has ~4096 char limit; should be well under but truncate defensively
+    const truncated = message.length > 3800 ? message.slice(0, 3700) + '\n…[truncated]' : message;
+    sendTelegramAlert(truncated);
+
+    logger.info(
+      'WalletScreener report sent to Telegram. ' +
+      report.demotionCandidates.length + ' demote, ' +
+      report.promotionCandidates.length + ' promote candidate(s).',
+    );
   }
 
   private logStatus(): void {
