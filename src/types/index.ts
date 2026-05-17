@@ -38,10 +38,16 @@ export const RISK_PRESETS: Record<RiskLevel, RiskConfig> = {
     // capital ($6300 × 0.02 = $126); after Option D pipeline isolation
     // (2026-05-12), each per-pipeline RM uses its OWN pool balance, so 2%
     // of a $1500 geopolitics pool = $30 — silently rejected the $75 flat
-    // sizing. The per-trade max-loss cap (MAX_LOSS_PCT_PER_TRADE=0.05) is
+    // sizing.
+    // 2026-05-17: bumped 0.10 → 0.15 for Phase 0.2 consensus sizing. The
+    // 4-of-4 consensus tier is $200; geopolitics pool of $1500 × 0.10 = $150
+    // would silently reject. 0.15 gives $225 cap which admits $200 with
+    // headroom. Signal pool ($6300 × 0.15 = $945) is well above signal's
+    // own $100 tier max, so no behavior change for signal.
+    // The per-trade max-loss cap (MAX_LOSS_PCT_PER_TRADE=0.05) is
     // the real asymmetric-exposure safety gate; this percent is just a
     // sanity cap on dollar size.
-    maxPositionPct: 0.10,
+    maxPositionPct: 0.15,
     maxOpenPositions: 5,
     maxDailyRiskPct: 0.05,
     minWhaleConsensus: 0,

@@ -53,6 +53,21 @@ const MAX_OPEN_POSITIONS = parseInt(process.env.GEOPOLITICS_MAX_OPEN ?? '8');
 const CAPITAL_CAP_PCT = parseFloat(process.env.GEOPOLITICS_CAPITAL_CAP_PCT ?? '0.80');
 const STOP_LOSS_COOLDOWN_MS = 60 * 60 * 1000; // 60 min
 
+// ─── Consensus sizing (Phase 0.2, 2026-05-17) ─────────────────────────
+// When 2+ specialists buy the same market on the same side within the
+// consensus window, scale up our position. When specialists DISAGREE
+// (one buys YES, another buys NO on the same market), REJECT the trade.
+// Specs locked in build-plan-2026-05-16.md.
+const CONSENSUS_SIZING_ENABLED = process.env.GEOPOLITICS_CONSENSUS_SIZING !== 'false';
+const CONSENSUS_WINDOW_MS = (parseInt(process.env.GEOPOLITICS_CONSENSUS_WINDOW_H ?? '48')) * 60 * 60 * 1000;
+// totalAgreement → size (totalAgreement = self + agreeing other wallets)
+const CONSENSUS_TIERS: Record<number, number> = {
+  1: 50,   // solo  — single-source uncertainty, smaller bet
+  2: 100,  // 2-of-N
+  3: 150,  // 3-of-N
+  4: 200,  // 4-of-N — max conviction (requires maxPositionPct >= 0.14)
+};
+
 export class GeopoliticsExecutor {
   private paperEngine: PaperTradingEngine;
   private riskManager: RiskManager;
@@ -64,6 +79,17 @@ export class GeopoliticsExecutor {
   private stopLossCooldown: Map<string, number> = new Map();
   private executedCount = 0;
   private blockedCount = 0;
+  /**
+   * Consensus tracking — for each watched specialist wallet, a rolling
+   * 48h window of their observed BUYs. Used to detect when 2+ specialists
+   * converge on the same market (size up) or take opposite sides (reject).
+   * Phase 0.2, 2026-05-17.
+   */
+  private recentBuysByWallet: Map<string, Array<{
+    marketId: string;
+    outcome: string;
+    timestamp: number;
+  }>> = new Map();
   /**
    * Per-pipeline cash balance — tracks the geopolitics pool's available capital.
    * Updated on open/close and fed to the per-pipeline RiskManager so its
@@ -151,6 +177,20 @@ export class GeopoliticsExecutor {
     const specialist = findSpecialist(leaderTrade.leaderWallet);
     const specialistTag = specialist ? `${specialist.name}(${specialist.tier})` : 'unknown';
 
+    // ─── Consensus tracking (Phase 0.2) ───
+    // Record this BUY observation BEFORE any filtering. We want the consensus
+    // detector to have a complete picture of what specialists have done
+    // recently, even on trades we don't end up mirroring. Tracks only BUYs
+    // since the executor is BUY-only and disagreement is YES-vs-NO of BUY.
+    if (leaderTrade.side === 'buy') {
+      this.trackBuy(
+        leaderTrade.leaderWallet,
+        leaderTrade.marketId,
+        leaderTrade.outcome ?? 'Yes',
+        Date.now(),
+      );
+    }
+
     // ─── Zero-capital guard ───
     // Avoids the edge case where the pipeline is GEOPOLITICS_ENABLED=true
     // but GEOPOLITICS_CAPITAL=0 (e.g. flag flipped before capital set).
@@ -220,8 +260,35 @@ export class GeopoliticsExecutor {
       return { success: false, reason: `Capital cap: ${(deployedPct * 100).toFixed(1)}% deployed (max ${(CAPITAL_CAP_PCT * 100).toFixed(0)}%)` };
     }
 
-    // ─── Flat sizing — start with configured flat size ───
-    let ourSize = this.flatSizeUsdc;
+    // ─── Consensus detection (Phase 0.2, 2026-05-17) ───
+    // Look at other specialists' recent BUYs on this market within the window.
+    // If any disagree (bought opposite side) → REJECT — specialists fighting
+    // each other is a low-quality signal. If 2+ agree → size up per tier.
+    const consensusOutcome = leaderTrade.outcome ?? 'Yes';
+    const { agreeingWallets, disagreeingWallets } = this.detectConsensus(
+      leaderTrade.marketId,
+      consensusOutcome,
+      leaderTrade.leaderWallet,
+    );
+
+    if (disagreeingWallets.length > 0) {
+      this.blockedCount++;
+      return {
+        success: false,
+        reason: `Specialist disagreement: ${disagreeingWallets.join(',')} hold opposite side on ${leaderTrade.marketId.slice(0, 20)} within ${CONSENSUS_WINDOW_MS / 3600000}h. Skipping.`,
+      };
+    }
+
+    const totalAgreement = agreeingWallets.length + 1; // include self
+    const consensusTierSize = this.computeSizeFromConsensus(totalAgreement);
+
+    // ─── Sizing decision — consensus tier or flat fallback ───
+    let ourSize = CONSENSUS_SIZING_ENABLED ? consensusTierSize : this.flatSizeUsdc;
+
+    if (CONSENSUS_SIZING_ENABLED) {
+      const consensusTag = totalAgreement >= 2 ? `${totalAgreement}-of-N consensus (${[...agreeingWallets, specialistTag].join('+')})` : 'solo';
+      logger.info(`GeopoliticsExecutor: ${specialistTag} ${consensusTag} → size $${ourSize}`);
+    }
 
     // ─── Max-loss cap (asymmetric tail risk on BUY: max loss = entryPrice × shares) ───
     const cappedSize = this.riskManager.capByMaxLoss(ourSize, entryPrice, 'buy');
@@ -432,6 +499,78 @@ export class GeopoliticsExecutor {
   updateCapital(newPool: number): void {
     this.capitalPool = newPool;
   }
+
+  // ───────────────────────────────────────────────────────────────────
+  //  CONSENSUS DETECTION HELPERS (Phase 0.2, 2026-05-17)
+  // ───────────────────────────────────────────────────────────────────
+
+  /**
+   * Record a leader's BUY in the rolling 48h consensus buffer. Called for
+   * every observed BUY from any watchlist specialist, even if we don't end
+   * up mirroring (we want the buffer to reflect actual specialist activity).
+   * Dedupes by marketId per wallet (a wallet that scales into a position
+   * counts as ONE entry, not multiple).
+   */
+  private trackBuy(wallet: string, marketId: string, outcome: string, timestamp: number): void {
+    if (!this.recentBuysByWallet.has(wallet)) {
+      this.recentBuysByWallet.set(wallet, []);
+    }
+    const buys = this.recentBuysByWallet.get(wallet)!;
+    const cutoff = timestamp - CONSENSUS_WINDOW_MS;
+    // Prune expired
+    const fresh = buys.filter((b) => b.timestamp >= cutoff);
+    // Dedupe by marketId — keep the latest for that market
+    const existingIdx = fresh.findIndex((b) => b.marketId === marketId);
+    if (existingIdx >= 0) {
+      fresh[existingIdx] = { marketId, outcome, timestamp };
+    } else {
+      fresh.push({ marketId, outcome, timestamp });
+    }
+    this.recentBuysByWallet.set(wallet, fresh);
+  }
+
+  /**
+   * For a given market+outcome+wallet, find other specialists who:
+   *   - bought the SAME market on the SAME outcome → agreeingWallets (consensus)
+   *   - bought the SAME market on the OPPOSITE outcome → disagreeingWallets (reject signal)
+   * Excludes the current wallet from both sets.
+   */
+  private detectConsensus(
+    marketId: string,
+    outcome: string,
+    currentWallet: string,
+  ): { agreeingWallets: string[]; disagreeingWallets: string[] } {
+    const agreeing: string[] = [];
+    const disagreeing: string[] = [];
+    const now = Date.now();
+    const cutoff = now - CONSENSUS_WINDOW_MS;
+    const targetOutcome = outcome.toLowerCase();
+
+    for (const [wallet, buys] of this.recentBuysByWallet) {
+      if (wallet === currentWallet) continue; // exclude self
+      for (const b of buys) {
+        if (b.timestamp < cutoff) continue;
+        if (b.marketId !== marketId) continue;
+        const name = findSpecialist(wallet)?.name ?? wallet.slice(0, 8);
+        if (b.outcome.toLowerCase() === targetOutcome) {
+          agreeing.push(name);
+        } else {
+          disagreeing.push(name);
+        }
+        break; // one entry per wallet (dedup is per market in trackBuy)
+      }
+    }
+    return { agreeingWallets: agreeing, disagreeingWallets: disagreeing };
+  }
+
+  /** Map total-agreement count (self + others) to sizing tier (USDC). */
+  private computeSizeFromConsensus(totalAgreement: number): number {
+    if (totalAgreement <= 0) return CONSENSUS_TIERS[1];
+    const capped = Math.min(totalAgreement, 4) as 1 | 2 | 3 | 4;
+    return CONSENSUS_TIERS[capped];
+  }
+
+  // ───────────────────────────────────────────────────────────────────
 
   /** Detect markets whose deadline has already passed (date in title) */
   private detectExpired(marketQuestion: string): string | null {
