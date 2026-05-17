@@ -1,7 +1,6 @@
 import { logger } from '../utils/logger.js';
 import { PaperTradingEngine } from '../core/paper-trading.js';
 import { RiskManager } from '../core/risk-manager.js';
-import { categoriseMarket } from '../signals/market-categoriser.js';
 import * as cliWrapper from './cli-wrapper.js';
 import { findSpecialist } from '../geopolitics/watchlist.js';
 import type { LeaderTrade, CopyTrade, RiskLevel, ConfirmationDecision } from '../types/index.js';
@@ -16,8 +15,13 @@ import type { LeaderTrade, CopyTrade, RiskLevel, ConfirmationDecision } from '..
  *   - No rolling-WR penalty / hot-wallet elevation. Static list, refresh quarterly.
  *   - BUY-only. SELL-mirroring is out of scope for v1 (would mean opening shorts;
  *     specialists' edge is in low-price entry, not exit timing).
- *   - Politics-category only. Anything else from the same specialists is filtered
- *     (they trade other categories opportunistically).
+ *   - NO category filter (removed 2026-05-17, Phase 0). Earlier the executor
+ *     rejected any market the categoriser didn't tag 'politics'. That blocked
+ *     ~95% of balthazar's actual book (Peruvian elections) because the keyword
+ *     list didn't pre-enumerate Latin American politics. The watchlist itself
+ *     IS the edge filter; second-guessing the specialist's market choice is
+ *     redundant. See `_NEXT_STEPS/build-plan-2026-05-16.md` and Decision Log
+ *     2026-05-16 / 2026-05-17 for rationale.
  *
  * Inherits from CopyExecutor's playbook:
  *   - Light safety filters (expired/dead market, near-certainty price band)
@@ -159,12 +163,6 @@ export class GeopoliticsExecutor {
     // ─── BUY-only ───
     if (leaderTrade.side !== 'buy') {
       return { success: false, reason: `Geopolitics v1 is BUY-only; ${specialistTag} ${leaderTrade.side.toUpperCase()} ignored` };
-    }
-
-    // ─── Politics-category only (specialists trade other things too) ───
-    const category = categoriseMarket(leaderTrade.marketQuestion);
-    if (category !== 'politics') {
-      return { success: false, reason: `Not politics market (categorised '${category}'): "${leaderTrade.marketQuestion.slice(0, 60)}"` };
     }
 
     // ─── Stop-loss cooldown ───
