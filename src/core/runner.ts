@@ -1102,7 +1102,7 @@ export class Runner {
     );
   }
 
-  private logStatus(): void {
+  private async logStatus(): Promise<void> {
     if (!this.running) return;
 
     // Phase 0.3 (2026-05-17): sweep for phantom positions BEFORE collecting
@@ -1111,6 +1111,83 @@ export class Runner {
     // bypasses executor.closePosition (e.g., paperEngine.checkStopLosses).
     // Sweep runs every 5 min on the same cadence as the status pump.
     this.geopoliticsExecutor.sweepPhantoms();
+
+    // Phase 1.2 (2026-05-17): continuous max-loss exposure monitor.
+    // The per-trade max-loss cap is computed at trade time; if balance drops
+    // after open, positions can drift over the (recomputed) cap percentage.
+    // External watchdog catches this but only after the fact. This in-bot
+    // monitor surfaces violations on the 5-min status cadence so we can
+    // either alert (default) or auto-close (env-flagged).
+    const maxLossPct = Number(process.env.MAX_LOSS_PCT_PER_TRADE ?? '0.05') || 0.05;
+    const violations = this.paperEngine.checkMaxLossExposure(maxLossPct);
+    if (violations.length > 0) {
+      const tgLines: string[] = ['⚠️ <b>MAX-LOSS MONITOR</b>'];
+      tgLines.push(violations.length + ' position(s) over the ' + (maxLossPct * 100).toFixed(0) + '% per-trade cap:');
+      for (const v of violations) {
+        logger.warn(
+          'MaxLossMonitor: position ' + v.trade.id.slice(0, 8) +
+          ' (' + v.trade.side + ' @' + v.trade.entryPrice.toFixed(4) + ' size $' + v.trade.usdcAmount.toFixed(2) + ')' +
+          ' — max-loss $' + v.maxLoss.toFixed(2) + ' is ' + v.pctOfBalance.toFixed(2) + '% of balance ' +
+          '(cap $' + v.capDollars.toFixed(2) + ', overage +' + v.overagePct.toFixed(1) + '%) ' +
+          '"' + (v.trade.question || v.trade.marketId).slice(0, 50) + '"',
+        );
+        tgLines.push('• ' + v.trade.side.toUpperCase() + ' @' + v.trade.entryPrice.toFixed(4) +
+          ' size $' + v.trade.usdcAmount.toFixed(0) +
+          ' — max-loss $' + v.maxLoss.toFixed(0) + ' (' + v.pctOfBalance.toFixed(1) + '%): ' +
+          (v.trade.question || v.trade.marketId).slice(0, 45));
+      }
+      // Optional auto-close (default OFF for safety; flip env var to enable).
+      // Routes through the same close-cascade the lifecycle manager uses so
+      // all per-executor bookkeeping (RM balance updates, Supabase persist)
+      // fires correctly. Uses MarketCache for realistic exit price when
+      // available; falls back to entry price (zero-P&L close) on cache miss.
+      const autoCloseEnabled = process.env.MAX_LOSS_MONITOR_AUTOCLOSE === 'true';
+      if (autoCloseEnabled) {
+        tgLines.push('');
+        tgLines.push('<i>Auto-close enabled — closing flagged positions.</i>');
+        for (const v of violations) {
+          try {
+            // Look up current market price for realistic exit P&L
+            const cached = this.marketCache.getMarket(v.trade.marketId);
+            let exitPrice = v.trade.entryPrice; // safe fallback
+            if (cached?.outcomePrices?.length) {
+              const outcomeIdx = cached.outcomes.findIndex((o) => o.toLowerCase() === (v.trade.outcome ?? 'yes').toLowerCase());
+              if (outcomeIdx >= 0 && Number.isFinite(cached.outcomePrices[outcomeIdx])) {
+                exitPrice = cached.outcomePrices[outcomeIdx];
+              }
+            }
+            // Try each executor in turn — only the owning one returns a non-null
+            const closedCopy = await this.copyExecutor.closePosition(v.trade.marketId, exitPrice, 'max_loss_exposure_breach');
+            const closedGeo = closedCopy ? null : await this.geopoliticsExecutor.closePosition(v.trade.marketId, exitPrice, 'max_loss_exposure_breach');
+            const closedSig = closedCopy || closedGeo ? null : await this.signalExecutor.closePosition(v.trade.marketId, exitPrice, 'max_loss_exposure_breach');
+            const closed = closedCopy || closedGeo || closedSig;
+            if (closed) {
+              logger.info('MaxLossMonitor: auto-closed ' + v.trade.id.slice(0, 8) + ' at exit ' + exitPrice.toFixed(4));
+              // Persist close to Supabase
+              if (this.config.supabase.url && v.trade.id) {
+                try {
+                  await db.updateCopyTrade(v.trade.id, {
+                    status: 'stopped',
+                    pnl: (closed as any).pnl ?? 0,
+                    exitTime: new Date().toISOString(),
+                  } as any);
+                } catch (err) {
+                  logger.warn('MaxLossMonitor: Supabase persist failed for ' + v.trade.id + ': ' + err);
+                }
+              }
+            } else {
+              logger.warn('MaxLossMonitor: no executor accepted close for ' + v.trade.marketId);
+            }
+          } catch (err) {
+            logger.error('MaxLossMonitor: auto-close failed for ' + v.trade.id.slice(0, 8) + ': ' + err);
+          }
+        }
+      } else {
+        tgLines.push('');
+        tgLines.push('<i>Manual review needed. Set MAX_LOSS_MONITOR_AUTOCLOSE=true to enable automatic close.</i>');
+      }
+      sendTelegramAlert(tgLines.join('\n'));
+    }
 
     const paperStats = this.paperEngine.getStats();
     const confirmStats = this.confirmationLayer.getStats();

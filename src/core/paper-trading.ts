@@ -258,6 +258,54 @@ export class PaperTradingEngine {
     return null;
   }
 
+  /**
+   * Continuous max-loss exposure monitor (Phase 1.2, 2026-05-17).
+   *
+   * Re-evaluates the per-trade max-loss cap against CURRENT balance for every
+   * open position. The cap is `MAX_LOSS_PCT_PER_TRADE` (default 5%) of the
+   * current bot balance. A position's max-loss is fixed at trade time (set
+   * by entry price + size), so it doesn't change with current market price —
+   * but the cap percentage drifts as balance changes.
+   *
+   * Use case: positions sized within-cap at trade time can drift out-of-cap
+   * if the bot's balance drops. Without this monitor, we discover violations
+   * only via the external watchdog or after a tail event lands.
+   *
+   * Read-only — returns the list of violations. Caller (runner.logStatus)
+   * decides whether to log, alert, or auto-close.
+   */
+  checkMaxLossExposure(maxLossPct: number = 0.05): Array<{
+    trade: Trade;
+    maxLoss: number;
+    capDollars: number;
+    overagePct: number;
+    pctOfBalance: number;
+  }> {
+    const balance = this.balance;
+    const cap = balance * maxLossPct;
+    const violations: Array<{
+      trade: Trade;
+      maxLoss: number;
+      capDollars: number;
+      overagePct: number;
+      pctOfBalance: number;
+    }> = [];
+    for (const trade of this.openTrades.values()) {
+      const entry = trade.entryPrice;
+      const size = trade.usdcAmount;
+      if (entry <= 0 || entry >= 1 || size <= 0) continue;
+      const maxLossPerShare = trade.side === 'sell' ? (1 - entry) : entry;
+      const shares = size / entry;
+      const maxLoss = maxLossPerShare * shares;
+      if (maxLoss > cap) {
+        const pctOfBalance = (maxLoss / balance) * 100;
+        const overagePct = ((maxLoss - cap) / cap) * 100;
+        violations.push({ trade, maxLoss, capDollars: cap, overagePct, pctOfBalance });
+      }
+    }
+    return violations;
+  }
+
   checkStopLosses(priceMap: Map<string, number>): Trade[] {
     const stopped: Trade[] = [];
     for (const [tradeId, trade] of this.openTrades) {
