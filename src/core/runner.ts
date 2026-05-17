@@ -971,6 +971,13 @@ export class Runner {
   private logStatus(): void {
     if (!this.running) return;
 
+    // Phase 0.3 (2026-05-17): sweep for phantom positions BEFORE collecting
+    // stats so the openPositions counter reflects reality, not stale state.
+    // Phantoms arise when paperEngine closes a position via a path that
+    // bypasses executor.closePosition (e.g., paperEngine.checkStopLosses).
+    // Sweep runs every 5 min on the same cadence as the status pump.
+    this.geopoliticsExecutor.sweepPhantoms();
+
     const paperStats = this.paperEngine.getStats();
     const confirmStats = this.confirmationLayer.getStats();
     const copyStats = this.copyExecutor.getStats();

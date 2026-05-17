@@ -439,6 +439,25 @@ export class GeopoliticsExecutor {
         this.riskManager.updateBalance(this.poolBalance);
         return trade;
       }
+      // Stale-state correction (Phase 0.3, 2026-05-17): paperEngine had no
+      // record of this marketId but our openTrades did. That means paperEngine
+      // closed the position via a different path (e.g., checkStopLosses,
+      // hydration mismatch, prior closeTradeByMarketId call we missed).
+      // Without this branch, our openTrades accumulates "phantom" entries
+      // that inflate the drawdown-breaker calculation and freeze the pipeline.
+      logger.warn(
+        `GeopoliticsExecutor: stale phantom detected for ${marketId.slice(0, 24)} ` +
+        `(paperEngine has no record; reason=${reason}). Cleaning up executor state.`,
+      );
+      trade.status = 'closed';
+      trade.exitTime = new Date().toISOString();
+      // pnl unknown — paperEngine has no record; assume capital-only return
+      this.openTrades.delete(marketId);
+      this.poolBalance += (trade.ourSize ?? 0);
+      this.riskManager.updateBalance(this.poolBalance);
+      // Return null so the lifecycle-cascade can keep looking (e.g., signalExecutor)
+      // and the caller doesn't double-persist a close we don't have real data for.
+      return null;
     } else if (trade.tokenId) {
       try {
         await cliWrapper.smartOrder(trade.tokenId, 'sell', trade.ourSize);
@@ -454,6 +473,42 @@ export class GeopoliticsExecutor {
       }
     }
     return null;
+  }
+
+  /**
+   * Phantom-state sweep (Phase 0.3, 2026-05-17). Compares the executor's
+   * in-memory openTrades against the paper engine's authoritative state.
+   * Any executor entry that paperEngine no longer recognizes is a phantom —
+   * paperEngine has already closed it (likely via checkStopLosses or an
+   * earlier code path that bypassed closePosition). We clean up the
+   * executor's state to keep drawdown / capital accounting correct.
+   *
+   * Should be called from runner.ts on the same cadence as the status
+   * pump (every 5 min). Idempotent and safe to run frequently.
+   */
+  sweepPhantoms(): { removed: number; phantomMarketIds: string[] } {
+    if (!this.paperMode) return { removed: 0, phantomMarketIds: [] };
+    const phantoms: string[] = [];
+    for (const [marketId] of this.openTrades) {
+      if (!this.paperEngine.hasOpenPositionForMarket(marketId)) {
+        phantoms.push(marketId);
+      }
+    }
+    for (const marketId of phantoms) {
+      const trade = this.openTrades.get(marketId);
+      if (!trade) continue;
+      this.openTrades.delete(marketId);
+      this.poolBalance += (trade.ourSize ?? 0);
+      this.riskManager.updateBalance(this.poolBalance);
+    }
+    if (phantoms.length > 0) {
+      logger.warn(
+        `GeopoliticsExecutor: phantom sweep removed ${phantoms.length} ` +
+        `stale executor entries: ${phantoms.map((m) => m.slice(0, 20)).join(', ')}. ` +
+        `Pool balance restored by $${phantoms.reduce((s, m) => s + (this.openTrades.get(m)?.ourSize ?? 0), 0).toFixed(2)}.`,
+      );
+    }
+    return { removed: phantoms.length, phantomMarketIds: phantoms };
   }
 
   /**
