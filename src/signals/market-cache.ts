@@ -145,6 +145,15 @@ export class MarketCache {
     return this.cache.get(slug) ?? null;
   }
 
+  /**
+   * Return every cached market. Used by scanners that need to iterate the
+   * full cache (StrategyCScanner) rather than search by term/category.
+   * Read-only snapshot — mutating the returned array does not affect cache.
+   */
+  getAllMarkets(): CachedMarket[] {
+    return Array.from(this.cache.values());
+  }
+
   /** Summary stats for monitoring / health checks. */
   getStats(): {
     totalMarkets: number;

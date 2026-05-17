@@ -26,6 +26,7 @@ import { NewsScanner } from '../signals/news-scanner.js';
 import { MarketCache } from '../signals/market-cache.js';
 import { SignalGenerator } from '../signals/signal-generator.js';
 import { MarketMovementScanner } from '../signals/market-movement-scanner.js';
+import { StrategyCScanner } from '../signals/strategy-c-scanner.js';
 import { AIClassifier } from '../signals/ai-classifier.js';
 import * as db from '../data/supabase.js';
 import { PositionLifecycleManager } from './position-lifecycle.js';
@@ -90,6 +91,7 @@ export class Runner {
   private signalGenerator: SignalGenerator;
   private signalExecutor: SignalExecutor;
   private movementScanner: MarketMovementScanner;
+  private strategyCScanner: StrategyCScanner;
 
   // Execution
   private confirmationLayer: ConfirmationLayer;
@@ -203,6 +205,12 @@ export class Runner {
     });
 
     this.movementScanner = new MarketMovementScanner({ marketCache: this.marketCache });
+    // StrategyCScanner — systematic discovery of "fade the near-cert" trades
+    // (Phase 0.4, 2026-05-17). Polls MarketCache every 60s for markets
+    // matching the Strategy C pattern (YES >= 0.92 within 24h to resolution
+    // with sufficient liquidity). Emits TradingSignal events routed through
+    // the same SignalExecutor as news + movement signals.
+    this.strategyCScanner = new StrategyCScanner({ marketCache: this.marketCache });
 
     // Branch 3 (geopolitics) — wired but disabled by default. Activate via
     // GEOPOLITICS_ENABLED=true. Watches a static Tier-1 list of pre-vetted
@@ -428,6 +436,7 @@ export class Runner {
     this.newsScanner.stop();
     this.marketCache.stop();
     this.movementScanner.stop();
+    this.strategyCScanner.stop();
     if (this.blockListener) await this.blockListener.stop();
     if (this.divergenceLogger) this.divergenceLogger.stop();
 
@@ -457,6 +466,57 @@ export class Runner {
     // Start market cache (polls Gamma API for active non-sports markets)
     this.marketCache.start();
     this.movementScanner.start();
+    this.strategyCScanner.start();
+
+    // Wire StrategyC scanner signals (Phase 0.4, 2026-05-17). Same path as
+    // news + movement signals: route through SignalExecutor's filter chain
+    // and persist on success. TG fires only AFTER executor accepts (Option 1
+    // semantics from 2026-05-12 fix — no false-positive scanner alerts).
+    this.strategyCScanner.on('signal', async (signal: TradingSignal) => {
+      logger.info(
+        'SCANNER SIGNAL: ' + signal.side.toUpperCase() +
+        ' on "' + signal.market.question.slice(0, 50) + '" (' +
+        (signal.confidence * 100).toFixed(0) + '% confidence)',
+      );
+      const result = await this.signalExecutor.execute(signal);
+      if (result.success && result.trade) {
+        if (this.config.supabase.url) {
+          try {
+            const dbId = await db.insertCopyTrade({
+              pipeline: 'signal',
+              leaderWallet: 'signal-bot',
+              marketId: signal.market.slug,
+              marketQuestion: signal.market.question,
+              tokenId: signal.market.conditionId,
+              outcome: signal.market.outcomes[0] ?? 'Yes',
+              side: signal.side,
+              leaderEntryPrice: result.trade.entryPrice,
+              ourEntryPrice: result.trade.entryPrice,
+              ourSize: result.trade.usdcAmount,
+              confirmationResult: 'approved' as any,
+              confirmationReason: signal.reasoning.slice(0, 200),
+              status: 'open' as any,
+              riskLevel: 'paper' as any,
+              entryTime: new Date().toISOString(),
+            });
+            if (dbId) { result.trade.id = dbId; logger.info('Supabase: strategy-c scanner trade saved ' + dbId); }
+          } catch (err) { logger.warn('Supabase: strategy-c scanner insert failed: ' + err); }
+        }
+        logger.info(
+          'SCANNER TRADE EXECUTED: $' + (result.trade.usdcAmount?.toFixed(2) ?? '?') +
+          ' on "' + signal.market.question.slice(0, 40) + '"',
+        );
+        sendTelegramAlert(
+          '🎯 <b>SCANNER TRADE EXECUTED</b>\n' +
+          '📊 ' + signal.side.toUpperCase() + ' "' + signal.market.question.slice(0, 50) + '"\n' +
+          '💪 ' + (signal.confidence * 100).toFixed(0) + '% confidence\n' +
+          '💵 $' + (result.trade.usdcAmount?.toFixed(2) ?? '?') + ' deployed @ ' + (result.trade.entryPrice?.toFixed(4) ?? '?') + '\n' +
+          '🔍 Strategy C scanner',
+        );
+      } else {
+        logger.info('Scanner trade not executed: ' + result.reason);
+      }
+    });
 
     // Wire movement scanner signals to the same handler as news signals
     this.movementScanner.on('signal', async (signal: TradingSignal) => {
@@ -1001,6 +1061,9 @@ export class Runner {
         signalsGenerated: this.signalGenerator.getStats().signalsGenerated,
         movementScans: this.movementScanner.getStats().scansCompleted,
         movementSignals: this.movementScanner.getStats().signalsEmitted,
+        strategyCScans: this.strategyCScanner.getStats().scansCompleted,
+        strategyCSignals: this.strategyCScanner.getStats().signalsEmitted,
+        strategyCCandidates: this.strategyCScanner.getStats().candidatesSeen,
         marketsCached: this.marketCache.getStats().totalMarkets,
         geopoliticsTrades: geoStats.executed,
         geopoliticsOpen: geoStats.openPositions,
@@ -1030,6 +1093,7 @@ export class Runner {
       signalsGenerated: this.signalGenerator.getStats().signalsGenerated,
       movementScans: this.movementScanner.getStats().scansCompleted,
       movementSignals: this.movementScanner.getStats().signalsEmitted,
+      strategyC: `scans=${this.strategyCScanner.getStats().scansCompleted} signals=${this.strategyCScanner.getStats().signalsEmitted}`,
       geopolitics: this.config.pipelines.geopolitics.enabled
         ? `executed=${geoStats.executed} open=${geoStats.openPositions} blocked=${geoStats.blocked}`
         : 'disabled',
