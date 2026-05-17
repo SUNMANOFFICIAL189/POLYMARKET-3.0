@@ -1060,7 +1060,11 @@ export class Runner {
     for (const w of report.tier1) {
       const indicator = w.flag === 'DEMOTE' ? ' ⚠️' : ' ✓';
       const nameStr = w.internalName ?? w.displayName;
-      lines.push(`• ${nameStr}: $${w.totalWinPnl.toFixed(0)} (${w.eventCount} winning events)${indicator}`);
+      const wins = `wins $${w.totalWinPnl.toFixed(0)} (${w.eventCount} events)`;
+      const book = w.positions
+        ? `, book: ${w.positions.openPositionCount} open · unrealized $${w.positions.totalUnrealizedPnl.toFixed(0)}`
+        : '';
+      lines.push(`• ${nameStr} — ${wins}${book}${indicator}`);
     }
     lines.push('');
 

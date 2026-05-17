@@ -47,6 +47,23 @@ const MAX_PROMOTE_IN_REPORT = parseInt(process.env.WALLET_MAX_PROMOTE_REPORT ?? 
 
 const DATA_API = 'https://data-api.polymarket.com';
 
+// ─── Calibration tuning (Phase 1.1, 2026-05-17) ──────────────────────
+// The /biggest-winners endpoint is a "recent realized wins" view. Long-hold
+// specialists like balthazar (~500 open Peruvian-election positions) don't
+// appear there until their markets resolve. To avoid mis-flagging them as
+// demote candidates, supplement with /positions per Tier-1 wallet and
+// compute the open book health.
+//
+// A Tier-1 wallet stays HEALTHY if ANY of:
+//   1. Appears in /biggest-winners with totalWinPnl >= DEMOTE_THRESHOLD
+//   2. Open book has net positive unrealized P&L >= UNREALIZED_HEALTH_THRESHOLD
+//   3. Has >= MIN_RECENT_POSITIONS open positions (proxy for "actively trading")
+//
+// Demote only when ALL THREE signals are absent. This is a much higher bar.
+const UNREALIZED_HEALTH_THRESHOLD = parseFloat(process.env.WALLET_UNREALIZED_HEALTH_THRESHOLD ?? '1000');
+const MIN_RECENT_POSITIONS = parseInt(process.env.WALLET_MIN_RECENT_POSITIONS ?? '10');
+const POSITIONS_FETCH_LIMIT = parseInt(process.env.WALLET_POSITIONS_FETCH_LIMIT ?? '500');
+
 // ─── Types ───────────────────────────────────────────────────────────
 interface WalletEvent {
   wallet: string;
@@ -64,6 +81,16 @@ interface AggregatedWallet {
   userName: string;
 }
 
+interface WalletPositionsSummary {
+  openPositionCount: number;
+  totalInitialValue: number;        // capital deployed into open positions
+  totalCurrentValue: number;        // current market value of open positions
+  totalUnrealizedPnl: number;       // cashPnl + realizedPnl across positions
+  redeemableCount: number;          // count of resolved-in-their-favor positions
+  topWinnerTitle?: string;
+  topWinnerPnl?: number;
+}
+
 export interface WalletStat {
   wallet: string;
   displayName: string;       // userName from Polymarket or "Tier-1: balthazar"
@@ -73,6 +100,8 @@ export interface WalletStat {
   eventCount: number;        // count of winning events
   flag: 'DEMOTE' | 'PROMOTE' | null;
   reason?: string;           // human-readable explanation of the flag
+  // ── Phase 1.1 calibration fields (Tier-1 only) ──
+  positions?: WalletPositionsSummary;
 }
 
 export interface WalletScreenReport {
@@ -135,42 +164,87 @@ export class WalletScreener extends EventEmitter {
     const aggregated = this.aggregateByWallet(winners);
     logger.info('WalletScreener: aggregated to ' + aggregated.size + ' unique wallets');
 
+    // Phase 1.1 calibration: fetch /positions for each Tier-1 wallet in parallel
+    // to detect long-hold open-book health that /biggest-winners misses.
+    logger.info('WalletScreener: fetching positions for ' + TIER_1.length + ' Tier-1 wallets in parallel...');
+    const positionsByWallet = new Map<string, WalletPositionsSummary>();
+    await Promise.all(
+      TIER_1.map(async (spec) => {
+        const key = spec.walletAddress.toLowerCase();
+        try {
+          const summary = await this.fetchPositionsSummary(spec.walletAddress);
+          positionsByWallet.set(key, summary);
+        } catch (err) {
+          logger.warn('WalletScreener: positions fetch failed for ' + spec.name + ': ' + err);
+        }
+      }),
+    );
+    logger.info('WalletScreener: positions fetched for ' + positionsByWallet.size + '/' + TIER_1.length + ' Tier-1 wallets');
+
     // Classify and build per-wallet stats
     const tier1Stats: WalletStat[] = [];
     const externalStats: WalletStat[] = [];
 
-    // Ensure every Tier-1 wallet appears in the report — fill in zeroes
-    // for wallets that don't show up in /biggest-winners at all.
+    // Tier-1 evaluation: combine /biggest-winners and /positions signals.
+    // A wallet is HEALTHY if ANY of:
+    //   (a) appears in /biggest-winners with totalWinPnl >= DEMOTE_THRESHOLD
+    //   (b) open-book unrealized P&L >= UNREALIZED_HEALTH_THRESHOLD
+    //   (c) has >= MIN_RECENT_POSITIONS open positions (actively trading)
+    // Demote only when ALL THREE signals are absent.
     for (const spec of TIER_1) {
       const aggKey = spec.walletAddress.toLowerCase();
       const agg = aggregated.get(aggKey);
-      if (agg) {
-        tier1Stats.push({
-          wallet: aggKey,
-          displayName: 'Tier-1: ' + spec.name,
-          tier: 'Tier-1',
-          internalName: spec.name,
-          totalWinPnl: agg.totalPnl,
-          eventCount: agg.events.length,
-          flag: agg.totalPnl < DEMOTE_THRESHOLD ? 'DEMOTE' : null,
-          reason: agg.totalPnl < DEMOTE_THRESHOLD
-            ? 'Total winning pnl $' + agg.totalPnl.toFixed(0) + ' below threshold $' + DEMOTE_THRESHOLD
-            : undefined,
-        });
-        // Mark as consumed so it's not double-listed as external
-        aggregated.delete(aggKey);
+      const pos = positionsByWallet.get(aggKey);
+
+      const winPnl = agg?.totalPnl ?? 0;
+      const winEvents = agg?.events.length ?? 0;
+      const openCount = pos?.openPositionCount ?? 0;
+      const unrealized = pos?.totalUnrealizedPnl ?? 0;
+
+      const signalA_hasRecentWins = winPnl >= DEMOTE_THRESHOLD;
+      const signalB_strongOpenBook = unrealized >= UNREALIZED_HEALTH_THRESHOLD;
+      const signalC_activelyTrading = openCount >= MIN_RECENT_POSITIONS;
+
+      const healthy = signalA_hasRecentWins || signalB_strongOpenBook || signalC_activelyTrading;
+
+      let flag: 'DEMOTE' | null = null;
+      let reason: string | undefined;
+      if (!healthy) {
+        flag = 'DEMOTE';
+        const parts: string[] = [];
+        parts.push('no recent /biggest-winners appearance' + (winPnl > 0 ? ' (only $' + winPnl.toFixed(0) + ')' : ''));
+        if (openCount === 0) {
+          parts.push('zero open positions');
+        } else {
+          parts.push('only ' + openCount + ' open positions');
+        }
+        if (unrealized < UNREALIZED_HEALTH_THRESHOLD) {
+          parts.push('unrealized $' + unrealized.toFixed(0) + ' below health threshold $' + UNREALIZED_HEALTH_THRESHOLD);
+        }
+        reason = parts.join('; ');
       } else {
-        tier1Stats.push({
-          wallet: aggKey,
-          displayName: 'Tier-1: ' + spec.name,
-          tier: 'Tier-1',
-          internalName: spec.name,
-          totalWinPnl: 0,
-          eventCount: 0,
-          flag: 'DEMOTE',
-          reason: 'No appearance in /biggest-winners — no recent realized wins',
-        });
+        // Build a human-readable "healthy because…" string for the report
+        const why: string[] = [];
+        if (signalA_hasRecentWins) why.push('/biggest-winners $' + winPnl.toFixed(0));
+        if (signalB_strongOpenBook) why.push('unrealized $' + unrealized.toFixed(0));
+        if (signalC_activelyTrading) why.push(openCount + ' open positions');
+        reason = 'Healthy: ' + why.join(' + ');
       }
+
+      tier1Stats.push({
+        wallet: aggKey,
+        displayName: 'Tier-1: ' + spec.name,
+        tier: 'Tier-1',
+        internalName: spec.name,
+        totalWinPnl: winPnl,
+        eventCount: winEvents,
+        flag,
+        reason,
+        positions: pos,
+      });
+
+      // Mark as consumed so it's not double-listed as external candidate
+      if (agg) aggregated.delete(aggKey);
     }
 
     // Same for Tier-2 (informational; not flagged)
@@ -227,6 +301,76 @@ export class WalletScreener extends EventEmitter {
 
     this.emit('report', report);
     return report;
+  }
+
+  /**
+   * Fetch a /positions summary for one wallet. Used to detect long-hold
+   * open-book health for Tier-1 wallets whose edge doesn't show up in
+   * /biggest-winners (because their positions haven't resolved yet).
+   * Phase 1.1 calibration, 2026-05-17.
+   */
+  private async fetchPositionsSummary(wallet: string): Promise<WalletPositionsSummary> {
+    const url = DATA_API + '/positions?user=' + wallet + '&limit=' + POSITIONS_FETCH_LIMIT;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) throw new Error('/positions returned HTTP ' + res.status);
+    const data = await res.json() as Array<Record<string, unknown>>;
+    if (!Array.isArray(data)) {
+      return {
+        openPositionCount: 0,
+        totalInitialValue: 0,
+        totalCurrentValue: 0,
+        totalUnrealizedPnl: 0,
+        redeemableCount: 0,
+      };
+    }
+
+    let openCount = 0;
+    let totalInit = 0;
+    let totalCur = 0;
+    let totalUnrealized = 0;
+    let redeemable = 0;
+    let topPnl = -Infinity;
+    let topTitle: string | undefined;
+
+    for (const p of data) {
+      const initialValue = Number(p.initialValue) || 0;
+      const currentValue = Number(p.currentValue) || 0;
+      const cashPnl = Number(p.cashPnl) || 0;
+      const realizedPnl = Number(p.realizedPnl) || 0;
+      const truePnl = cashPnl + realizedPnl;
+      const isRedeemable = Boolean(p.redeemable);
+      const title = typeof p.title === 'string' ? p.title : undefined;
+
+      // Only count "open" positions (initialValue > 0 means they bought)
+      if (initialValue <= 0) continue;
+
+      // Treat as "still open" if currentValue > 0 and not redeemable
+      if (currentValue > 0 && !isRedeemable) {
+        openCount++;
+        totalInit += initialValue;
+        totalCur += currentValue;
+      }
+
+      if (isRedeemable) redeemable++;
+
+      // Always include truePnl (closed and open positions contribute)
+      totalUnrealized += truePnl;
+
+      if (truePnl > topPnl) {
+        topPnl = truePnl;
+        topTitle = title;
+      }
+    }
+
+    return {
+      openPositionCount: openCount,
+      totalInitialValue: totalInit,
+      totalCurrentValue: totalCur,
+      totalUnrealizedPnl: totalUnrealized,
+      redeemableCount: redeemable,
+      topWinnerTitle: topTitle,
+      topWinnerPnl: topPnl === -Infinity ? undefined : topPnl,
+    };
   }
 
   private async fetchBiggestWinners(): Promise<WalletEvent[]> {
