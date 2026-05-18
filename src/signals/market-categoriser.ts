@@ -53,6 +53,16 @@ const KEYWORDS: Record<Exclude<MarketCategory, 'other'>, string[]> = {
     'heroic', 'oddik', 'shifters',
     'game winner', 'map winner', 'set winner',
     'total goals', 'total points', 'handicap:',
+    // Phase 1.3 (2026-05-18): modern esports markets use "LoL:" / format
+    // prefix that the older "league of legends" keyword misses. Bilibili
+    // Gaming (LoL LPL) and Karmine Corp (LoL LEC) trades cost -$326 across
+    // 6 trades in the 2026-05-17 → 18 window because of this gap.
+    'lol:', 'lpl', 'lcs', 'lec', 'lck', 'msi', 'worlds 2026',
+    'bo3', 'bo5', ' bo3 ', ' bo5 ',
+    'karmine corp', 'flyquest', 'bilibili', 'movistar koi',
+    'anyone\'s legend', 'lyon ', 't1 ', 'gen.g', 'hanwha',
+    'esports world cup', 'lol ', 'lan finals',
+    'pickem', 'pick em',
   ],
   politics: [
     'election', 'president', 'congress', 'senate', 'house of representatives',

@@ -99,6 +99,20 @@ export class SignalExecutor {
       }
     }
 
+    // Phase 1.3 sports/esports blocklist (2026-05-18). Esports markets are
+    // coin-flip mid-priced bets (0.49-0.51 entry) where SELL has roughly
+    // break-even-minus-spread expected value. Yesterday's Bilibili LoL
+    // trades lost -$206; overnight's FlyQuest + Karmine Corp LoL trades
+    // added another $120 of exposure in the same pattern. Block them.
+    // Env override: SIGNAL_BLOCK_SPORTS=false reverts in-place.
+    if (process.env.SIGNAL_BLOCK_SPORTS !== 'false') {
+      const cat = categoriseMarket(marketQ);
+      if (cat === 'sports') {
+        logger.info(`SignalExecutor: CATEGORY GATE — sports/esports blocked: "${marketQ.slice(0, 60)}"`);
+        return { success: false, reason: 'Category gate: signal pipeline does not trade sports/esports markets' };
+      }
+    }
+
     // Thesis-level dedup + Rule B: cap at 2 positions per thesis cluster
     // A "thesis" = markets sharing 3+ meaningful words (e.g. "US Iran peace deal" variants)
     // Block entry if 2+ existing positions already share the same thesis
