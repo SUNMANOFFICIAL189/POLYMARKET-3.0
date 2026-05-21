@@ -5,7 +5,7 @@ import { logger } from '../utils/logger.js';
 import { sendTelegramAlert } from '../utils/telegram.js';
 import { loadConfig } from './config.js';
 import { RiskDial } from './config.js';
-import { RiskManager } from './risk-manager.js';
+import { RiskManager, BreakerStateChange } from './risk-manager.js';
 
 const _runnerDir = dirname(fileURLToPath(import.meta.url));
 const PEAK_BALANCE_FILE = resolve(_runnerDir, '../../.peak-balance.json');
@@ -58,6 +58,7 @@ export class Runner {
   private statusTimer: ReturnType<typeof setInterval> | null = null;
   private dayRolloverTimer: ReturnType<typeof setInterval> | null = null;
   private reconciliationTimer: ReturnType<typeof setInterval> | null = null;
+  private breakerDailySummaryTimer: ReturnType<typeof setInterval> | null = null;
 
   // Core modules
   private riskDial: RiskDial;
@@ -138,18 +139,48 @@ export class Runner {
     // is the only one with peakBalance persistence today, since copy + geo
     // are disabled (capital=0 by default — see DEFAULT_PIPELINE_SHARE in
     // config.ts).
+    //
+    // Phase 1.4 (2026-05-21): every non-global RiskManager now exposes a
+    // breaker-state callback so trip/release transitions fire a TG alert.
+    // This closes the observability gap that hid 100+ silently-blocked Car
+    // trades for 3 days post-2026-05-18 breaker trip.
+    const onBreakerStateChange = (change: BreakerStateChange) => {
+      this.handleBreakerStateChange(change).catch((err) =>
+        logger.error(`handleBreakerStateChange error: ${err}`),
+      );
+    };
     for (const id of ALL_PIPELINES) {
       const pcfg = cfg.pipelines[id];
       const dial = new RiskDial(pcfg.riskLevel);
       const isSignal = id === 'signal';
-      const rm = new RiskManager(id, dial, pcfg.capital, isSignal ? {
-        restoredPeakBalance: restoredPeak,
-        onPeakBalanceChange: (peak) => {
+      const opts: ConstructorParameters<typeof RiskManager>[3] = {
+        onBreakerStateChange,
+      };
+      if (isSignal) {
+        opts.restoredPeakBalance = restoredPeak;
+        opts.onPeakBalanceChange = (peak) => {
           try { writeFileSync(PEAK_BALANCE_FILE, JSON.stringify({ peakBalance: peak, updatedAt: new Date().toISOString() })); }
           catch { /* non-fatal */ }
-        },
-      } : undefined);
+        };
+      }
+      const rm = new RiskManager(id, dial, pcfg.capital, opts);
       this.riskManagers.set(id, rm);
+    }
+
+    // Phase 1.4 (2026-05-21): one-shot peakBalance reset for geopolitics.
+    // The early-soak balthazar losses tripped the 14% drawdown breaker which
+    // then silently blocked Car's ~100+ valid trade signals for 3 days. We
+    // demoted balthazar/MRF/unknown-near-miss to Tier-2 (watchlist.ts edit)
+    // and need to re-arm the breaker for Car's solo-Tier-1 experiment.
+    //
+    // Set GEOPOLITICS_RESET_PEAK_ON_BOOT=true to trigger ONCE at next boot;
+    // unset it from pm2 env after deploy so a future restart doesn't reset.
+    if (process.env.GEOPOLITICS_RESET_PEAK_ON_BOOT === 'true') {
+      const geoRm = this.riskManagers.get('geopolitics');
+      if (geoRm) {
+        geoRm.resetPeakBalance(cfg.pipelines.geopolitics.capital);
+        logger.info('Phase 1.4: GEOPOLITICS_RESET_PEAK_ON_BOOT consumed — unset env to avoid re-reset on future restarts');
+      }
     }
     this.paperEngine = new PaperTradingEngine(cfg.totalCapitalUsdc, cfg.risk.level);
 
@@ -403,6 +434,11 @@ export class Runner {
       this.reconciliationTimer = setInterval(() => this.reconcileWithSupabase(), 15 * 60 * 1000);
     }
 
+    // Phase 1.4 (2026-05-21): breaker-still-tripped daily summary. Checks
+    // every hour, emits a TG alert per pipeline at most once per 24h window
+    // while the breaker remains tripped. Per-call cost is trivial.
+    this.breakerDailySummaryTimer = setInterval(() => this.checkBreakerDailySummary(), 60 * 60 * 1000);
+
     // Hydrate signal trade IDs from Supabase so lifecycle manager knows about them
     if (this.config.supabase.url) {
       try {
@@ -444,6 +480,7 @@ export class Runner {
     if (this.statusTimer) { clearInterval(this.statusTimer); this.statusTimer = null; }
     if (this.dayRolloverTimer) { clearInterval(this.dayRolloverTimer); this.dayRolloverTimer = null; }
     if (this.reconciliationTimer) { clearInterval(this.reconciliationTimer); this.reconciliationTimer = null; }
+    if (this.breakerDailySummaryTimer) { clearInterval(this.breakerDailySummaryTimer); this.breakerDailySummaryTimer = null; }
 
     this.scraper.stop();
     this.walletMonitor.stop();
@@ -700,6 +737,79 @@ export class Runner {
   }
 
   /**
+   * Drawdown circuit breaker observability (Phase 1.4, 2026-05-21).
+   *
+   * Three event types fire:
+   *   - TRIP    : breaker goes from armed → tripped. One TG alert.
+   *   - RELEASE : breaker goes from tripped → armed (recovery OR manual reset).
+   *               One TG alert.
+   *   - STILL_TRIPPED daily summary: handled by the 24h timer in start(), not
+   *     this method. Reports how many trades were blocked in the last 24h.
+   *
+   * The trip-counter (blockedSinceLastReport) is tracked here for the daily
+   * summary. Reset on RELEASE or after each summary is sent.
+   */
+  private breakerBlockedSinceLastReport: Map<string, number> = new Map();
+  private breakerLastTripTimestamp: Map<string, string> = new Map();
+
+  private async handleBreakerStateChange(change: BreakerStateChange): Promise<void> {
+    const pid = change.pipelineId;
+    if (change.transition === 'trip') {
+      this.breakerLastTripTimestamp.set(pid, new Date().toISOString());
+      this.breakerBlockedSinceLastReport.set(pid, 0);
+      logger.warn(`Breaker TRIPPED [${pid}] DD=${(change.drawdownPct * 100).toFixed(1)}% > ${(change.limitPct * 100).toFixed(0)}% peak=$${change.peakBalance.toFixed(2)} bal=$${change.currentBalance.toFixed(2)}`);
+      sendTelegramAlert(
+        `🚨 <b>DRAWDOWN BREAKER TRIPPED</b>\n` +
+        `Pipeline: <b>${pid}</b>\n` +
+        `Drawdown: <b>${(change.drawdownPct * 100).toFixed(1)}%</b> (limit ${(change.limitPct * 100).toFixed(0)}%)\n` +
+        `Peak: $${change.peakBalance.toFixed(2)} → Current: $${change.currentBalance.toFixed(2)}\n` +
+        `All new ${pid} trades will be blocked until pool recovers or peak is reset.`,
+      );
+    } else if (change.transition === 'release') {
+      const blocked = this.breakerBlockedSinceLastReport.get(pid) ?? 0;
+      const trippedAt = this.breakerLastTripTimestamp.get(pid);
+      this.breakerBlockedSinceLastReport.set(pid, 0);
+      this.breakerLastTripTimestamp.delete(pid);
+      logger.info(`Breaker RELEASED [${pid}] DD=${(change.drawdownPct * 100).toFixed(1)}% peak=$${change.peakBalance.toFixed(2)} bal=$${change.currentBalance.toFixed(2)} (was tripped since ${trippedAt ?? 'unknown'}, blocked ${blocked} trades)`);
+      sendTelegramAlert(
+        `✅ <b>BREAKER RELEASED</b>\n` +
+        `Pipeline: <b>${pid}</b>\n` +
+        `Drawdown now ${(change.drawdownPct * 100).toFixed(1)}%, trades resuming.\n` +
+        `Blocked while tripped: <b>${blocked}</b> trade(s).`,
+      );
+    }
+  }
+
+  /**
+   * Daily-summary check: for every pipeline whose breaker is currently
+   * tripped, send one TG alert per 24h with the running block count.
+   * Wired to a 24h timer in start(). Idempotent — safe to call multiple times.
+   */
+  private breakerLastDailyAlert: Map<string, number> = new Map();
+
+  private checkBreakerDailySummary(): void {
+    const now = Date.now();
+    for (const [id, rm] of this.riskManagers) {
+      const state = rm.getBreakerState();
+      if (!state.tripped) continue;
+      const lastAlerted = this.breakerLastDailyAlert.get(id) ?? 0;
+      if (now - lastAlerted < 24 * 60 * 60 * 1000) continue;
+      const blocked = this.breakerBlockedSinceLastReport.get(id) ?? 0;
+      const trippedAt = this.breakerLastTripTimestamp.get(id) ?? 'unknown';
+      logger.warn(`Breaker daily summary [${id}]: still tripped (DD ${(state.drawdownPct * 100).toFixed(1)}%, ${blocked} blocked since last summary, tripped at ${trippedAt})`);
+      sendTelegramAlert(
+        `⚠️ <b>BREAKER STILL TRIPPED</b>\n` +
+        `Pipeline: <b>${id}</b>\n` +
+        `Drawdown: ${(state.drawdownPct * 100).toFixed(1)}% (limit ${(state.limitPct * 100).toFixed(0)}%)\n` +
+        `Blocked in last 24h: <b>${blocked}</b> trade(s)\n` +
+        `Tripped at: ${trippedAt}`,
+      );
+      this.breakerLastDailyAlert.set(id, now);
+      this.breakerBlockedSinceLastReport.set(id, 0);
+    }
+  }
+
+  /**
    * Process a single specialist trade through the geopolitics executor.
    * No AI confirmation gate — specialists are pre-vetted by the Phase 2 v3
    * screen (2026-05-11 sprint). Executor handles BUY/politics filters internally.
@@ -712,6 +822,11 @@ export class Runner {
       // pipeline RM gate was silently rejecting every trade for 4h with no
       // visible reason because this line was at debug level.
       logger.info(`GeopoliticsExecutor: skipped — ${result.reason}`);
+      // Phase 1.4 (2026-05-21): count breaker-blocked trades for daily summary
+      if (result.reason?.includes('Drawdown circuit breaker')) {
+        const cur = this.breakerBlockedSinceLastReport.get('geopolitics') ?? 0;
+        this.breakerBlockedSinceLastReport.set('geopolitics', cur + 1);
+      }
       return;
     }
     // Write-through to Supabase

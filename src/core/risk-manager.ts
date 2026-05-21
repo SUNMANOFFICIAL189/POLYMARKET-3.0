@@ -18,6 +18,29 @@ export interface PortfolioRisk {
   riskUtilization: number;
 }
 
+/**
+ * Drawdown circuit breaker state. Fired on TRIP and RELEASE transitions so
+ * the runner can emit a Telegram alert. Phase 1.4 (2026-05-21) — added after
+ * the geopolitics breaker silently blocked 100+ Car trades for 3 days because
+ * nothing was watching it.
+ */
+export interface BreakerStateChange {
+  pipelineId: PipelineId | 'global';
+  transition: 'trip' | 'release';
+  peakBalance: number;
+  currentBalance: number;
+  drawdownPct: number;
+  limitPct: number;
+}
+
+export interface BreakerState {
+  tripped: boolean;
+  peakBalance: number;
+  currentBalance: number;
+  drawdownPct: number;
+  limitPct: number;
+}
+
 export class RiskManager {
   /**
    * The pipeline this RiskManager belongs to. Each pipeline holds its own
@@ -38,18 +61,98 @@ export class RiskManager {
   private peakBalance: number;
   private maxDrawdown: number = 0;
   private onPeakBalanceChange?: (peak: number) => void;
+  private breakerTripped: boolean = false;
+  private onBreakerStateChange?: (change: BreakerStateChange) => void;
 
   constructor(pipelineId: PipelineId | 'global', riskDial: RiskDial, balance: number, opts?: {
     restoredPeakBalance?: number;
     onPeakBalanceChange?: (peak: number) => void;
+    onBreakerStateChange?: (change: BreakerStateChange) => void;
   }) {
     this.pipelineId = pipelineId;
     this.riskDial = riskDial;
     this.balance = balance;
     this.onPeakBalanceChange = opts?.onPeakBalanceChange;
+    this.onBreakerStateChange = opts?.onBreakerStateChange;
     this.peakBalance = Math.max(balance, opts?.restoredPeakBalance ?? balance);
     if (this.peakBalance > balance) {
       logger.info(`RiskManager[${pipelineId}]: Restored peakBalance $${this.peakBalance.toFixed(2)} from persistence (current: $${balance.toFixed(2)}, DD: ${(((this.peakBalance - balance) / this.peakBalance) * 100).toFixed(1)}%)`);
+    }
+  }
+
+  /**
+   * Phase 1.4 (2026-05-21): one-shot peakBalance reset. Used at boot via
+   * the GEOPOLITICS_RESET_PEAK_ON_BOOT env flag to re-arm the breaker after
+   * the early-soak balthazar losses tripped it permanently. Safe to call at
+   * any time but typically only at controlled boot.
+   */
+  resetPeakBalance(newPeak: number): void {
+    const oldPeak = this.peakBalance;
+    const oldTripped = this.breakerTripped;
+    this.peakBalance = newPeak;
+    this.maxDrawdown = 0;
+    this.breakerTripped = false;
+    this.onPeakBalanceChange?.(this.peakBalance);
+    logger.info(`RiskManager[${this.pipelineId}]: peakBalance manually reset $${oldPeak.toFixed(2)} → $${newPeak.toFixed(2)} (DD now 0%, breaker armed=${!this.breakerTripped})`);
+    if (oldTripped) {
+      const limitPct = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
+      this.onBreakerStateChange?.({
+        pipelineId: this.pipelineId,
+        transition: 'release',
+        peakBalance: newPeak,
+        currentBalance: this.balance,
+        drawdownPct: 0,
+        limitPct,
+      });
+    }
+  }
+
+  getBreakerState(): BreakerState {
+    const limitPct = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
+    const drawdownPct = this.peakBalance > 0
+      ? (this.peakBalance - this.balance) / this.peakBalance
+      : 0;
+    return {
+      tripped: this.breakerTripped,
+      peakBalance: this.peakBalance,
+      currentBalance: this.balance,
+      drawdownPct,
+      limitPct,
+    };
+  }
+
+  /**
+   * Recompute breaker state from current balance/peak and fire transitions.
+   * Called whenever balance changes and from checkTrade() so the state stays
+   * coherent. Skipped for the 'global' RM (paper-engine ledger) — see Option D.
+   */
+  private updateBreakerState(): void {
+    if (this.pipelineId === 'global') return;
+    const limitPct = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
+    const drawdownPct = this.peakBalance > 0
+      ? (this.peakBalance - this.balance) / this.peakBalance
+      : 0;
+    const shouldBeTripped = drawdownPct > limitPct;
+    if (shouldBeTripped && !this.breakerTripped) {
+      this.breakerTripped = true;
+      this.onBreakerStateChange?.({
+        pipelineId: this.pipelineId,
+        transition: 'trip',
+        peakBalance: this.peakBalance,
+        currentBalance: this.balance,
+        drawdownPct,
+        limitPct,
+      });
+    } else if (!shouldBeTripped && this.breakerTripped) {
+      this.breakerTripped = false;
+      this.onBreakerStateChange?.({
+        pipelineId: this.pipelineId,
+        transition: 'release',
+        peakBalance: this.peakBalance,
+        currentBalance: this.balance,
+        drawdownPct,
+        limitPct,
+      });
     }
   }
 
@@ -61,6 +164,7 @@ export class RiskManager {
     }
     const drawdown = (this.peakBalance - balance) / this.peakBalance;
     if (drawdown > this.maxDrawdown) this.maxDrawdown = drawdown;
+    this.updateBreakerState();
   }
 
   setOpenTrades(trades: Trade[]): void { this.openTrades = trades; }
@@ -88,7 +192,9 @@ export class RiskManager {
     // Drawdown circuit breaker — pipeline-scoped only. Skip for the 'global'
     // RM (paper-engine cash ledger). Bot-wide DD bleeding across pipelines
     // breaks Option D isolation — see vault Decision Log 2026-05-12.
+    // Phase 1.4 (2026-05-21): state transitions emit via onBreakerStateChange.
     if (this.pipelineId !== 'global') {
+      this.updateBreakerState();
       const DRAWDOWN_LIMIT = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
       const currentDrawdown = (this.peakBalance - this.balance) / this.peakBalance;
       if (currentDrawdown > DRAWDOWN_LIMIT) {

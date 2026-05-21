@@ -39,34 +39,34 @@ const SNAPSHOT_DATE = '2026-05-11';
 /**
  * Tier-1: active mirror targets for the geopolitics pipeline.
  *
- * Loosened on 2026-05-12 from 2 wallets to 4 — added MRF and 0x44c1dfe4 to
- * trade more activity for slightly more variance. The Phase 4 backtest
- * over the past 7 days showed:
- *   - Tight rules (2 wallets): +$1,659 realized on $1,500 pool, 110% ROI
- *   - Loose rules (6 wallets): driven by ONE MRF lottery hit (Trump Jr. 2028)
- * Verdict: include MRF (lottery-style edge worth capturing) and 0x44c1dfe4
- * (positive-PnL Phase 2 v3 near-miss). Continue skipping cigarettes
- * (sports-pivoted), debased (too young, joined Mar 2026), and Spirit of
- * Ukraine>UMA (UMA-arbitrage style — different mechanism).
+ * Phase 1.4 revision (2026-05-21): tightened to Car only after soak-week-9
+ * audit. balthazar, MRF, and unknown-near-miss all demoted to Tier-2 because:
+ *   - balthazar: portfolio-longtail archetype (n=50+ open longshots in election
+ *     baskets at $0.02 each). Single-trade copy of his trades is structurally
+ *     unsound — we need basket replication to capture his edge. In the
+ *     2026-05-12 → 2026-05-20 soak he produced 21 trades, 0 wins, -$144.
+ *     His losses tripped the geopolitics drawdown circuit breaker at 14%,
+ *     which then blocked Car's 100+ valid trades for 3 days straight.
+ *   - MRF: portfolio-longtail but concentrated in SPORTS markets (FIFA, F1,
+ *     Eurovision, Joshua). Phase 1.3 sports filter blocks his entire flow.
+ *     0 trades executed in soak. Dead weight under current configuration.
+ *   - unknown-near-miss: external realized P&L is -$68K, cash -$29K.
+ *     Edge clearly decayed since the 2026-05-11 screening (the v4.3 OOS
+ *     warning was right). Bleeding money in 3 trades during soak.
  *
- * If MRF turns into a drag over the soak: easy revert via this file.
+ * Car remains active because his archetype (HIGH_CONVICTION / INFO_EDGE —
+ * 100 positions, median $565, concentrated in 2028 election + Trump-Xi +
+ * MicroStrategy + Iran flashpoints) is the textbook match for our existing
+ * single-trade copy executor. He produced ~100+ valid signals during the
+ * soak; every one was silently blocked by the tripped circuit breaker.
  *
- * Post-Phase-2-v4 rigorous-screen revision (2026-05-11): originally tightened
- * to 2 wallets. balthazar passed all 8 v4 rules cleanly. Car passed v3 + v4.1
- * + v4.2 + v4.3 but failed only v4.4 (OOS sample n<5). MRF, cigarettes,
- * debased, and Spirit of Ukraine>UMA all FAILED v4 rules and were demoted
- * to Tier-2. See `_NEXT_STEPS/branch-3-phase2v4-shortlist.json`.
+ * Phase 1.4 also resets the geopolitics peakBalance so the breaker re-arms.
+ * If Car re-trips it within 7 days, single-trade copy is the wrong
+ * architecture entirely — see _NEXT_STEPS/build-plan-2026-05-16.md.
+ *
+ * Prior history retained in this file as Tier-2 entries for tracking only.
  */
 export const TIER_1: GeopoliticsSpecialist[] = [
-  {
-    walletAddress: '0x5a218c7ad04135830a45c41aaed7294df7809318',
-    name: 'balthazar',
-    tier: 1,
-    wrPct: 67.9,
-    truePnl: 258654,
-    medianSize: 78,
-    snapshotDate: SNAPSHOT_DATE,
-  },
   {
     walletAddress: '0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b',
     name: 'Car',
@@ -76,47 +76,69 @@ export const TIER_1: GeopoliticsSpecialist[] = [
     medianSize: 370,
     snapshotDate: SNAPSHOT_DATE,
   },
+];
+
+/**
+ * Tier-2: tracked but NOT actively mirrored. Three cohorts:
+ *
+ * (a) Demoted from Tier-1 by Phase 1.4 (2026-05-21) — see header comment on
+ *     TIER_1 above. Demoted for archetype mismatch (balthazar, MRF) or
+ *     observed edge decay (unknown-near-miss).
+ *
+ * (b) Demoted from Tier-1 after Phase 2 v4 rigorous screening (2026-05-11)
+ *     because they failed one or more v4 rules. Retained here so the future
+ *     Phase A weekly diff alert (BACKLOG item) can re-promote them if
+ *     observed performance recovers.
+ *
+ * (c) Original Phase 2 v3 near-misses with marginal P&L or unstable signal.
+ *     Less interesting than (b) but kept for completeness.
+ */
+export const TIER_2: GeopoliticsSpecialist[] = [
+  // (a) Demoted from Tier-1 by Phase 1.4 (2026-05-21) — see TIER_1 header.
   {
-    // Added 2026-05-12 loosening — phase 2 v3 positive-PnL near-miss.
-    // Failed v4.3 OOS check by a thin margin (couldn't be confirmed with n<5).
-    // In-sample: +$20K truePnl on 30 positions at 46.7% WR. Median bet $139.
+    // Portfolio-longtail archetype: 50+ open positions, 74% at <$0.05 entry,
+    // concentrated in election baskets (Peruvian, BC, Daegu, Israel PM).
+    // Single-trade copy of his trades is structurally unsound. Net -$144
+    // across 21 trades in 9-day soak; losses tripped the geopolitics
+    // drawdown breaker which then blocked Car's signal for 3 days.
+    // Re-promote only after basket-replication architecture is built.
+    walletAddress: '0x5a218c7ad04135830a45c41aaed7294df7809318',
+    name: 'balthazar',
+    tier: 2,
+    wrPct: 67.9,
+    truePnl: 258654,
+    medianSize: 78,
+    snapshotDate: SNAPSHOT_DATE,
+  },
+  {
+    // External realized P&L -$68K, cash P&L -$29K = -$97K combined position.
+    // The 2026-05-11 v4.3 OOS-warning ("failed by a thin margin") was right;
+    // observed performance has since confirmed it. 3 trades in 9-day soak,
+    // 0 wins, -$22. Re-promote only after fresh screening shows recovery.
     walletAddress: '0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1',
     name: 'unknown-near-miss',
-    tier: 1,
+    tier: 2,
     wrPct: 46.7,
     truePnl: 20586,
     medianSize: 139,
     snapshotDate: SNAPSHOT_DATE,
   },
   {
-    // Re-added 2026-05-12 loosening — lottery-style edge.
-    // Failed v4.3 OOS (-$7,895 / n=3) and v4.4 (insufficient OOS sample).
-    // But the past 7 days produced +$23K from one Trump Jr. 2028 trade.
-    // Pattern: many small longshot bets, rare large hits. Expected value
-    // depends on whether the hits land within our soak window.
+    // Portfolio-longtail concentrated in SPORTS (30 FIFA, 19 election 2028,
+    // 7 Eurovision, 4 Joshua boxing — realized +$551K mostly from sports).
+    // Phase 1.3 sports filter blocks every market he trades. Zero contribution
+    // to bot. Re-promote only after (a) a per-wallet sports allowlist exists
+    // AND (b) basket-replication architecture handles his longtail style.
     walletAddress: '0x16cbe223607a6513ae76d1e3751c78e4eabc2704',
     name: 'MRF',
-    tier: 1,
+    tier: 2,
     wrPct: 73.8,
     truePnl: 695803,
     medianSize: 71,
     snapshotDate: SNAPSHOT_DATE,
   },
-];
 
-/**
- * Tier-2: tracked but NOT actively mirrored. Two cohorts:
- *
- * (a) Demoted from Tier-1 after Phase 2 v4 rigorous screening (2026-05-11)
- *     because they failed one or more v4 rules. Retained here so the future
- *     Phase A weekly diff alert (BACKLOG item) can re-promote them if
- *     observed performance recovers.
- *
- * (b) Original Phase 2 v3 near-misses with marginal P&L or unstable signal.
- *     Less interesting than (a) but kept for completeness.
- */
-export const TIER_2: GeopoliticsSpecialist[] = [
-  // (a) Demoted from Tier-1 by Phase 2 v4 — MRF re-promoted to Tier-1 on 2026-05-12 loosening.
+  // (b) Demoted from Tier-1 by Phase 2 v4 (2026-05-11).
   {
     walletAddress: '0xd218e474776403a330142299f7796e8ba32eb5c9',
     name: 'cigarettes',
