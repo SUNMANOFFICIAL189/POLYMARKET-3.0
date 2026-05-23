@@ -315,7 +315,18 @@ export class WalletMonitor extends EventEmitter {
   }
 
   private tradeKey(t: DataAPITrade): string {
-    return t.id || t.taker_order_id || `${t.market}:${t.created_at}:${t.size}`;
+    // Phase 1.5 (2026-05-23): use transactionHash first because Polymarket's
+    // data-api /trades response actually returns transactionHash as the unique
+    // identifier. The id/taker_order_id/market/created_at fields are undefined
+    // despite the DataAPITrade type signature claiming they exist. The previous
+    // fallback to `${market}:${created_at}:${size}` collapsed to
+    // `undefined:undefined:${size}` and silently deduplicated trades by size
+    // alone — confirmed dropping 3 of 4 of Car's BUYs on 2026-05-23
+    // (sizes 5000, 3000, 3000 all collided; only the 524.23 trade executed).
+    return t.transactionHash
+      || t.id
+      || t.taker_order_id
+      || `${t.market}:${t.created_at}:${t.size}`;
   }
 
   private async fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {

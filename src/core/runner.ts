@@ -1065,11 +1065,18 @@ export class Runner {
   private async reconcileWithSupabase(): Promise<void> {
     try {
       const supabaseOpen = await db.getOpenCopyTrades();
-      const memoryTrades = this.copyExecutor.getOpenTrades();
+      const copyTrades = this.copyExecutor.getOpenTrades();
+      // Phase 1.5 (2026-05-23): include geopoliticsExecutor trades in the
+      // memory-vs-Supabase reconciliation. Before this fix the reconciliation
+      // only checked copy + signal, so every geopolitics open trade was treated
+      // as an orphan within 15 min of opening and force-closed with pnl=null.
+      // Root cause behind all 16 of balthazar's "$0 stopped" closes during the
+      // 2026-05-12→18 soak and Car's first executed trade on 2026-05-23.
+      const geopoliticsTrades = this.geopoliticsExecutor.getOpenTrades();
 
       const supabaseIds = new Set(supabaseOpen.map(t => t.marketId));
       const signalTrades = this.signalExecutor.getOpenTrades();
-      const allMemoryTrades = [...memoryTrades, ...(signalTrades as any[])];
+      const allMemoryTrades = [...copyTrades, ...geopoliticsTrades, ...(signalTrades as any[])];
       const memoryIds = new Set(allMemoryTrades.map(t => t.marketId));
 
       let orphansClosed = 0;
@@ -1144,8 +1151,12 @@ export class Runner {
         }
       }
 
-      // Gap B: Memory has trades that Supabase doesn't → insert them
-      for (const memTrade of memoryTrades) {
+      // Gap B: Memory has trades that Supabase doesn't → insert them.
+      // Phase 1.5 (2026-05-23): include geopoliticsTrades — both copy and geo
+      // executors write through db.insertCopyTrade on entry, so both can
+      // miss the write and need re-insertion here. Signal trades use a
+      // different persistence path and are intentionally excluded.
+      for (const memTrade of [...copyTrades, ...geopoliticsTrades]) {
         if (!supabaseIds.has(memTrade.marketId) && memTrade.status === 'open') {
           const dbId = await db.insertCopyTrade(memTrade);
           if (dbId) {

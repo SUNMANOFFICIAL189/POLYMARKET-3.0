@@ -340,6 +340,16 @@ export interface CopyTrade {
 
 // ─── Raw Data API Types ────────────────────────────────────────
 export interface DataAPITrade {
+  /**
+   * The unique on-chain trade identifier from Polymarket's /trades endpoint.
+   * Phase 1.5 (2026-05-23): added because the actual API response is keyed by
+   * transactionHash, not by `id`. The id/taker_order_id/market/created_at
+   * fields below are undefined in real responses despite this type signature,
+   * which is why tradeKey() fell back to size-based keying and silently
+   * deduplicated trades by size — dropping ~75% of Car's signal during the
+   * Phase 1.4 soak. transactionHash is the correct primary key.
+   */
+  transactionHash?: string;
   id: string;
   taker_order_id?: string;
   market: string;
