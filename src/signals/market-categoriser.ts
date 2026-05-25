@@ -63,6 +63,15 @@ const KEYWORDS: Record<Exclude<MarketCategory, 'other'>, string[]> = {
     'anyone\'s legend', 'lyon ', 't1 ', 'gen.g', 'hanwha',
     'esports world cup', 'lol ', 'lan finals',
     'pickem', 'pick em',
+    // Phase 1.7 (2026-05-26): boxing/MMA gap. Two Glory-in-Giza Usyk vs
+    // Verhoeven trades in 2026-05-23 leaked through Phase 1.3 filter (cost
+    // -$30.78 closed + $105.30 lucky stop). Cause: boxing event names use
+    // <Promotion>: <Fighter1> vs. <Fighter2> format with no existing keyword
+    // match. Added the 'X vs. Y' fight format itself (zero false positives
+    // verified against 14 legitimate market samples — politics/crypto markets
+    // use "x" or other separators, not " vs. "). Plus major fight promotions.
+    ' vs. ', 'glory in giza', 'glory ', 'bellator', 'pfl ', 'one championship',
+    'method of victory', 'fight night', 'rounds remaining',
   ],
   politics: [
     'election', 'president', 'congress', 'senate', 'house of representatives',
