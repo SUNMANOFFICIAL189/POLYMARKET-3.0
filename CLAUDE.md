@@ -29,6 +29,27 @@ git branch --show-current && git log --oneline -3
 
 If the answer to #1 includes `optimization/2026-04-12-v2`, the full v2 program (Tier 0+1+2) is deployed. Read `docs/DEPLOYMENT_REPORT_2026-04-12_v2.md` for what's live and what to monitor.
 
+## Stale-Claim Sweep (MANDATORY before describing any bug from handoff)
+
+Session handoff memories can contain stale claims that get propagated across sessions and become self-confirming. Triggered by the 2026-05-28 incident where the handoff said "SELL-aware sizing bug NEVER fixed" — but the fix had shipped 20 days earlier at commit `935d44f` (BACKLOG Done 2026-05-08). See `~/claude-hq/commander/LESSONS.md` LESSON 26.
+
+**Before describing any bug, missing-fix, or "needs to be done" item from the handoff:**
+
+1. Grep the handoff for trigger words:
+   ```bash
+   grep -inE "NEVER|never been|broken|TODO|long-term fix|unfixed|needs to be|not yet" \
+     ~/.claude/projects/-Users-sunil-rajput/memory/project_session_handoff_*.md \
+     ~/Vaults/Jarvis-Brain/JARVIS-BRAIN/Projects/PATS-Copy/04*.md
+   ```
+2. For each hit, verify against current code/BACKLOG/git log BEFORE describing it:
+   - Bug claim → grep `src/` for the symptom + check `~/claude-hq/docs/BACKLOG.md` for Done entries
+   - Missing-fix claim → `git log --oneline --all | grep -i <symptom>` to find the commit
+   - "Long-term fix" claim in a watchdog alert → check the alert template file's last update vs the bot commit history
+3. Mark each claim: VERIFIED-STALE / VERIFIED-CURRENT / NEEDS-INVESTIGATION
+4. Fix stale claims in the handoff IN THIS SESSION before propagating to your response, so the next session inherits truth
+
+**The sweep runs BEFORE any code-touching work, alongside Quick Resume.**
+
 ## What This Project Is
 
 PATS-Copy is an autonomous Polymarket copy-trading bot. It identifies top traders on the leaderboard, monitors their wallets, confirms trades via an AI classifier (sole gate — Phase 04 design), and mirrors positions with proportional sizing through a paper trading engine.

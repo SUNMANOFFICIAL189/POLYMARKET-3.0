@@ -1,6 +1,7 @@
 import { logger } from '../utils/logger.js';
 import { sendTelegramAlert } from '../utils/telegram.js';
 import type { CopyTrade } from '../types/index.js';
+import { evaluateCapDriftDominance } from './risk-manager.js';
 
 const GAMMA_API_BASE = 'https://gamma-api.polymarket.com';
 
@@ -23,6 +24,7 @@ interface PositionCloseRequest {
 type ClosePositionFn = (marketId: string, exitPrice: number, reason: string) => Promise<CopyTrade | null>;
 type GetOpenTradesFn = () => CopyTrade[];
 type PersistCloseFn = (trade: CopyTrade) => Promise<void>;
+type GetBalanceFn = () => number;
 
 /**
  * PositionLifecycleManager
@@ -39,16 +41,19 @@ export class PositionLifecycleManager {
   private resolutionTimer: ReturnType<typeof setInterval> | null = null;
   private ttlTimer: ReturnType<typeof setInterval> | null = null;
   private stopLossTimer: ReturnType<typeof setInterval> | null = null;
+  private capDriftTimer: ReturnType<typeof setInterval> | null = null;
 
   private readonly RESOLUTION_CHECK_MS: number;
   private readonly TTL_CHECK_MS: number;
   private readonly STOP_LOSS_CHECK_MS: number;
+  private readonly CAP_DRIFT_CHECK_MS: number;
   private readonly MAX_POSITION_AGE_MS: number;
   private readonly STOP_LOSS_PCT: number;
 
   private closePosition: ClosePositionFn;
   private getOpenTrades: GetOpenTradesFn;
   private persistClose: PersistCloseFn;
+  private getBalance: GetBalanceFn | null = null;
 
   // Cache to avoid hammering Gamma API for same market
   private marketStatusCache: Map<string, { status: MarketStatus; fetchedAt: number }> = new Map();
@@ -71,17 +76,21 @@ export class PositionLifecycleManager {
     resolutionCheckMs?: number;
     ttlCheckMs?: number;
     stopLossCheckMs?: number;
+    capDriftCheckMs?: number;
     maxPositionAgeMs?: number;
     getMaxAgeForTrade?: (trade: unknown) => number;
     stopLossPct?: number;
+    getBalance?: GetBalanceFn;
   }) {
     this.closePosition = opts.closePosition;
     this.getOpenTrades = opts.getOpenTrades;
     this.persistClose = opts.persistClose;
+    this.getBalance = opts.getBalance ?? null;
 
     this.RESOLUTION_CHECK_MS = opts.resolutionCheckMs ?? 5 * 60 * 1000;   // 5 min
     this.TTL_CHECK_MS = opts.ttlCheckMs ?? 30 * 60 * 1000;                // 30 min
     this.STOP_LOSS_CHECK_MS = opts.stopLossCheckMs ?? 60 * 1000;           // 60 sec
+    this.CAP_DRIFT_CHECK_MS = opts.capDriftCheckMs ?? 5 * 60 * 1000;       // 5 min
     this.MAX_POSITION_AGE_MS = opts.maxPositionAgeMs ?? 24 * 60 * 60 * 1000; // 24 hours (was 48h — too long for sports markets that resolve in hours)
     this.getMaxAgeForTrade = opts.getMaxAgeForTrade;
     this.STOP_LOSS_PCT = opts.stopLossPct ?? 0.30; // 30% loss = close
@@ -97,12 +106,26 @@ export class PositionLifecycleManager {
     this.resolutionTimer = setInterval(() => this.checkResolutions(), this.RESOLUTION_CHECK_MS);
     this.ttlTimer = setInterval(() => this.checkTTL(), this.TTL_CHECK_MS);
     this.stopLossTimer = setInterval(() => this.checkStopLosses(), this.STOP_LOSS_CHECK_MS);
+
+    // Layer 4: cap-drift auto-close. Env-gated, off by default.
+    // CAP_DRIFT_AUTO_CLOSE = 'true' (active) | 'dry' (log-only) | anything else (disabled)
+    const capDriftMode = (process.env.CAP_DRIFT_AUTO_CLOSE ?? '').toLowerCase();
+    if (capDriftMode === 'true' || capDriftMode === 'dry') {
+      if (!this.getBalance) {
+        logger.warn('PositionLifecycle: CAP_DRIFT_AUTO_CLOSE set but no getBalance callback provided — Layer 4 disabled');
+      } else {
+        logger.info(`PositionLifecycle: Layer 4 cap-drift auto-close ENABLED in '${capDriftMode}' mode, every ${this.CAP_DRIFT_CHECK_MS / 1000}s`);
+        setTimeout(() => this.checkCapDrift(), 90_000); // initial check after 90s
+        this.capDriftTimer = setInterval(() => this.checkCapDrift(), this.CAP_DRIFT_CHECK_MS);
+      }
+    }
   }
 
   stop(): void {
     if (this.resolutionTimer) clearInterval(this.resolutionTimer);
     if (this.ttlTimer) clearInterval(this.ttlTimer);
     if (this.stopLossTimer) clearInterval(this.stopLossTimer);
+    if (this.capDriftTimer) clearInterval(this.capDriftTimer);
     logger.info('PositionLifecycleManager stopped');
   }
 
@@ -253,6 +276,90 @@ export class PositionLifecycleManager {
       } catch (err) {
         logger.warn(`PositionLifecycle: Stop-loss check failed for ${marketId}: ${err}`);
       }
+    }
+  }
+
+  /**
+   * Layer 4: Cap-Drift Dominance Auto-Close
+   *
+   * Closes positions whose locked-in max-loss now exceeds the cap because
+   * balance has eroded since entry, AND the close-vs-hold math is dominated
+   * (closing now and holding to resolution have the same expected outcome,
+   * but holding carries real tail risk).
+   *
+   * Env-gated via CAP_DRIFT_AUTO_CLOSE: 'true' (active), 'dry' (log-only), else disabled.
+   * Math is in evaluateCapDriftDominance (pure function in risk-manager.ts).
+   * Tested in scripts/test-cap-drift.ts. Created 2026-05-28 (LESSON 27 / Layer 4).
+   */
+  private async checkCapDrift(): Promise<void> {
+    if (!this.getBalance) return;
+    const mode = (process.env.CAP_DRIFT_AUTO_CLOSE ?? '').toLowerCase();
+    if (mode !== 'true' && mode !== 'dry') return;
+
+    const openTrades = this.getOpenTrades();
+    if (openTrades.length === 0) return;
+
+    const balance = this.getBalance();
+    if (balance <= 0) return;
+
+    const MAX_PER_CYCLE = 3;
+    let closedCount = 0;
+
+    for (const trade of openTrades) {
+      if (closedCount >= MAX_PER_CYCLE) break;
+
+      const marketId = trade.marketId ?? '';
+      const entryPrice = trade.ourEntryPrice ?? trade.entryPrice ?? 0;
+      const sizeDollars = trade.ourSize ?? 0;
+      const side = trade.side;
+      if (!marketId || !entryPrice || !sizeDollars || (side !== 'buy' && side !== 'sell')) continue;
+
+      try {
+        const status = await this.fetchMarketStatus(marketId);
+        if (!status || status.closed) continue; // resolution handler covers resolved markets
+
+        const currentPrice = this.getCurrentPrice(status, trade.outcome);
+        const verdict = evaluateCapDriftDominance({
+          entryPrice, sizeDollars, side,
+          currentMarketPrice: currentPrice, currentBalance: balance,
+        });
+
+        if (!verdict.shouldClose) continue;
+
+        const audit = `entry=${entryPrice.toFixed(4)} size=$${sizeDollars.toFixed(2)} curr=${currentPrice.toFixed(4)} max_loss=$${verdict.positionMaxLoss.toFixed(2)} cap=$${verdict.currentCap.toFixed(2)} close_pnl=$${verdict.closeNowPnl.toFixed(2)} hold_ev=$${verdict.holdEv.toFixed(2)} tail=$${verdict.tailRisk.toFixed(2)} reason=${verdict.reason}`;
+
+        if (mode === 'dry') {
+          logger.info(`PositionLifecycle: [DRY] CAP-DRIFT would close "${marketId.slice(0, 40)}" — ${audit}`);
+          continue;
+        }
+
+        logger.warn(`PositionLifecycle: CAP-DRIFT AUTO-CLOSE "${marketId.slice(0, 40)}" — ${audit}`);
+        const closed = await this.closePosition(marketId, currentPrice, `cap_drift_${verdict.reason}`);
+        if (!closed) continue;
+        await this.persistClose(closed);
+        closedCount++;
+
+        // Plain-English TG alert per Lesson 16
+        const market40 = marketId.slice(0, 40);
+        const pnlNum = closed.pnl ?? 0;
+        const pnlStr = pnlNum >= 0 ? `+$${pnlNum.toFixed(2)}` : `-$${Math.abs(pnlNum).toFixed(2)}`;
+        const lossPctOfBal = (verdict.positionMaxLoss / balance * 100).toFixed(1);
+        sendTelegramAlert(
+          `🟡 Auto-closed a bet to remove risk\n\n` +
+          `Bet: "${market40}"\n` +
+          `Side: ${side.toUpperCase()}  |  Closed at: $${currentPrice.toFixed(3)}\n` +
+          `Realized: ${pnlStr}\n\n` +
+          `Why now: this bet's worst-case loss was ${lossPctOfBal}% of the current bankroll (safety cap is 5%). ` +
+          `The math said closing now and waiting were the same expected outcome, so closing removes the downside without giving up anything.\n\n` +
+          `What to do: nothing — this was the expected behavior of the cap-drift auto-close rule. Decision Log has the math.`
+        );
+      } catch (err) {
+        logger.warn(`PositionLifecycle: cap-drift check failed for ${marketId}: ${err}`);
+      }
+    }
+
+    if (closedCount > 0) {
+      logger.info(`PositionLifecycle: Cap-drift swept ${closedCount} dominated position(s)`);
     }
   }
 

@@ -276,3 +276,93 @@ export class RiskManager {
     };
   }
 }
+
+// =====================================================================
+// PURE FUNCTIONS — testable, no class state, no I/O, no env reads
+// Used by Layer 4 cap-drift auto-close in PositionLifecycleManager.
+// Mirror of CTDD-precheck Class 1 dominance rules (LESSON 27).
+// =====================================================================
+
+export interface CapDriftEvaluation {
+  /** True if position's locked-in max-loss exceeds current cap AND dominance test says close. */
+  shouldClose: boolean;
+  /** True if position is over the current cap (regardless of dominance). */
+  capDrifted: boolean;
+  /** Position's worst-case loss in dollars (fixed at entry). */
+  positionMaxLoss: number;
+  /** Current cap in dollars (= maxLossPct × currentBalance). */
+  currentCap: number;
+  /** P&L if we close at currentMarketPrice right now. */
+  closeNowPnl: number;
+  /** Expected P&L if we hold to resolution, using currentMarketPrice as probability. */
+  holdEv: number;
+  /** Dollar value at risk if the bet goes against us (probability × max-loss). */
+  tailRisk: number;
+  /** Hold EV minus close-now PnL. Negative or near-zero = no benefit to holding. */
+  upside: number;
+  /** Reason code for the decision. */
+  reason: 'within_cap' | 'dominated_strict' | 'dominated_marginal' | 'genuine_hold' | 'invalid_input';
+}
+
+export function evaluateCapDriftDominance(params: {
+  entryPrice: number;
+  sizeDollars: number;
+  side: 'buy' | 'sell';
+  currentMarketPrice: number;
+  currentBalance: number;
+  maxLossPct?: number;        // Default 0.05 = 5%
+  dominanceUpsidePct?: number; // Default 0.05 = 5% of position size
+  dominanceTailPct?: number;   // Default 0.10 = 10% of position size
+}): CapDriftEvaluation {
+  const {
+    entryPrice, sizeDollars, side, currentMarketPrice, currentBalance,
+    maxLossPct = 0.05, dominanceUpsidePct = 0.05, dominanceTailPct = 0.10,
+  } = params;
+
+  if (entryPrice <= 0 || entryPrice >= 1 || sizeDollars <= 0 || currentBalance <= 0 || currentMarketPrice < 0 || currentMarketPrice > 1) {
+    return {
+      shouldClose: false, capDrifted: false, positionMaxLoss: 0, currentCap: 0,
+      closeNowPnl: 0, holdEv: 0, tailRisk: 0, upside: 0, reason: 'invalid_input',
+    };
+  }
+
+  const shares = sizeDollars / entryPrice;
+  const maxLossPerShare = side === 'sell' ? (1 - entryPrice) : entryPrice;
+  const positionMaxLoss = maxLossPerShare * shares;
+  const currentCap = maxLossPct * currentBalance;
+
+  if (positionMaxLoss <= currentCap) {
+    return {
+      shouldClose: false, capDrifted: false, positionMaxLoss, currentCap,
+      closeNowPnl: 0, holdEv: 0, tailRisk: 0, upside: 0, reason: 'within_cap',
+    };
+  }
+
+  const closeNowPnl = side === 'sell'
+    ? (entryPrice - currentMarketPrice) * shares
+    : (currentMarketPrice - entryPrice) * shares;
+
+  const holdWinPnl = side === 'sell' ? entryPrice * shares : (1 - entryPrice) * shares;
+  const holdLosePnl = -positionMaxLoss;
+  const pWin = side === 'sell' ? (1 - currentMarketPrice) : currentMarketPrice;
+  const holdEv = pWin * holdWinPnl + (1 - pWin) * holdLosePnl;
+  const tailRisk = (1 - pWin) * positionMaxLoss;
+  const upside = holdEv - closeNowPnl;
+
+  if (holdEv <= closeNowPnl && tailRisk > 0) {
+    return {
+      shouldClose: true, capDrifted: true, positionMaxLoss, currentCap,
+      closeNowPnl, holdEv, tailRisk, upside, reason: 'dominated_strict',
+    };
+  }
+  if (Math.abs(upside) <= dominanceUpsidePct * sizeDollars && tailRisk > dominanceTailPct * sizeDollars) {
+    return {
+      shouldClose: true, capDrifted: true, positionMaxLoss, currentCap,
+      closeNowPnl, holdEv, tailRisk, upside, reason: 'dominated_marginal',
+    };
+  }
+  return {
+    shouldClose: false, capDrifted: true, positionMaxLoss, currentCap,
+    closeNowPnl, holdEv, tailRisk, upside, reason: 'genuine_hold',
+  };
+}

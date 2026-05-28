@@ -327,6 +327,9 @@ export class Runner {
         return parseInt(process.env.MAX_POSITION_AGE_HOURS ?? '24') * 3600000;
       },
       stopLossPct: parseFloat(process.env.STOP_LOSS_PCT ?? '0.30'),
+      // Layer 4 cap-drift auto-close (2026-05-28): pass current balance to enable
+      // the dominance check. Env-gated via CAP_DRIFT_AUTO_CLOSE (dry|true|else-off).
+      getBalance: () => this.paperEngine.getBalance(),
     });
   }
 
