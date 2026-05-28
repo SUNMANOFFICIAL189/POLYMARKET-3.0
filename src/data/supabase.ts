@@ -66,10 +66,111 @@ export async function upsertLeader(leader: Leader): Promise<void> {
   if (error) logger.error(`upsertLeader failed: ${error.message}`);
 }
 
-export async function upsertLeaders(leaders: Leader[]): Promise<void> {
-  for (const leader of leaders) {
-    await upsertLeader(leader);
+/**
+ * Existing-row shape used by diffLeaders to detect "no-op" upserts.
+ * Mirrors the SELECT projection inside upsertLeaders.
+ */
+export interface ExistingLeaderRow {
+  wallet_address: string;
+  display_name: string | null;
+  composite_score: number | null;
+  win_rate_30d: number | null;
+  profit_factor_14d: number | null;
+  trade_count_30d: number | null;
+  total_pnl_30d: number | null;
+  last_trade_time: string | null;
+  tracked_since: string | null;
+}
+
+/**
+ * Pure function: given a map of {lowercase wallet → existing row} and the
+ * incoming leader batch, return ONLY the leaders whose payload differs from
+ * the existing row (or whose wallet isn't in the map yet).
+ *
+ * Extracted from upsertLeaders so the per-row samePayload logic is testable
+ * in isolation (see scripts/test-leader-diff.ts).
+ *
+ * Created 2026-05-28 as part of the bulk-read refactor that cuts ~95% of
+ * Supabase reads (~5,760/day → ~288/day from this hot path alone).
+ */
+export function diffLeaders(
+  existingByWallet: Map<string, ExistingLeaderRow>,
+  newLeaders: Leader[],
+): Leader[] {
+  const result: Leader[] = [];
+  for (const leader of newLeaders) {
+    const target = leader.walletAddress.toLowerCase();
+    const ex = existingByWallet.get(target);
+    if (!ex) {
+      result.push(leader);
+      continue;
+    }
+    const samePayload =
+      ex.display_name === leader.displayName &&
+      ex.composite_score === leader.compositeScore &&
+      ex.win_rate_30d === leader.winRate30d &&
+      ex.profit_factor_14d === leader.profitFactor14d &&
+      ex.trade_count_30d === leader.tradeCount30d &&
+      ex.total_pnl_30d === leader.totalPnl30d &&
+      ex.last_trade_time === leader.lastTradeTime &&
+      ex.tracked_since === leader.trackedSince;
+    if (!samePayload) result.push(leader);
   }
+  return result;
+}
+
+/**
+ * Bulk leader upsert with single read + single write.
+ *
+ * Previous implementation looped per-leader (20 SELECTs + 0-20 UPDATEs per
+ * 5-min poll = ~5,760 reads/day for the leaderboard sync alone). This was
+ * the dominant Supabase IO consumer found during the 2026-05-28 Disk IO
+ * Budget depletion investigation. Pattern echoes the 2026-05-08 incident
+ * with setCurrentLeader (see comment block above), but in a different
+ * function so the prior fix didn't cover it.
+ *
+ * Current implementation: 1 SELECT for all wallets, diff locally, 1 bulk
+ * UPSERT for only the changed rows. ~95% reduction.
+ */
+export async function upsertLeaders(leaders: Leader[]): Promise<void> {
+  if (leaders.length === 0) return;
+
+  const wallets = leaders.map(l => l.walletAddress.toLowerCase());
+
+  // ONE bulk read for all wallets' existing rows
+  const { data: existing, error: readErr } = await getClient()
+    .from('leaders')
+    .select('wallet_address, display_name, composite_score, win_rate_30d, profit_factor_14d, trade_count_30d, total_pnl_30d, last_trade_time, tracked_since')
+    .in('wallet_address', wallets);
+  if (readErr) {
+    logger.error(`upsertLeaders bulk read failed: ${readErr.message}`);
+    return;
+  }
+
+  const existingByWallet = new Map<string, ExistingLeaderRow>(
+    (existing ?? []).map((e) => [e.wallet_address as string, e as ExistingLeaderRow]),
+  );
+
+  const toUpsert = diffLeaders(existingByWallet, leaders);
+  if (toUpsert.length === 0) return; // no-op: nothing changed across all leaders
+
+  const now = new Date().toISOString();
+  const rows = toUpsert.map((leader) => ({
+    wallet_address: leader.walletAddress.toLowerCase(),
+    display_name: leader.displayName,
+    composite_score: leader.compositeScore,
+    win_rate_30d: leader.winRate30d,
+    profit_factor_14d: leader.profitFactor14d,
+    trade_count_30d: leader.tradeCount30d,
+    total_pnl_30d: leader.totalPnl30d,
+    last_trade_time: leader.lastTradeTime,
+    tracked_since: leader.trackedSince,
+    updated_at: now,
+  }));
+
+  // ONE bulk upsert for only the changed rows
+  const { error } = await getClient().from('leaders').upsert(rows, { onConflict: 'wallet_address' });
+  if (error) logger.error(`upsertLeaders bulk upsert failed (${rows.length} rows): ${error.message}`);
 }
 
 export async function setCurrentLeader(walletAddress: string): Promise<void> {
