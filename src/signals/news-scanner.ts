@@ -44,7 +44,12 @@ const DEFAULT_FEEDS: RSSFeed[] = [
   { name: 'Financial Times', url: 'https://www.ft.com/rss/home', priority: 'medium' },
   { name: 'Guardian World', url: 'https://www.theguardian.com/world/rss', priority: 'low' },
   { name: 'Foreign Affairs', url: 'https://www.foreignaffairs.com/rss.xml', priority: 'low' },
-  { name: 'DL News', url: 'https://www.dlnews.com/arc/outboundfeeds/rss/', priority: 'medium' },
+  // DL News REMOVED 2026-05-28: server SSL cert doesn't include www.dlnews.com in
+  // alternative names → fetch fails with "TypeError: fetch failed" every poll (~15s).
+  // Reproduced via curl from independent host — permanent server-side issue, not transient.
+  // Other crypto-native sources (The Block, Decrypt, CoinDesk, CoinTelegraph, Bloomberg
+  // Crypto) cover the same ground. Re-add if DL News fixes their cert; see BACKLOG entry
+  // 2026-05-28 for general per-feed circuit-breaker pattern that would have caught this.
   { name: 'Watcher Guru', url: 'https://watcher.guru/news/feed', priority: 'low' },
 ];
 
