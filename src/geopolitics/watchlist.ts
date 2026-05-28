@@ -66,15 +66,43 @@ const SNAPSHOT_DATE = '2026-05-11';
  *
  * Prior history retained in this file as Tier-2 entries for tracking only.
  */
+/**
+ * Phase 1.5 rotation (2026-05-28): Car DEMOTED to TIER_2, StarMaster PROMOTED to TIER_1.
+ *
+ * Phase 1.4 Day 7 verdict on Car: 0W/4L on clean post-Phase-1.5-fix trades (-$69.83 realized
+ * + -$20.66 MTM on 2 open Iran peace deals). Per the verdict matrix, n<-$50 = "single-trade
+ * copy is wrong" → kill or pivot. Car's 2 open Iran peace deal positions (Jun 30 + Jul 31)
+ * remain in the bot's tracking until they resolve naturally via the lifecycle manager — no
+ * new Car BUYs will be processed because the WalletMonitor only watches TIER_1_ADDRESSES.
+ *
+ * StarMaster promotion grounded in CTDD discipline:
+ *   - Six-gate (LESSONS.md #25) verified on FRESH data 2026-05-28: 6/6 gates pass
+ *   - n=133 positions, Z=+2.35σ, longshot 6.8%, INFO_EDGE archetype, worst -$148 (under -$200 cap)
+ *   - Trajectory stable: realized +$1,830 (vs +$1,822 at 2026-05-27 snapshot, +$8 over 7 hours)
+ *   - Architecture fit: 1.7 trades/hr median (vs balthazar 105/hr HFT) — mirrorable at our 30-60s polling
+ *   - Market mix: 66% geopolitics-relevant (Iran, Israel, Trump-Xi, Strait of Hormuz, peace deals)
+ *
+ * Risk gates remaining open (operator-acknowledged):
+ *   - 14-day watch was the original promotion gate (currently Day 4 of 14). Operator approved
+ *     skipping the remaining 10 days based on (a) stable trajectory post-Day-2 wobble,
+ *     (b) bounded downside via existing geopolitics pool + Phase 1.4 breaker observability,
+ *     (c) Path B (per-wallet capital isolation) deferred to next-rotation trigger since only
+ *     one TIER_1 wallet today.
+ *
+ * Conservative ramp recommended: set `GEOPOLITICS_CAPITAL=750` on deploy for first 7 days,
+ * then ramp to $1500 if metrics hold. Existing breaker at 14% drawdown is unchanged.
+ *
+ * Full audit trail at vault 04 Decision Log "2026-05-28 — Phase 1.5 rotation Car → StarMaster".
+ */
 export const TIER_1: GeopoliticsSpecialist[] = [
   {
-    walletAddress: '0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b',
-    name: 'Car',
+    walletAddress: '0xeca0c0888e34df59589c67fbe53dc7f298b5e8f8',
+    name: 'StarMaster',
     tier: 1,
-    wrPct: 61.2,
-    truePnl: 61708,
-    medianSize: 370,
-    snapshotDate: SNAPSHOT_DATE,
+    wrPct: 71,           // 40W/21L from realized history (2026-05-28 live fetch)
+    truePnl: 8729,       // cashPnl ($6,899) + realizedPnl ($1,830) per 2026-05-28 live fetch
+    medianSize: 50,      // approximate; refine after 30d at our $50 scale
+    snapshotDate: '2026-05-28',
   },
 ];
 
@@ -94,6 +122,21 @@ export const TIER_1: GeopoliticsSpecialist[] = [
  *     Less interesting than (b) but kept for completeness.
  */
 export const TIER_2: GeopoliticsSpecialist[] = [
+  // (NEW 2026-05-28) Demoted from Tier-1 by Phase 1.5 rotation — see TIER_1 header for rationale.
+  // Car's 2 open Iran peace deal BUYs (Jun 30 + Jul 31) remain in bot tracking until they
+  // resolve via lifecycle manager — no NEW Car BUYs will be opened because WalletMonitor
+  // only watches TIER_1_ADDRESSES. Re-promote only if: (a) the 2 open positions resolve
+  // positive AND (b) a fresh 6-gate run shows Car back in INFO_EDGE territory.
+  {
+    walletAddress: '0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b',
+    name: 'Car',
+    tier: 2,
+    wrPct: 61.2,
+    truePnl: 61708,
+    medianSize: 370,
+    snapshotDate: SNAPSHOT_DATE,
+  },
+
   // (a) Demoted from Tier-1 by Phase 1.4 (2026-05-21) — see TIER_1 header.
   {
     // Portfolio-longtail archetype: 50+ open positions, 74% at <$0.05 entry,
@@ -102,6 +145,8 @@ export const TIER_2: GeopoliticsSpecialist[] = [
     // across 21 trades in 9-day soak; losses tripped the geopolitics
     // drawdown breaker which then blocked Car's signal for 3 days.
     // Re-promote only after basket-replication architecture is built.
+    // 2026-05-28 confirmed: profile shows 105 trades/hr HFT pattern —
+    // also incompatible with our 30-60s polling cadence regardless of basket build.
     walletAddress: '0x5a218c7ad04135830a45c41aaed7294df7809318',
     name: 'balthazar',
     tier: 2,
@@ -185,6 +230,8 @@ export const TIER_2: GeopoliticsSpecialist[] = [
     medianSize: 20,
     snapshotDate: SNAPSHOT_DATE,
   },
+
+  // (c) StarMaster — PROMOTED to TIER_1 on 2026-05-28 via Phase 1.5 rotation. See TIER_1 above.
 ];
 
 export const ALL_SPECIALISTS: GeopoliticsSpecialist[] = [...TIER_1, ...TIER_2];
