@@ -330,6 +330,10 @@ export class Runner {
       // Layer 4 cap-drift auto-close (2026-05-28): pass current balance to enable
       // the dominance check. Env-gated via CAP_DRIFT_AUTO_CLOSE (dry|true|else-off).
       getBalance: () => this.paperEngine.getBalance(),
+      // Fix A leader-mirrored exit (2026-06-06): pass leader-snapshot reader + current-size fetcher
+      // from geopoliticsExecutor. Env-gated via LEADER_EXIT_ENABLED (dry|true|else-off).
+      getLeaderSnapshot: (marketId) => this.geopoliticsExecutor.getLeaderSnapshot(marketId),
+      fetchCurrentLeaderSize: (leaderWallet, marketId) => this.geopoliticsExecutor.fetchCurrentLeaderSize(leaderWallet, marketId),
     });
   }
 

@@ -4,6 +4,26 @@ import { RiskManager } from '../core/risk-manager.js';
 import * as cliWrapper from './cli-wrapper.js';
 import { findSpecialist } from '../geopolitics/watchlist.js';
 import type { LeaderTrade, CopyTrade, RiskLevel, ConfirmationDecision } from '../types/index.js';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+
+/**
+ * Leader-mirrored-exit snapshot: leader's CURRENT total position size on a
+ * specific market at the moment WE opened our mirror. Used by PositionLifecycleManager
+ * to detect when the leader has materially reduced their conviction (sold ≥50%
+ * of the snapshot baseline) and trigger a coordinated exit on our side.
+ *
+ * See LESSONS.md #25, scripts/test-leader-exit.ts, and the 2026-06-06 health
+ * check that motivated this (6 of 12 closed StarMaster mirrors hit our fixed
+ * 30% stop while she held through the dip).
+ */
+export interface LeaderSnapshot {
+  leaderWallet: string;
+  marketId: string;
+  sizeAtEntry: number;
+  capturedAt: string; // ISO timestamp
+  ourTradeId?: string;
+}
 
 /**
  * GeopoliticsExecutor — flat-sized mirror of pre-vetted geopolitics specialists.
@@ -98,6 +118,14 @@ export class GeopoliticsExecutor {
    */
   private poolBalance: number;
 
+  /**
+   * Leader-position snapshot store for Fix A (leader-mirrored exit).
+   * Map<marketId, LeaderSnapshot>. Persisted to disk so it survives restarts.
+   * Created 2026-06-06 — see LeaderSnapshot interface for full context.
+   */
+  private leaderSnapshots: Map<string, LeaderSnapshot> = new Map();
+  private readonly SNAPSHOT_FILE = process.env.LEADER_SNAPSHOT_FILE ?? '/opt/polymarket-bot/data/leader-snapshots.json';
+
   constructor(opts: {
     paperEngine: PaperTradingEngine;
     riskManager: RiskManager;
@@ -114,6 +142,96 @@ export class GeopoliticsExecutor {
     this.flatSizeUsdc = opts.flatSizeUsdc ?? DEFAULT_FLAT_SIZE_USDC;
     this.poolBalance = opts.capitalPool;
     this.riskManager.updateBalance(this.poolBalance);
+    this.loadLeaderSnapshots(); // restore from disk on startup
+  }
+
+  // ─── Leader snapshot persistence (Fix A — leader-mirrored exit) ───
+
+  /** Look up the leader's position size baseline for a given marketId. */
+  getLeaderSnapshot(marketId: string): LeaderSnapshot | undefined {
+    return this.leaderSnapshots.get(marketId);
+  }
+
+  /**
+   * Fetch the leader's CURRENT total position size on a market.
+   * Used by PositionLifecycleManager every 5 min to detect material reductions.
+   * Returns null on fetch failure / no position — caller skips exit check in that case.
+   */
+  async fetchCurrentLeaderSize(leaderWallet: string, marketId: string): Promise<number | null> {
+    try {
+      const url = `https://data-api.polymarket.com/positions?user=${leaderWallet}&limit=500`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10_000);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) return null;
+        const positions = await res.json() as Array<{ slug?: string; conditionId?: string; size?: number; eventSlug?: string }>;
+        // Match by slug, conditionId, or eventSlug — Polymarket has slug variants
+        const match = positions.find((p) => p.slug === marketId || p.conditionId === marketId || p.eventSlug === marketId);
+        if (!match) return 0; // leader has no position on this market → fully exited
+        return typeof match.size === 'number' ? match.size : null;
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  /** Capture leader's current size on a market AT THE MOMENT we open our mirror. */
+  private async captureLeaderSnapshot(leaderWallet: string, marketId: string, ourTradeId?: string): Promise<void> {
+    try {
+      const size = await this.fetchCurrentLeaderSize(leaderWallet, marketId);
+      if (size === null || size <= 0) {
+        logger.warn(`GeopoliticsExecutor: leader snapshot fetch returned ${size} for ${marketId.slice(0, 25)} — skipping (50% backstop only)`);
+        return;
+      }
+      const snap: LeaderSnapshot = {
+        leaderWallet,
+        marketId,
+        sizeAtEntry: size,
+        capturedAt: new Date().toISOString(),
+        ourTradeId,
+      };
+      this.leaderSnapshots.set(marketId, snap);
+      this.persistLeaderSnapshots();
+      logger.info(`GeopoliticsExecutor: leader snapshot captured — ${leaderWallet.slice(0, 10)} on ${marketId.slice(0, 25)} sizeAtEntry=${size.toFixed(0)}`);
+    } catch (err) {
+      logger.warn(`GeopoliticsExecutor: captureLeaderSnapshot failed for ${marketId.slice(0, 25)}: ${err}`);
+    }
+  }
+
+  /** Drop the snapshot when we close our position. */
+  private removeLeaderSnapshot(marketId: string): void {
+    if (this.leaderSnapshots.delete(marketId)) {
+      this.persistLeaderSnapshots();
+    }
+  }
+
+  private persistLeaderSnapshots(): void {
+    try {
+      const dir = dirname(this.SNAPSHOT_FILE);
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      const obj = Object.fromEntries(this.leaderSnapshots);
+      writeFileSync(this.SNAPSHOT_FILE, JSON.stringify(obj, null, 2));
+    } catch (err) {
+      logger.warn(`GeopoliticsExecutor: leader snapshot persist failed (non-fatal): ${err}`);
+    }
+  }
+
+  private loadLeaderSnapshots(): void {
+    try {
+      if (!existsSync(this.SNAPSHOT_FILE)) return;
+      const obj = JSON.parse(readFileSync(this.SNAPSHOT_FILE, 'utf8'));
+      for (const [k, v] of Object.entries(obj)) {
+        this.leaderSnapshots.set(k, v as LeaderSnapshot);
+      }
+      if (this.leaderSnapshots.size > 0) {
+        logger.info(`GeopoliticsExecutor: loaded ${this.leaderSnapshots.size} leader snapshots from ${this.SNAPSHOT_FILE}`);
+      }
+    } catch (err) {
+      logger.warn(`GeopoliticsExecutor: leader snapshot load failed (non-fatal): ${err}`);
+    }
   }
 
   /** Hydrate open positions from Supabase on startup (geopolitics-pipeline trades only) */
@@ -160,6 +278,7 @@ export class GeopoliticsExecutor {
     const trade = this.openTrades.get(marketId);
     if (trade) {
       this.openTrades.delete(marketId);
+      this.removeLeaderSnapshot(marketId);
       this.paperEngine.closeTradeByMarketId(marketId, trade.ourEntryPrice ?? 0, 'rollback');
       this.executedCount = Math.max(0, this.executedCount - 1);
       // Refund capital — the trade was reverted, no P&L realized.
@@ -375,6 +494,9 @@ export class GeopoliticsExecutor {
     // Per-pipeline balance accounting — capital reserved.
     this.poolBalance -= ourSize;
     this.riskManager.updateBalance(this.poolBalance);
+    // Fix A: capture leader's current position size for leader-mirrored exit policy.
+    // Fire-and-forget — fetch failure means we fall back to 50% drawdown backstop only.
+    void this.captureLeaderSnapshot(leaderTrade.leaderWallet, leaderTrade.marketId, trade.id);
     return { success: true, copyTrade: trade };
   }
 
@@ -412,6 +534,8 @@ export class GeopoliticsExecutor {
       // Per-pipeline balance accounting — capital reserved.
       this.poolBalance -= ourSize;
       this.riskManager.updateBalance(this.poolBalance);
+      // Fix A: capture leader snapshot (fire-and-forget; see executePaper).
+      void this.captureLeaderSnapshot(leaderTrade.leaderWallet, leaderTrade.marketId, trade.id);
       return { success: true, copyTrade: trade };
     } catch (err) {
       this.blockedCount++;
@@ -431,6 +555,7 @@ export class GeopoliticsExecutor {
         trade.pnl = closed.pnl;
         trade.exitTime = typeof closed.exitTime === 'string' ? closed.exitTime : closed.exitTime?.toISOString();
         this.openTrades.delete(marketId);
+        this.removeLeaderSnapshot(marketId);
         if (reason === 'stop_loss' || reason === 'stop-loss') {
           this.stopLossCooldown.set(marketId, Date.now());
         }
@@ -453,6 +578,7 @@ export class GeopoliticsExecutor {
       trade.exitTime = new Date().toISOString();
       // pnl unknown — paperEngine has no record; assume capital-only return
       this.openTrades.delete(marketId);
+      this.removeLeaderSnapshot(marketId);
       this.poolBalance += (trade.ourSize ?? 0);
       this.riskManager.updateBalance(this.poolBalance);
       // Return null so the lifecycle-cascade can keep looking (e.g., signalExecutor)
@@ -463,6 +589,7 @@ export class GeopoliticsExecutor {
         await cliWrapper.smartOrder(trade.tokenId, 'sell', trade.ourSize);
         trade.status = 'closed';
         this.openTrades.delete(marketId);
+        this.removeLeaderSnapshot(marketId);
         // Live close: paperEngine isn't writing P&L; book the capital return
         // only. Realised P&L is settled at reconciliation/audit time.
         this.poolBalance += (trade.ourSize ?? 0);
@@ -498,6 +625,7 @@ export class GeopoliticsExecutor {
       const trade = this.openTrades.get(marketId);
       if (!trade) continue;
       this.openTrades.delete(marketId);
+      this.removeLeaderSnapshot(marketId);
       this.poolBalance += (trade.ourSize ?? 0);
       this.riskManager.updateBalance(this.poolBalance);
     }

@@ -1,7 +1,20 @@
 import { logger } from '../utils/logger.js';
 import { sendTelegramAlert } from '../utils/telegram.js';
 import type { CopyTrade } from '../types/index.js';
-import { evaluateCapDriftDominance } from './risk-manager.js';
+import { evaluateCapDriftDominance, shouldExitOnLeaderReduction, shouldExitOnDeepDrawdown } from './risk-manager.js';
+
+/**
+ * Leader snapshot interface (Fix A, 2026-06-06). Mirror of the
+ * LeaderSnapshot type in geopolitics-executor.ts — duplicated here as a
+ * structural type to avoid an import cycle.
+ */
+interface LeaderSnapshotLike {
+  leaderWallet: string;
+  marketId: string;
+  sizeAtEntry: number;
+  capturedAt: string;
+  ourTradeId?: string;
+}
 
 const GAMMA_API_BASE = 'https://gamma-api.polymarket.com';
 
@@ -25,6 +38,8 @@ type ClosePositionFn = (marketId: string, exitPrice: number, reason: string) => 
 type GetOpenTradesFn = () => CopyTrade[];
 type PersistCloseFn = (trade: CopyTrade) => Promise<void>;
 type GetBalanceFn = () => number;
+type GetLeaderSnapshotFn = (marketId: string) => LeaderSnapshotLike | undefined;
+type FetchCurrentLeaderSizeFn = (leaderWallet: string, marketId: string) => Promise<number | null>;
 
 /**
  * PositionLifecycleManager
@@ -42,18 +57,24 @@ export class PositionLifecycleManager {
   private ttlTimer: ReturnType<typeof setInterval> | null = null;
   private stopLossTimer: ReturnType<typeof setInterval> | null = null;
   private capDriftTimer: ReturnType<typeof setInterval> | null = null;
+  private leaderExitTimer: ReturnType<typeof setInterval> | null = null;
 
   private readonly RESOLUTION_CHECK_MS: number;
   private readonly TTL_CHECK_MS: number;
   private readonly STOP_LOSS_CHECK_MS: number;
   private readonly CAP_DRIFT_CHECK_MS: number;
+  private readonly LEADER_EXIT_CHECK_MS: number;
   private readonly MAX_POSITION_AGE_MS: number;
   private readonly STOP_LOSS_PCT: number;
+  private readonly LEADER_REDUCTION_THRESHOLD: number;
+  private readonly DEEP_DRAWDOWN_BACKSTOP: number;
 
   private closePosition: ClosePositionFn;
   private getOpenTrades: GetOpenTradesFn;
   private persistClose: PersistCloseFn;
   private getBalance: GetBalanceFn | null = null;
+  private getLeaderSnapshot: GetLeaderSnapshotFn | null = null;
+  private fetchCurrentLeaderSize: FetchCurrentLeaderSizeFn | null = null;
 
   // Cache to avoid hammering Gamma API for same market
   private marketStatusCache: Map<string, { status: MarketStatus; fetchedAt: number }> = new Map();
@@ -77,23 +98,33 @@ export class PositionLifecycleManager {
     ttlCheckMs?: number;
     stopLossCheckMs?: number;
     capDriftCheckMs?: number;
+    leaderExitCheckMs?: number;
     maxPositionAgeMs?: number;
     getMaxAgeForTrade?: (trade: unknown) => number;
     stopLossPct?: number;
+    leaderReductionThreshold?: number;
+    deepDrawdownBackstop?: number;
     getBalance?: GetBalanceFn;
+    getLeaderSnapshot?: GetLeaderSnapshotFn;
+    fetchCurrentLeaderSize?: FetchCurrentLeaderSizeFn;
   }) {
     this.closePosition = opts.closePosition;
     this.getOpenTrades = opts.getOpenTrades;
     this.persistClose = opts.persistClose;
     this.getBalance = opts.getBalance ?? null;
+    this.getLeaderSnapshot = opts.getLeaderSnapshot ?? null;
+    this.fetchCurrentLeaderSize = opts.fetchCurrentLeaderSize ?? null;
 
     this.RESOLUTION_CHECK_MS = opts.resolutionCheckMs ?? 5 * 60 * 1000;   // 5 min
     this.TTL_CHECK_MS = opts.ttlCheckMs ?? 30 * 60 * 1000;                // 30 min
     this.STOP_LOSS_CHECK_MS = opts.stopLossCheckMs ?? 60 * 1000;           // 60 sec
     this.CAP_DRIFT_CHECK_MS = opts.capDriftCheckMs ?? 5 * 60 * 1000;       // 5 min
+    this.LEADER_EXIT_CHECK_MS = opts.leaderExitCheckMs ?? 5 * 60 * 1000;   // 5 min — Fix A
     this.MAX_POSITION_AGE_MS = opts.maxPositionAgeMs ?? 24 * 60 * 60 * 1000; // 24 hours (was 48h — too long for sports markets that resolve in hours)
     this.getMaxAgeForTrade = opts.getMaxAgeForTrade;
-    this.STOP_LOSS_PCT = opts.stopLossPct ?? 0.30; // 30% loss = close
+    this.STOP_LOSS_PCT = opts.stopLossPct ?? 0.30; // 30% loss = close (signal pipeline only — geopolitics uses leader-mirror + 50% backstop instead)
+    this.LEADER_REDUCTION_THRESHOLD = opts.leaderReductionThreshold ?? 0.50; // Fix A: exit when leader sold ≥50% of stake
+    this.DEEP_DRAWDOWN_BACKSTOP = opts.deepDrawdownBackstop ?? 0.50;         // Fix A: hard 50% backstop for geopolitics
   }
 
   start(): void {
@@ -119,6 +150,22 @@ export class PositionLifecycleManager {
         this.capDriftTimer = setInterval(() => this.checkCapDrift(), this.CAP_DRIFT_CHECK_MS);
       }
     }
+
+    // Fix A (2026-06-06): leader-mirrored exit for geopolitics pipeline.
+    // LEADER_EXIT_ENABLED = 'true' (active) | 'dry' (log-only) | anything else (disabled).
+    // Replaces the fixed 30% stop-loss for geopolitics trades (which is now skipped in
+    // checkStopLosses for that pipeline). Combines: (1) exit when leader sells ≥50% of stake,
+    // (2) hard 50% drawdown backstop.
+    const leaderExitMode = (process.env.LEADER_EXIT_ENABLED ?? '').toLowerCase();
+    if (leaderExitMode === 'true' || leaderExitMode === 'dry') {
+      if (!this.getLeaderSnapshot || !this.fetchCurrentLeaderSize) {
+        logger.warn('PositionLifecycle: LEADER_EXIT_ENABLED set but callbacks missing — Fix A disabled');
+      } else {
+        logger.info(`PositionLifecycle: Fix A leader-mirrored exit ENABLED in '${leaderExitMode}' mode, every ${this.LEADER_EXIT_CHECK_MS / 1000}s (threshold ${this.LEADER_REDUCTION_THRESHOLD * 100}% reduction, ${this.DEEP_DRAWDOWN_BACKSTOP * 100}% backstop)`);
+        setTimeout(() => this.checkLeaderExits(), 120_000); // initial after 2 min
+        this.leaderExitTimer = setInterval(() => this.checkLeaderExits(), this.LEADER_EXIT_CHECK_MS);
+      }
+    }
   }
 
   stop(): void {
@@ -126,6 +173,7 @@ export class PositionLifecycleManager {
     if (this.ttlTimer) clearInterval(this.ttlTimer);
     if (this.stopLossTimer) clearInterval(this.stopLossTimer);
     if (this.capDriftTimer) clearInterval(this.capDriftTimer);
+    if (this.leaderExitTimer) clearInterval(this.leaderExitTimer);
     logger.info('PositionLifecycleManager stopped');
   }
 
@@ -247,8 +295,14 @@ export class PositionLifecycleManager {
     const openTrades = this.getOpenTrades();
     if (openTrades.length === 0) return;
 
+    const leaderExitOn = (process.env.LEADER_EXIT_ENABLED ?? '').toLowerCase() === 'true';
     for (const trade of openTrades) {
       const marketId = trade.marketId ?? '';
+      // Fix A (2026-06-06): when LEADER_EXIT_ENABLED=true, skip the fixed 30% stop-loss
+      // for geopolitics-pipeline trades. They get checkLeaderExits' policy instead
+      // (leader-mirrored exit + 50% deep-drawdown backstop). In 'dry' mode the legacy
+      // stop-loss still runs so we can compare behavior.
+      if (leaderExitOn && (trade as { pipeline?: string }).pipeline === 'geopolitics') continue;
       try {
         const status = await this.fetchMarketStatus(marketId);
         if (!status || status.closed) continue; // skip resolved markets (handled by resolution checker)
@@ -360,6 +414,109 @@ export class PositionLifecycleManager {
 
     if (closedCount > 0) {
       logger.info(`PositionLifecycle: Cap-drift swept ${closedCount} dominated position(s)`);
+    }
+  }
+
+  /**
+   * Fix A (2026-06-06): Leader-mirrored exit policy for geopolitics pipeline.
+   *
+   * Replaces the fixed 30% stop-loss (which is now skipped for geopolitics trades
+   * in checkStopLosses when LEADER_EXIT_ENABLED=true). Two-part exit decision:
+   *
+   *   1. **Leader-mirror:** if the leader (StarMaster) has sold ≥50% of their
+   *      position size baseline (captured at OUR entry), close ours too. They're
+   *      reducing conviction — we should follow.
+   *
+   *   2. **Deep-drawdown backstop:** if our position has lost ≥50% on price-move
+   *      basis (vs entry price), close to limit catastrophic tail. Fires even
+   *      if leader hasn't sold — protects against the leader being wrong / slow.
+   *
+   * Triggered by the 2026-06-06 health check showing 6 of 12 closed StarMaster
+   * mirrors hit our fixed 30% stop while she held through the dip — 5 of those
+   * are now profitable in her wallet. Style mismatch (she averages down through
+   * volatility; we shouldn't fixed-% stop her trades).
+   *
+   * Env-gated by LEADER_EXIT_ENABLED: 'true' = active, 'dry' = log-only.
+   * Math is in evaluateCapDriftDominance + shouldExitOnLeaderReduction +
+   * shouldExitOnDeepDrawdown (pure functions in risk-manager.ts).
+   * Tested in scripts/test-leader-exit.ts (20/20 pass).
+   */
+  private async checkLeaderExits(): Promise<void> {
+    if (!this.getLeaderSnapshot || !this.fetchCurrentLeaderSize) return;
+    const mode = (process.env.LEADER_EXIT_ENABLED ?? '').toLowerCase();
+    if (mode !== 'true' && mode !== 'dry') return;
+
+    const openTrades = this.getOpenTrades();
+    const geoTrades = openTrades.filter((t) => (t as { pipeline?: string }).pipeline === 'geopolitics');
+    if (geoTrades.length === 0) return;
+
+    const MAX_PER_CYCLE = 5;
+    let closedCount = 0;
+
+    for (const trade of geoTrades) {
+      if (closedCount >= MAX_PER_CYCLE) break;
+
+      const marketId = trade.marketId ?? '';
+      const leaderWallet = trade.leaderWallet;
+      const entryPrice = trade.ourEntryPrice ?? trade.entryPrice ?? 0;
+      if (!marketId || !leaderWallet || !entryPrice) continue;
+
+      try {
+        // ─── Check 1: deep-drawdown backstop ───
+        const status = await this.fetchMarketStatus(marketId);
+        if (!status) continue;
+        if (status.closed) continue; // resolution checker handles this
+        const currentPrice = this.getCurrentPrice(status, trade.outcome);
+        const shouldBackstop = shouldExitOnDeepDrawdown(entryPrice, currentPrice, (trade.side as 'buy' | 'sell') ?? 'buy', this.DEEP_DRAWDOWN_BACKSTOP);
+
+        // ─── Check 2: leader-mirrored exit ───
+        const snapshot = this.getLeaderSnapshot(marketId);
+        let shouldFollow = false;
+        let leaderSize = -1;
+        if (snapshot && snapshot.sizeAtEntry > 0) {
+          const current = await this.fetchCurrentLeaderSize(leaderWallet, marketId);
+          if (current !== null) {
+            leaderSize = current;
+            shouldFollow = shouldExitOnLeaderReduction(snapshot.sizeAtEntry, current, this.LEADER_REDUCTION_THRESHOLD);
+          }
+        }
+        // Legacy positions without a snapshot: skip leader-mirror, backstop only.
+
+        if (!shouldBackstop && !shouldFollow) continue;
+
+        const reason = shouldFollow ? 'leader_reduced' : 'deep_drawdown_backstop';
+        const reasonDetail = shouldFollow
+          ? `leader ${leaderWallet.slice(0, 10)} now holds ${leaderSize.toFixed(0)} (was ${snapshot?.sizeAtEntry.toFixed(0)} at our entry, ${(this.LEADER_REDUCTION_THRESHOLD * 100).toFixed(0)}% threshold)`
+          : `loss ${(Math.abs((trade.side === 'buy' ? (currentPrice - entryPrice) : (entryPrice - currentPrice)) / entryPrice) * 100).toFixed(1)}% exceeds ${(this.DEEP_DRAWDOWN_BACKSTOP * 100).toFixed(0)}% backstop`;
+        const audit = `entry=${entryPrice.toFixed(4)} curr=${currentPrice.toFixed(4)} side=${trade.side} ${reasonDetail}`;
+
+        if (mode === 'dry') {
+          logger.info(`PositionLifecycle: [DRY] LEADER-EXIT would close "${marketId.slice(0, 40)}" — reason=${reason} ${audit}`);
+          continue;
+        }
+
+        logger.warn(`PositionLifecycle: LEADER-EXIT closing "${marketId.slice(0, 40)}" — reason=${reason} ${audit}`);
+        const closed = await this.closePosition(marketId, currentPrice, reason);
+        if (!closed) continue;
+        await this.persistClose(closed);
+        closedCount++;
+
+        const pnlNum = closed.pnl ?? 0;
+        const pnlStr = pnlNum >= 0 ? `+$${pnlNum.toFixed(2)}` : `-$${Math.abs(pnlNum).toFixed(2)}`;
+        sendTelegramAlert(
+          `🟡 Closed a copy-trade because the source wallet exited\n\n` +
+          `Market: "${marketId.slice(0, 50)}"\n` +
+          `Reason: ${shouldFollow ? 'StarMaster sold ≥50% of her position — following her exit' : 'Position lost more than 50% — safety backstop'}\n` +
+          `Realized: ${pnlStr}\n\n` +
+          `What to do: nothing — this is the new exit policy from Fix A (2026-06-06). It replaces the old "30% stop-loss on everything" which was forcing exits while StarMaster held through dips. Decision Log has full math.`,
+        );
+      } catch (err) {
+        logger.warn(`PositionLifecycle: leader-exit check failed for ${marketId.slice(0, 25)}: ${err}`);
+      }
+    }
+
+    if (closedCount > 0) {
+      logger.info(`PositionLifecycle: Fix A swept ${closedCount} geopolitics position(s)`);
     }
   }
 

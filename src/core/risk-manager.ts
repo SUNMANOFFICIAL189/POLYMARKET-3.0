@@ -366,3 +366,72 @@ export function evaluateCapDriftDominance(params: {
     closeNowPnl, holdEv, tailRisk, upside, reason: 'genuine_hold',
   };
 }
+
+/**
+ * Leader-mirrored exit policy: should we close because the leader has sold off
+ * a significant portion of their position?
+ *
+ * Returns true if the leader's CURRENT position size has fallen below
+ * (1 − reductionThreshold) × leader_size_at_our_entry.
+ *
+ * Created 2026-06-06 after health check showed our fixed 30% stop-loss exited
+ * 6 of 12 StarMaster mirrors while she held through the dip — 5 of those are
+ * now profitable in her wallet. Style mismatch: she averages down through
+ * volatility; we should mirror her exit timing instead of using a fixed %.
+ *
+ * Tested in scripts/test-leader-exit.ts.
+ *
+ * Defensive: returns false on invalid inputs (zero/negative entry size,
+ * negative current size).
+ *
+ * @param leaderSizeAtEntry leader's position size (in their native units —
+ *   typically USDC or shares) at the moment we opened our mirror
+ * @param currentLeaderSize leader's CURRENT position size (latest poll)
+ * @param reductionThreshold fraction (0–1). Default 0.50 = exit when leader
+ *   has sold ≥50% of their stake.
+ */
+export function shouldExitOnLeaderReduction(
+  leaderSizeAtEntry: number,
+  currentLeaderSize: number,
+  reductionThreshold = 0.50,
+): boolean {
+  if (leaderSizeAtEntry <= 0 || currentLeaderSize < 0) return false;
+  const remainingThreshold = leaderSizeAtEntry * (1 - reductionThreshold);
+  return currentLeaderSize <= remainingThreshold;
+}
+
+/**
+ * Deep-drawdown backstop: catch truly-catastrophic losses even if the leader
+ * is still holding.
+ *
+ * Returns true if our adverse-direction loss exceeds drawdownThreshold (default
+ * 50%). Separate from the existing 30% stop-loss in checkStopLosses; this is
+ * a HIGHER threshold specifically for the geopolitics pipeline that follows
+ * a leader-mirrored exit policy.
+ *
+ * Rationale: leader-mirrored exit can let positions ride through volatility,
+ * but we still need a hard floor in case the leader is wrong or slow to react.
+ * 50% is calibrated to be loose enough to let normal dips pass while still
+ * preventing total wipeouts.
+ *
+ * Created 2026-06-06 as the safety floor for Fix A.
+ *
+ * @param entryPrice price we entered at
+ * @param currentPrice current market price
+ * @param side 'buy' or 'sell'
+ * @param drawdownThreshold fraction (0–1). Default 0.50 = exit at 50% loss.
+ */
+export function shouldExitOnDeepDrawdown(
+  entryPrice: number,
+  currentPrice: number,
+  side: 'buy' | 'sell',
+  drawdownThreshold = 0.50,
+): boolean {
+  if (entryPrice <= 0 || currentPrice < 0) return false;
+  const lossPct = side === 'buy'
+    ? (entryPrice - currentPrice) / entryPrice
+    : (currentPrice - entryPrice) / entryPrice;
+  // Epsilon-tolerant comparison: JS float arithmetic produces 0.4999... when
+  // comparing (0.30-0.20)/0.20 against 0.50. 1e-9 epsilon is safe for trading.
+  return lossPct >= drawdownThreshold - 1e-9;
+}
