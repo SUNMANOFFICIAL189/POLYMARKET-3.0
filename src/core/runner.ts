@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logger } from '../utils/logger.js';
@@ -9,6 +9,23 @@ import { RiskManager, BreakerStateChange } from './risk-manager.js';
 
 const _runnerDir = dirname(fileURLToPath(import.meta.url));
 const PEAK_BALANCE_FILE = resolve(_runnerDir, '../../.peak-balance.json');
+
+/**
+ * Fix B (2026-06-08): signal-log JSONL — append-only diagnostic file recording
+ * EVERY observed leader trade with its disposition (executed | blocked + reason).
+ *
+ * Triggered by 2026-06-08 health check: STATUS counter showed `blocked=25`
+ * geopolitics signals since restart but the bot had ZERO visibility into WHY
+ * each was blocked. This file fixes that — one JSON object per line, append-
+ * only, grep-friendly. Survives restarts; rotates externally via logrotate
+ * if it ever gets big.
+ *
+ * Read with: `tail -50 /opt/polymarket-bot/data/signal-log.jsonl | jq .`
+ *
+ * Env-overridable via SIGNAL_LOG_FILE. Defaults to /opt/polymarket-bot/data/
+ * (same parent dir as the Fix A leader-snapshots file).
+ */
+const SIGNAL_LOG_FILE = process.env.SIGNAL_LOG_FILE ?? '/opt/polymarket-bot/data/signal-log.jsonl';
 import { PaperTradingEngine } from './paper-trading.js';
 import { LeaderboardScraper } from '../leaderboard/scraper.js';
 import { TraderScorer } from '../leaderboard/scorer.js';
@@ -823,6 +840,23 @@ export class Runner {
    */
   private async handleGeopoliticsTrade(trade: LeaderTrade): Promise<void> {
     const result = await this.geopoliticsExecutor.execute(trade);
+    // Fix B (2026-06-08): record EVERY geopolitics execute() attempt to the
+    // signal-log JSONL for permanent diagnostic visibility. Survives restarts;
+    // grep-friendly; one JSON object per line.
+    this.appendSignalLog({
+      timestamp: new Date().toISOString(),
+      pipeline: 'geopolitics',
+      leader_wallet: trade.leaderWallet,
+      market_id: trade.marketId,
+      market_question: trade.marketQuestion?.slice(0, 100),
+      side: trade.side,
+      leader_price: trade.entryPrice,
+      our_token_id: trade.tokenId,
+      disposition: result.success ? 'executed' : 'blocked',
+      reason: result.reason ?? (result.success ? 'ok' : 'unknown'),
+      our_trade_id: result.copyTrade?.id,
+      our_size: result.copyTrade?.ourSize,
+    });
     if (!result.success) {
       // info-level (not debug) so silent rejection regressions are visible
       // in pm2 logs without flipping log level. 2026-05-12 incident: a per-
@@ -854,6 +888,21 @@ export class Runner {
     const market = trade.marketQuestion.slice(0, 50);
     logger.info(`GEOPOLITICS TRADE EXECUTED: $${size} on "${market}"`);
     sendTelegramAlert(`🌍 <b>GEOPOLITICS TRADE</b>\n💰 $${size} on "${market}"\n👤 ${trade.leaderWallet.slice(0, 10)}`);
+  }
+
+  /**
+   * Fix B (2026-06-08): append one JSON line to the signal-log file.
+   * Fire-and-forget; failures are logged but never propagate (diagnostic
+   * channel must not be allowed to break the trading path).
+   */
+  private appendSignalLog(entry: Record<string, unknown>): void {
+    try {
+      const dir = dirname(SIGNAL_LOG_FILE);
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      appendFileSync(SIGNAL_LOG_FILE, JSON.stringify(entry) + '\n');
+    } catch (err) {
+      logger.warn(`signal-log append failed (non-fatal): ${err}`);
+    }
   }
 
   private setupBlockListener(): void {
