@@ -265,19 +265,26 @@ export class PositionLifecycleManager {
       if (ageMs > effectiveTTL) {
         logger.info(`PositionLifecycle: Position "${marketId}" is ${(ageMs / 3600000).toFixed(1)}h old (ttl: ${(effectiveTTL / 3600000).toFixed(0)}h) — auto-closing`);
 
-        // Try to get current price from market status
-        let exitPrice = 0.5; // default fallback
+        // Get the live price; NEVER fabricate. getCurrentPrice returns -1 on an
+        // unknown outcome. If no valid price is available, DEFER the close (it
+        // retries next sweep) rather than booking a fictional 0.5-based P&L.
+        let exitPrice: number | null = null;
         try {
           const status = await this.fetchMarketStatus(marketId);
           if (status) {
-            exitPrice = this.getCurrentPrice(status, trade.outcome);
+            const p = this.getCurrentPrice(status, trade.outcome);
+            if (p >= 0 && p <= 1) exitPrice = p;
           }
-        } catch { /* use fallback */ }
+        } catch { /* price unavailable */ }
 
-        const closed = await this.closePosition(marketId, exitPrice, 'ttl_expired');
-        if (closed) {
-          closedCount++;
-          await this.persistClose(closed);
+        if (exitPrice === null) {
+          logger.warn(`PositionLifecycle: TTL close DEFERRED for "${marketId.slice(0, 30)}" — no live price (retries next sweep; not fabricating 0.5)`);
+        } else {
+          const closed = await this.closePosition(marketId, exitPrice, 'ttl_expired');
+          if (closed) {
+            closedCount++;
+            await this.persistClose(closed);
+          }
         }
       }
     }

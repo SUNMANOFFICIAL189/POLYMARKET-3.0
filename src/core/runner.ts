@@ -703,13 +703,14 @@ export class Runner {
     // Note: setupBlockListener() handles the WS-side wiring. See below.
 
     this.walletMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string; rank?: number; exitPrice?: number }) => {
-      const exitPrice = typeof data.exitPrice === 'number' && data.exitPrice > 0
-        ? data.exitPrice
-        : 0.5;
-      const priceNote = exitPrice === 0.5 && data.exitPrice == null
-        ? ' (fallback midpoint)'
-        : '';
-      logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}" @ ${exitPrice.toFixed(3)}${priceNote}`);
+      // Use the leader's REAL exit price; NEVER fabricate 0.5. If unavailable,
+      // DEFER our close (TTL / stop-loss will close it later at a real price).
+      if (typeof data.exitPrice !== 'number' || !(data.exitPrice > 0)) {
+        logger.warn(`Leader closed "${data.marketQuestion.slice(0, 40)}" but no exit price — DEFERRING our close (not fabricating 0.5)`);
+        return;
+      }
+      const exitPrice = data.exitPrice;
+      logger.info(`Leader closed position on "${data.marketQuestion.slice(0, 50)}" @ ${exitPrice.toFixed(3)}`);
       const closedTrade = await this.copyExecutor.closePosition(data.marketId, exitPrice, 'leader_closed');
       if (!closedTrade) return;
       const pnlStr = closedTrade.pnl !== undefined ? `$${closedTrade.pnl.toFixed(2)}` : 'n/a';
@@ -744,7 +745,13 @@ export class Runner {
     });
 
     this.geopoliticsMonitor.on('leader-closed', async (data: { marketId: string; marketQuestion: string; leaderWallet: string; exitPrice?: number }) => {
-      const exitPrice = typeof data.exitPrice === 'number' && data.exitPrice > 0 ? data.exitPrice : 0.5;
+      // NEVER fabricate 0.5. If the specialist's exit price is unknown, DEFER —
+      // Fix A (leader-mirrored exit) / 50% backstop / TTL will close at a real price.
+      if (typeof data.exitPrice !== 'number' || !(data.exitPrice > 0)) {
+        logger.warn(`GeopoliticsExecutor: specialist closed "${data.marketQuestion.slice(0, 40)}" but no exit price — DEFERRING (not fabricating 0.5)`);
+        return;
+      }
+      const exitPrice = data.exitPrice;
       const closed = await this.geopoliticsExecutor.closePosition(data.marketId, exitPrice, 'leader_closed');
       if (!closed) return;
       const pnlStr = closed.pnl !== undefined ? `$${closed.pnl.toFixed(2)}` : 'n/a';
