@@ -261,8 +261,17 @@ export class GeopoliticsExecutor {
       };
       this.openTrades.set(marketId, trade);
     }
+    // Restart fidelity: deduct capital reserved by the hydrated open positions so
+    // poolBalance reflects DEPLOYED capital (mirrors PaperTradingEngine's hydrate).
+    // Without this, the pool reset to full on every restart and every geo risk gate
+    // (drawdown breaker / exposure / daily-loss / max-loss) used the wrong denominator
+    // — reading ~0% drawdown even with capital deployed.
+    let reservedCapital = 0;
+    for (const t of this.openTrades.values()) reservedCapital += t.ourSize ?? 0;
+    this.poolBalance = this.capitalPool - reservedCapital;
+    this.riskManager.updateBalance(this.poolBalance);
     if (this.openTrades.size > 0) {
-      logger.info(`GeopoliticsExecutor: Hydrated ${this.openTrades.size} open positions from Supabase`);
+      logger.info(`GeopoliticsExecutor: Hydrated ${this.openTrades.size} open positions ($${reservedCapital.toFixed(2)} reserved → pool $${this.poolBalance.toFixed(2)})`);
     }
   }
 
