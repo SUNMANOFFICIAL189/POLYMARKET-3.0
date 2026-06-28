@@ -144,7 +144,7 @@ export class GeopoliticsExecutor {
     this.riskLevel = opts.riskLevel;
     this.flatSizeUsdc = opts.flatSizeUsdc ?? DEFAULT_FLAT_SIZE_USDC;
     this.poolBalance = opts.capitalPool;
-    this.riskManager.updateBalance(this.poolBalance);
+    this.syncRiskState();
     this.loadLeaderSnapshots(); // restore from disk on startup
     // Tier-1 3.3: restore cooldown + 48h consensus window so a restart no longer
     // bypasses the stop-loss cooldown or mis-sizes trades (solo vs consensus).
@@ -277,7 +277,7 @@ export class GeopoliticsExecutor {
     let reservedCapital = 0;
     for (const t of this.openTrades.values()) reservedCapital += t.ourSize ?? 0;
     this.poolBalance = this.capitalPool - reservedCapital;
-    this.riskManager.updateBalance(this.poolBalance);
+    this.syncRiskState();
     if (this.openTrades.size > 0) {
       logger.info(`GeopoliticsExecutor: Hydrated ${this.openTrades.size} open positions ($${reservedCapital.toFixed(2)} reserved → pool $${this.poolBalance.toFixed(2)})`);
     }
@@ -300,7 +300,7 @@ export class GeopoliticsExecutor {
       this.executedCount = Math.max(0, this.executedCount - 1);
       // Refund capital — the trade was reverted, no P&L realized.
       this.poolBalance += trade.ourSize ?? 0;
-      this.riskManager.updateBalance(this.poolBalance);
+      this.syncRiskState();
       logger.warn(`GeopoliticsExecutor: Rolled back trade for ${marketId.slice(0, 20)} (Supabase write failed)`);
     }
   }
@@ -511,7 +511,7 @@ export class GeopoliticsExecutor {
     this.executedCount++;
     // Per-pipeline balance accounting — capital reserved.
     this.poolBalance -= ourSize;
-    this.riskManager.updateBalance(this.poolBalance);
+    this.syncRiskState();
     // Fix A: capture leader's current position size for leader-mirrored exit policy.
     // Fire-and-forget — fetch failure means we fall back to 50% drawdown backstop only.
     void this.captureLeaderSnapshot(leaderTrade.leaderWallet, leaderTrade.marketId, trade.id);
@@ -551,7 +551,7 @@ export class GeopoliticsExecutor {
       this.executedCount++;
       // Per-pipeline balance accounting — capital reserved.
       this.poolBalance -= ourSize;
-      this.riskManager.updateBalance(this.poolBalance);
+      this.syncRiskState();
       // Fix A: capture leader snapshot (fire-and-forget; see executePaper).
       void this.captureLeaderSnapshot(leaderTrade.leaderWallet, leaderTrade.marketId, trade.id);
       return { success: true, copyTrade: trade };
@@ -580,7 +580,7 @@ export class GeopoliticsExecutor {
         }
         // Per-pipeline balance accounting — capital returned + realized P&L.
         this.poolBalance += (trade.ourSize ?? 0) + (closed.pnl ?? 0);
-        this.riskManager.updateBalance(this.poolBalance);
+        this.syncRiskState();
         return trade;
       }
       // Stale-state correction (Phase 0.3, 2026-05-17): paperEngine had no
@@ -599,7 +599,7 @@ export class GeopoliticsExecutor {
       this.openTrades.delete(marketId);
       this.removeLeaderSnapshot(marketId);
       this.poolBalance += (trade.ourSize ?? 0);
-      this.riskManager.updateBalance(this.poolBalance);
+      this.syncRiskState();
       // Return null so the lifecycle-cascade can keep looking (e.g., signalExecutor)
       // and the caller doesn't double-persist a close we don't have real data for.
       return null;
@@ -612,7 +612,7 @@ export class GeopoliticsExecutor {
         // Live close: paperEngine isn't writing P&L; book the capital return
         // only. Realised P&L is settled at reconciliation/audit time.
         this.poolBalance += (trade.ourSize ?? 0);
-        this.riskManager.updateBalance(this.poolBalance);
+        this.syncRiskState();
         return trade;
       } catch (err) {
         logger.error(`GeopoliticsExecutor: Live close failed for ${marketId}: ${err}`);
@@ -646,7 +646,7 @@ export class GeopoliticsExecutor {
       this.openTrades.delete(marketId);
       this.removeLeaderSnapshot(marketId);
       this.poolBalance += (trade.ourSize ?? 0);
-      this.riskManager.updateBalance(this.poolBalance);
+      this.syncRiskState();
     }
     if (phantoms.length > 0) {
       logger.warn(
@@ -656,6 +656,20 @@ export class GeopoliticsExecutor {
       );
     }
     return { removed: phantoms.length, phantomMarketIds: phantoms };
+  }
+
+  /**
+   * Option A (2026-06-28): keep the RiskManager's open-trades view in lockstep
+   * with poolBalance whenever cash changes, so its EQUITY-based drawdown breaker
+   * always sees a consistent (free-cash, deployed) pair. setOpenTrades BEFORE
+   * updateBalance so equity is computed against the just-changed open set.
+   * Replaces the bare updateBalance(poolBalance) calls — including the restart
+   * hydrate, which is what neutralises the boot phantom-drawdown (H1): equity =
+   * (pool − reserved) + reserved = full pool ⇒ 0% boot drawdown.
+   */
+  private syncRiskState(): void {
+    this.riskManager.setOpenTrades(this.toRMTrades());
+    this.riskManager.updateBalance(this.poolBalance);
   }
 
   /**

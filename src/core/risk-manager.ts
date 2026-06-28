@@ -100,22 +100,40 @@ export class RiskManager {
         pipelineId: this.pipelineId,
         transition: 'release',
         peakBalance: newPeak,
-        currentBalance: this.balance,
+        currentBalance: this.equity(),
         drawdownPct: 0,
         limitPct,
       });
     }
   }
 
+  /**
+   * Equity = free cash + open-position cost basis. Option A (2026-06-28): the
+   * drawdown breaker measures EQUITY, not free cash, so capital DEPLOYED into
+   * open positions counts as worth — not as drawdown. This removes the phantom
+   * drawdown that (a) tripped the geo breaker at boot after a restart with
+   * positions open (H1) and (b) lurked in steady-state as deployed capital read
+   * as loss. Only REALIZED losses (and cash moves) reduce equity. Sizing /
+   * exposure / daily-loss gates still use free cash (this.balance) — unchanged.
+   * Correctness needs openTrades kept in lockstep with balance (geo executor's
+   * syncRiskState does setOpenTrades immediately before updateBalance).
+   */
+  private equity(): number {
+    let deployed = 0;
+    for (const t of this.openTrades) deployed += t.usdcAmount ?? 0;
+    return this.balance + deployed;
+  }
+
   getBreakerState(): BreakerState {
     const limitPct = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
+    const eq = this.equity();
     const drawdownPct = this.peakBalance > 0
-      ? (this.peakBalance - this.balance) / this.peakBalance
+      ? (this.peakBalance - eq) / this.peakBalance
       : 0;
     return {
       tripped: this.breakerTripped,
       peakBalance: this.peakBalance,
-      currentBalance: this.balance,
+      currentBalance: eq,
       drawdownPct,
       limitPct,
     };
@@ -129,8 +147,9 @@ export class RiskManager {
   private updateBreakerState(): void {
     if (this.pipelineId === 'global') return;
     const limitPct = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
+    const eq = this.equity();
     const drawdownPct = this.peakBalance > 0
-      ? (this.peakBalance - this.balance) / this.peakBalance
+      ? (this.peakBalance - eq) / this.peakBalance
       : 0;
     const shouldBeTripped = drawdownPct > limitPct;
     if (shouldBeTripped && !this.breakerTripped) {
@@ -139,7 +158,7 @@ export class RiskManager {
         pipelineId: this.pipelineId,
         transition: 'trip',
         peakBalance: this.peakBalance,
-        currentBalance: this.balance,
+        currentBalance: eq,
         drawdownPct,
         limitPct,
       });
@@ -149,7 +168,7 @@ export class RiskManager {
         pipelineId: this.pipelineId,
         transition: 'release',
         peakBalance: this.peakBalance,
-        currentBalance: this.balance,
+        currentBalance: eq,
         drawdownPct,
         limitPct,
       });
@@ -158,11 +177,14 @@ export class RiskManager {
 
   updateBalance(balance: number): void {
     this.balance = balance;
-    if (balance > this.peakBalance) {
-      this.peakBalance = balance;
+    // Ratchet the high-water mark on EQUITY (cash + open cost basis), not free
+    // cash, so deploying capital never advances/regresses the peak artificially.
+    const eq = this.equity();
+    if (eq > this.peakBalance) {
+      this.peakBalance = eq;
       this.onPeakBalanceChange?.(this.peakBalance);
     }
-    const drawdown = (this.peakBalance - balance) / this.peakBalance;
+    const drawdown = this.peakBalance > 0 ? (this.peakBalance - eq) / this.peakBalance : 0;
     if (drawdown > this.maxDrawdown) this.maxDrawdown = drawdown;
     this.updateBreakerState();
   }
@@ -196,7 +218,7 @@ export class RiskManager {
     if (this.pipelineId !== 'global') {
       this.updateBreakerState();
       const DRAWDOWN_LIMIT = Number(process.env.DRAWDOWN_LIMIT_PCT ?? '0.14') || 0.14;
-      const currentDrawdown = (this.peakBalance - this.balance) / this.peakBalance;
+      const currentDrawdown = this.peakBalance > 0 ? (this.peakBalance - this.equity()) / this.peakBalance : 0;
       if (currentDrawdown > DRAWDOWN_LIMIT) {
         return {
           allowed: false,
