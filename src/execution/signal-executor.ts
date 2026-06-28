@@ -5,6 +5,7 @@ import { RiskManager } from '../core/risk-manager.js';
 import type { TradingSignal } from '../signals/signal-generator.js';
 import type { Trade } from '../types/index.js';
 import { categoriseMarket } from '../signals/market-categoriser.js';
+import { persistTimestampMap, loadTimestampMap } from '../core/map-persistence.js';
 
 /**
  * SignalExecutor — executes trades from the signal-based original trading pipeline.
@@ -34,6 +35,7 @@ export class SignalExecutor {
   private signalMarketIds: Set<string> = new Set(); // lightweight tracker — paper engine has the trades
   private recentlyClosedMarkets: Map<string, number> = new Map(); // marketId -> close timestamp
   private readonly REENTRY_COOLDOWN_MS = 15 * 60 * 1000; // 15 min cooldown after closing
+  private readonly COOLDOWN_FILE = process.env.SIGNAL_REENTRY_FILE ?? '/opt/polymarket-bot/data/signal-reentry-cooldown.json';
   private executedCount = 0;
   private blockedCount = 0;
   private maxOpenSignalPositions: number;
@@ -49,6 +51,9 @@ export class SignalExecutor {
     this.paperMode = opts.paperMode;
     this.maxOpenSignalPositions = opts.maxOpenSignalPositions
       ?? (Number(process.env.MAX_SIGNAL_POSITIONS ?? '15') || 5);
+    // Tier-1 3.3: restore the 15-min re-entry cooldown so a restart doesn't bypass
+    // the duplicate-open race guard.
+    this.recentlyClosedMarkets = loadTimestampMap(this.COOLDOWN_FILE, this.REENTRY_COOLDOWN_MS, Date.now());
   }
 
   async execute(signal: TradingSignal): Promise<{ success: boolean; reason: string; trade?: Trade }> {
@@ -255,6 +260,7 @@ export class SignalExecutor {
   closePosition(marketId: string, exitPrice: number, reason: string): Trade | null {
     if (!this.signalMarketIds.has(marketId)) return null;
     this.recentlyClosedMarkets.set(marketId, Date.now());
+    persistTimestampMap(this.COOLDOWN_FILE, this.recentlyClosedMarkets);
 
     if (this.paperMode) {
       const closed = this.paperEngine.closeTradeByMarketId(marketId, exitPrice, reason);

@@ -6,6 +6,7 @@ import { findSpecialist } from '../geopolitics/watchlist.js';
 import type { LeaderTrade, CopyTrade, RiskLevel, ConfirmationDecision } from '../types/index.js';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { persistTimestampMap, loadTimestampMap, persistBucketMap, loadBucketMap } from '../core/map-persistence.js';
 
 /**
  * Leader-mirrored-exit snapshot: leader's CURRENT total position size on a
@@ -125,6 +126,8 @@ export class GeopoliticsExecutor {
    */
   private leaderSnapshots: Map<string, LeaderSnapshot> = new Map();
   private readonly SNAPSHOT_FILE = process.env.LEADER_SNAPSHOT_FILE ?? '/opt/polymarket-bot/data/leader-snapshots.json';
+  private readonly COOLDOWN_FILE = process.env.GEO_COOLDOWN_FILE ?? '/opt/polymarket-bot/data/geo-stoploss-cooldown.json';
+  private readonly CONSENSUS_FILE = process.env.GEO_CONSENSUS_FILE ?? '/opt/polymarket-bot/data/geo-consensus.json';
 
   constructor(opts: {
     paperEngine: PaperTradingEngine;
@@ -143,6 +146,11 @@ export class GeopoliticsExecutor {
     this.poolBalance = opts.capitalPool;
     this.riskManager.updateBalance(this.poolBalance);
     this.loadLeaderSnapshots(); // restore from disk on startup
+    // Tier-1 3.3: restore cooldown + 48h consensus window so a restart no longer
+    // bypasses the stop-loss cooldown or mis-sizes trades (solo vs consensus).
+    const nowMs = Date.now();
+    this.stopLossCooldown = loadTimestampMap(this.COOLDOWN_FILE, STOP_LOSS_COOLDOWN_MS, nowMs);
+    this.recentBuysByWallet = loadBucketMap<{ marketId: string; outcome: string; timestamp: number }>(this.CONSENSUS_FILE, CONSENSUS_WINDOW_MS, nowMs);
   }
 
   // ─── Leader snapshot persistence (Fix A — leader-mirrored exit) ───
@@ -340,6 +348,7 @@ export class GeopoliticsExecutor {
       return { success: false, reason: `Stop-loss cooldown active (${remainingMin}min remaining)` };
     } else if (cooldownStart) {
       this.stopLossCooldown.delete(leaderTrade.marketId);
+      persistTimestampMap(this.COOLDOWN_FILE, this.stopLossCooldown);
     }
 
     // ─── Dedup ───
@@ -567,6 +576,7 @@ export class GeopoliticsExecutor {
         this.removeLeaderSnapshot(marketId);
         if (reason === 'stop_loss' || reason === 'stop-loss') {
           this.stopLossCooldown.set(marketId, Date.now());
+          persistTimestampMap(this.COOLDOWN_FILE, this.stopLossCooldown);
         }
         // Per-pipeline balance accounting — capital returned + realized P&L.
         this.poolBalance += (trade.ourSize ?? 0) + (closed.pnl ?? 0);
@@ -719,6 +729,7 @@ export class GeopoliticsExecutor {
       fresh.push({ marketId, outcome, timestamp });
     }
     this.recentBuysByWallet.set(wallet, fresh);
+    persistBucketMap(this.CONSENSUS_FILE, this.recentBuysByWallet);
   }
 
   /**

@@ -142,14 +142,11 @@ export class Runner {
 
     this.riskDial = new RiskDial(cfg.risk.level);
 
-    let restoredPeak: number | undefined;
-    try {
-      const raw = readFileSync(PEAK_BALANCE_FILE, 'utf8');
-      const parsed = JSON.parse(raw);
-      if (typeof parsed.peakBalance === 'number' && parsed.peakBalance > 0) {
-        restoredPeak = parsed.peakBalance;
-      }
-    } catch { /* first run or missing file */ }
+    // Per-pipeline peak-balance file (Tier-1 3.2): signal keeps the existing
+    // PEAK_BALANCE_FILE; other pipelines use a sibling file. Peak now persists for
+    // geo/copy too, so the drawdown breaker remembers its peak across restarts.
+    const peakFileFor = (pid: PipelineId): string =>
+      pid === 'signal' ? PEAK_BALANCE_FILE : resolve(PEAK_BALANCE_FILE, '..', `peak-balance-${pid}.json`);
 
     // Build a RiskManager per pipeline (Option D, 2026-05-10). Each pipeline
     // gets its own isolated balance + drawdown tracking. The signal pipeline
@@ -169,17 +166,23 @@ export class Runner {
     for (const id of ALL_PIPELINES) {
       const pcfg = cfg.pipelines[id];
       const dial = new RiskDial(pcfg.riskLevel);
-      const isSignal = id === 'signal';
       const opts: ConstructorParameters<typeof RiskManager>[3] = {
         onBreakerStateChange,
       };
-      if (isSignal) {
-        opts.restoredPeakBalance = restoredPeak;
-        opts.onPeakBalanceChange = (peak) => {
-          try { writeFileSync(PEAK_BALANCE_FILE, JSON.stringify({ peakBalance: peak, updatedAt: new Date().toISOString() })); }
-          catch { /* non-fatal */ }
-        };
-      }
+      // Restore peak from disk + persist on every new peak — for EVERY pipeline now
+      // (was signal-only; geo/copy reset to capitalPool on restart, erasing drawdown
+      // history so the breaker forgot it was near tripping). Tier-1 3.2.
+      const peakFile = peakFileFor(id);
+      try {
+        const parsed = JSON.parse(readFileSync(peakFile, 'utf8'));
+        if (typeof parsed.peakBalance === 'number' && parsed.peakBalance > 0) {
+          opts.restoredPeakBalance = parsed.peakBalance;
+        }
+      } catch { /* first run or missing file */ }
+      opts.onPeakBalanceChange = (peak) => {
+        try { writeFileSync(peakFile, JSON.stringify({ peakBalance: peak, updatedAt: new Date().toISOString() })); }
+        catch { /* non-fatal */ }
+      };
       const rm = new RiskManager(id, dial, pcfg.capital, opts);
       this.riskManagers.set(id, rm);
     }
