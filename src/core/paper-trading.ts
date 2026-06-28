@@ -5,6 +5,7 @@ import type { Trade, DailyPerformance, PipelineId, RiskLevel, Side } from '../ty
 import type { MarketCache } from '../signals/market-cache.js';
 import { randomUUID } from 'crypto';
 import * as db from '../data/supabase.js';
+import { applyEntrySlippage, applyExitSlippage, isSettlementPrice, tradeFees } from './execution-costs.js';
 
 export interface CopyTradeInput {
   marketId: string;
@@ -172,12 +173,10 @@ export class PaperTradingEngine {
       this.latencyAwareCacheMissCount += 1;
     }
 
-    // Simulate slippage: 0.1% - 0.5%
-    const slippagePct = 0.001 + Math.random() * 0.004;
-    const slippage = basePrice * slippagePct;
-    const executionPrice = input.side === 'buy'
-      ? basePrice + slippage
-      : basePrice - slippage;
+    // Adverse entry slippage (half-spread + impact), price-tiered & deterministic
+    // — see execution-costs.ts. Replaces the old price-agnostic uniform 0.1-0.5%.
+    const executionPrice = applyEntrySlippage(basePrice, input.side);
+    const slippage = Math.abs(executionPrice - basePrice);
 
     const shares = input.usdcSize / executionPrice;
 
@@ -222,11 +221,20 @@ export class PaperTradingEngine {
     const trade = this.openTrades.get(tradeId);
     if (!trade) { logger.error(`Trade ${tradeId} not found`); return null; }
 
-    const { pnl, pnlPct } = this.riskManager.calculatePnl(trade, currentPrice);
-    trade.exitPrice = currentPrice;
+    // Adverse EXIT slippage (cross the spread) + round-trip Polymarket taker fee
+    // — UNLESS this is a settlement/redemption (price at 0/1), which has neither.
+    // See execution-costs.ts. Makes paper P&L net of live execution frictions.
+    const settled = isSettlementPrice(currentPrice);
+    const effectiveExit = settled ? currentPrice : applyExitSlippage(currentPrice, trade.side);
+    const { pnl: grossPnl } = this.riskManager.calculatePnl(trade, effectiveExit);
+    const fee = tradeFees(trade.size, trade.entryPrice, effectiveExit, trade.question, trade.pipelineId, settled);
+    const pnl = Math.round((grossPnl - fee) * 100) / 100;
+    const pnlPct = trade.usdcAmount > 0 ? Math.round((pnl / trade.usdcAmount) * 10000) / 100 : 0;
+    trade.exitPrice = effectiveExit;
     trade.exitTime = new Date().toISOString();
     trade.pnl = pnl;
     trade.pnlPct = pnlPct;
+    (trade as Trade & { fee?: number }).fee = fee;
     trade.status = 'closed';
 
     this.balance += trade.usdcAmount + pnl;
@@ -241,6 +249,8 @@ export class PaperTradingEngine {
     logger.info(`Paper copy trade CLOSED (${reason})`, {
       id: tradeId.slice(0, 8),
       market: trade.question.slice(0, 40),
+      exit: effectiveExit.toFixed(4),
+      fee: `$${fee.toFixed(2)}`,
       pnl: `$${pnl.toFixed(2)}`,
       pnlPct: `${pnlPct.toFixed(1)}%`,
       balance: `$${this.balance.toFixed(2)}`,
