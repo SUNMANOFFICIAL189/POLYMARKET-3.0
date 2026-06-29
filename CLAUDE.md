@@ -12,6 +12,21 @@ On session start in this project, automatically load the Commander system:
 
 Then proceed with the Quick Resume below.
 
+## ⚡ CURRENT STATE (2026-06-29) — read this + the handoff memory FIRST
+
+**On PATS resume, read `~/.claude/projects/-Users-sunil-rajput/memory/project_session_handoff_2026_06_29.md` — it is the live state-of-the-bot.** Quick facts (verified 2026-06-28):
+
+- **Paper mode only** (`PAPER_MODE=true`; no live-execution/order-signing code exists — the `[LIVE]` label is cosmetic). Real income: **$0 by construction.**
+- **The ONLY actively-trading pipeline is `geopolitics`** — copies a hand-curated static watchlist (TIER_1 = **StarMaster only**, `src/geopolitics/watchlist.ts`). **`signal` generates ~0 live signals; `copy` is disabled.** So today this is effectively a *single-wallet geopolitics copy bot*, NOT the leaderboard copy-trader the "What This Project Is" section below describes.
+- **Wallet selection is MANUAL** — the auto scorer/selector serves only the disabled copy pipeline; the screener (`wallet-rotation.ts`) is report-only; a human edits `watchlist.ts`.
+- **Live branch on server = `fidelity/paper-live-tier1` @ `74b8bc3`** (NOT `optimization/2026-04-12-v2`). pm2 runs `npx tsx src/index.ts` (no compile). Rollback: server `git checkout fidelity/deploy-1a1b`.
+- **Fidelity Tier-1 + Option A deployed 2026-06-28** — paper now models slippage + Polymarket fees + real settlements (no fabricated 0.5) + an **equity-based** drawdown breaker. Paper P&L is now LOWER = honest. Detail: `project_pats_fidelity_proofcheck_2026_06_28`.
+- **STRATEGY VERDICT (2026-06-28): the apparent edge was a fabricated-exit-price ARTIFACT; there is NO validated edge; honest lifetime P&L is negative.** Do NOT ship "Strategy C" as an edge. The current vehicle cannot hit the $300-600/day goal (14-35× short + no edge). Detail: `project_pats_strategy_verdict_2026_06_28`.
+- **A clean-data soak is running** (zero point = the 2026-06-28 deploy; verdict ≈ 2026-08-10) — re-measure every claimed edge from zero on honest data. Spec: `_NEXT_STEPS/clean-data-soak-2026-06-28.md`.
+- **Open decision:** the 2026-06-12 A/B/C fork (pivot class+capital / reset goal / stop) — now data-confirmed, pending the soak.
+
+> ⚠️ The "What This Project Is", "Targets", "Baseline (2026-04-12)", and "What's Next (Tier 3)" sections below are HISTORICAL and partly superseded. Keep them for architecture + protocol reference, but trust the handoff memory + this CURRENT STATE for what is actually true now.
+
 ## Quick Resume
 
 On session start, read this file and then check the current state:

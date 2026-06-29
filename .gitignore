@@ -7,6 +7,9 @@ dist/
 .DS_Store
 .claude-flow/
 
+# soak data export (transient — regenerate via scripts/soak/export-trades.ts)
+soak-export.json
+
 # Dashboard
 dashboard/node_modules/
 dashboard/.next/
