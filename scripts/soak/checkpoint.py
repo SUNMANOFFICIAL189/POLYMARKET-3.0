@@ -94,6 +94,30 @@ def tripwire(rs, label):
           f"(P&L booked on them: ${booked:+.0f})")
     return hits
 
+def directional_read(sc, days, pool_total=6300):
+    """Early directional signal across the whole soak window (all pipelines).
+    NOT a verdict — that needs n>=30 per element. Just 'bleeding / flat / leaning +'
+    plus a rough projection of when n>=30 arrives at the current resolution rate."""
+    n = len(sc)
+    if n == 0:
+        return None
+    pnls = [r["pnl"] for r in sc]
+    tot = sum(pnls)
+    wins = sum(1 for p in pnls if p > 0)
+    losses = sum(1 for p in pnls if p < 0)
+    wr = wins / (wins + losses) * 100 if (wins + losses) else 0.0
+    band = 0.005 * pool_total  # ~$31 dead-band so noise doesn't read as a trend
+    direction = ("LEANING NEGATIVE (bleeding)" if tot <= -band
+                 else "LEANING POSITIVE" if tot >= band
+                 else "FLAT / inconclusive")
+    proj = ""
+    if 0 < n < 30 and days > 0:
+        rate = n / days
+        if rate > 0:
+            proj = f"  ~{(30 - n) / rate:.0f} more days to n>=30 (resolving {rate:.1f}/day)"
+    return (n, tot, wr, wins, losses, direction, proj)
+
+
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_EXPORT
     try:
@@ -128,6 +152,18 @@ def main():
         blo = [r for r in sig if r["our_entry_price"] < 0.50]
         if b90: show("signal SELL>=0.90 (H2)", b90, POOL["signal"])
         if blo: show("signal SELL<0.50", blo, POOL["signal"])
+
+    # Early directional read (added 2026-06-29) — a 2-week signal before n>=30.
+    print("\nDIRECTIONAL READ — early signal, NOT a verdict (verdict needs n>=30 per element):")
+    dr = directional_read(sc, days)
+    if dr is None:
+        print("  no resolved trades yet")
+    else:
+        n_, tot_, wr_, w_, l_, direction_, proj_ = dr
+        flag_ = "verdict-ready (n>=30)" if n_ >= 30 else "directional only"
+        print(f"  n={n_}  cum=${tot_:+.0f}  {w_}W/{l_}L  WR={wr_:.0f}%  ->  {direction_}  [{flag_}]")
+        if proj_:
+            print(proj_)
 
     print("\nARTIFACT TRIPWIRE — fabricated ~0.5 exits on near-cert positions")
     soak_hits = tripwire(soak, "SOAK window")

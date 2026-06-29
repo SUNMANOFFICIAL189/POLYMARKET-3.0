@@ -148,6 +148,29 @@ function deriveMetrics(trades: CopyTrade[], _performance: DailyPerformance[], de
   }
 }
 
+// Fidelity deploy (commit 74b8bc3, 2026-06-28): honest accounting starts here.
+// Trades opened before this are artifact-contaminated (fabricated exit prices)
+// and are EXCLUDED from the honest view. Read-only — mirrors scripts/soak/checkpoint.py.
+const SOAK_ZERO_POINT = '2026-06-28'
+
+function deriveCleanMetrics(trades: CopyTrade[], depositAmount: number, zeroPoint: string) {
+  const since = (t: CopyTrade) => (t.entry_time ?? '') >= zeroPoint
+  const decided = trades.filter(t =>
+    since(t) && (t.status === 'closed' || t.status === 'stopped') && t.pnl != null && t.exit_time != null)
+  const realizedPnl = decided.reduce((s, t) => s + (t.pnl ?? 0), 0)
+  const wins = decided.filter(t => (t.pnl ?? 0) > 0).length
+  const losses = decided.filter(t => (t.pnl ?? 0) < 0).length
+  const winRate = (wins + losses) > 0 ? wins / (wins + losses) : null
+  const openN = trades.filter(t => since(t) && (t.status === 'open' || t.status === 'pending')).length
+  return {
+    cleanPnlUsd: realizedPnl,
+    cleanReturnPct: (realizedPnl / depositAmount) * 100,
+    cleanResolvedN: decided.length,
+    cleanWinRate: winRate !== null ? winRate * 100 : null,
+    cleanOpenN: openN,
+  }
+}
+
 export default async function DashboardPage() {
   let leaders: Leader[] = []
   let currentLeader: Leader | null = null
@@ -175,6 +198,9 @@ export default async function DashboardPage() {
     maxDrawdown, openPositions, maxOpenPositionsConfig, riskPreset, paperMode,
     mirofishOverrideCount, mirofishOverrideLosses, mirofishOverrideWins,
   } = deriveMetrics(trades, performance, 6300)
+
+  const { cleanPnlUsd, cleanReturnPct, cleanResolvedN, cleanWinRate, cleanOpenN } =
+    deriveCleanMetrics(trades, 6300, SOAK_ZERO_POINT)
 
   const chartPoints = deriveChartPoints(trades, 6300, readBotStatus()?.balance ?? undefined)
 
@@ -228,6 +254,12 @@ export default async function DashboardPage() {
           mirofishOverrideLosses={mirofishOverrideLosses}
           mirofishOverrideWins={mirofishOverrideWins}
           paperMode={paperMode}
+          cleanPnlUsd={cleanPnlUsd}
+          cleanReturnPct={cleanReturnPct}
+          cleanResolvedN={cleanResolvedN}
+          cleanWinRate={cleanWinRate}
+          cleanOpenN={cleanOpenN}
+          zeroPointLabel="6/28"
         />
 
         {/* Center — chart + activity feed + globe */}

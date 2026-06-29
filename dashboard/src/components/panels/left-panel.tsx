@@ -20,6 +20,12 @@ interface LeftPanelProps {
   mirofishOverrideLosses: number
   mirofishOverrideWins: number
   paperMode: boolean
+  cleanPnlUsd: number
+  cleanReturnPct: number
+  cleanResolvedN: number
+  cleanWinRate: number | null
+  cleanOpenN: number
+  zeroPointLabel: string
 }
 
 // ── Format helpers ──────────────────────────────────────────────────────────
@@ -186,10 +192,20 @@ export default function LeftPanel({
   mirofishOverrideLosses,
   mirofishOverrideWins,
   paperMode,
+  cleanPnlUsd,
+  cleanReturnPct,
+  cleanResolvedN,
+  cleanWinRate,
+  cleanOpenN,
+  zeroPointLabel,
 }: LeftPanelProps) {
   const returnPositive = totalReturnUsd >= 0
   const returnColor = returnPositive ? 'var(--green)' : 'var(--red)'
   const returnSign = returnPositive ? '+' : ''
+
+  const cleanPositive = cleanPnlUsd >= 0
+  const cleanColor = cleanPositive ? 'var(--green)' : 'var(--red)'
+  const cleanSign = cleanPositive ? '+' : ''
 
   const winRateColor =
     winRate !== null && winRate > 60 ? 'var(--green)' : '#fff'
@@ -224,9 +240,31 @@ export default function LeftPanel({
             ({returnSign}{formatPct(totalReturnPct)})
           </span>
         </div>
+        <div style={{ fontSize: '8px', color: 'var(--text-muted)', marginTop: '3px', fontStyle: 'italic' }}>
+          lifetime · incl. pre-{zeroPointLabel} legacy (artifact-inflated)
+        </div>
 
         {/* Sparkline placeholder */}
         <div style={S.sparklinePlaceholder} />
+      </div>
+
+      {/* ── HONEST P&L since the fidelity deploy (the trustworthy number) ── */}
+      <div style={{ ...S.section, background: '#03110a', borderLeft: '2px solid var(--green)' }}>
+        <div style={{ ...S.label, color: 'var(--green)' }}>★ Honest P&amp;L · since {zeroPointLabel}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '4px' }}>
+          <span style={{ fontSize: '22px', fontWeight: 700, color: cleanColor, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>
+            {cleanSign}{formatUSD(cleanPnlUsd)}
+          </span>
+          <span style={{ fontSize: '11px', color: cleanColor, fontFamily: 'var(--font-mono)' }}>
+            ({cleanSign}{formatPct(cleanReturnPct)})
+          </span>
+        </div>
+        <div style={{ ...S.depositLine, marginTop: '4px' }}>
+          {cleanResolvedN} resolved{cleanOpenN > 0 ? ` · ${cleanOpenN} open` : ''}{cleanWinRate !== null ? ` · ${formatPct(cleanWinRate)} WR` : ''}
+        </div>
+        <div style={{ fontSize: '8px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.35 }}>
+          realized, net of slippage + fees, from $6,300. pre-{zeroPointLabel} history excluded (artifact-contaminated). soak verdict ~Aug 10.
+        </div>
       </div>
 
       {/* ── Performance Stats Grid ── */}
